@@ -3,9 +3,9 @@ package org.example;
 
 import com.mavenr.file.ReName;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -20,7 +20,6 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.io.File;
-import java.util.EventListener;
 
 /**
  * @Classname App
@@ -35,7 +34,7 @@ public class App extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
 
         // 获取屏幕的宽、高
         Screen screen = Screen.getPrimary();
@@ -81,10 +80,11 @@ public class App extends Application {
         hBox1.setLayoutY(30);
         hBox1.getChildren().addAll(label1, oldFiled, label2, newFiled);
         hBox1.setSpacing(10);
+        hBox1.setAlignment(Pos.CENTER_LEFT);
 
         Button edit = new Button("批量修改");
         TextArea ta = new TextArea();
-        ta.setDisable(true);
+        ta.setEditable(false);
         VBox hBox2 = new VBox();
         hBox2.setLayoutX(0);
         hBox2.setLayoutY(60);
@@ -96,7 +96,7 @@ public class App extends Application {
             public void handle(ActionEvent event) {
                 if (text.getText() != "" && oldFiled.getText() != "" && newFiled.getText() != "") {
                     ReName.replaceFileName(text.getText(), oldFiled.getText(), newFiled.getText());
-                    ta.setText("批量修改完成");
+                    ta.setText("批量修改完成!");
                 }
             }
         });
