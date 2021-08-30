@@ -5,6 +5,7 @@ import com.mavenr.file.ReName;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
@@ -12,7 +13,9 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
@@ -36,82 +39,37 @@ public class App extends Application {
     @Override
     public void start(Stage primaryStage) {
 
+        // 设置顶部区域
+        Button topB1 = new Button("替换文件名");
+        Button topB2 = new Button("文件名前添加字符");
+
+        topB1.setPrefHeight(30);
+        topB2.setPrefHeight(30);
+
+        HBox hb = new HBox();
+        hb.setPrefHeight(50);
+        hb.setStyle("-fx-background-color: LightGrey");
+        hb.getChildren().addAll(topB1, topB2);
+        hb.setSpacing(20);
+        hb.setAlignment(Pos.CENTER_LEFT);
+        hb.setPadding(new Insets(10));
+
+        BorderPane bor = new BorderPane();
+        bor.setTop(hb);
+
+
         // 获取屏幕的宽、高
         Screen screen = Screen.getPrimary();
         Rectangle2D bounds = screen.getVisualBounds();
         double width = bounds.getWidth();
         double height = bounds.getHeight();
 
-        // 选择文件夹/文件路径，并输入到文本框
-        TextField text = new TextField();
-        // 输入框中禁止编辑
-        text.setDisable(true);
-        text.setPrefWidth(width / 2 - 200);
-
-        // 点击按钮，选择文件夹
-        Button buttonFileChoose = new Button("选择文件夹路径");
-        buttonFileChoose.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                DirectoryChooser dc = new DirectoryChooser();
-                File file = dc.showDialog(primaryStage);
-                String path = file.getPath();
-                text.setText(path);
-            }
-        });
-
-        // 横向布局
-        HBox hBox = new HBox();
-        hBox.getChildren().addAll(buttonFileChoose, text);
-        hBox.setSpacing(20);
-
-
-        Label label1 = new Label();
-        label1.setText("旧字符");
-        TextField oldFiled = new TextField();
-
-        Label label2 = new Label();
-        label2.setText("新字符");
-        label2.setStyle("");
-        TextField newFiled = new TextField();
-
-        HBox hBox1 = new HBox();
-        hBox1.setLayoutX(0);
-        hBox1.setLayoutY(30);
-        hBox1.getChildren().addAll(label1, oldFiled, label2, newFiled);
-        hBox1.setSpacing(10);
-        hBox1.setAlignment(Pos.CENTER_LEFT);
-
-        Button edit = new Button("批量修改");
-        TextArea ta = new TextArea();
-        ta.setEditable(false);
-        VBox hBox2 = new VBox();
-        hBox2.setLayoutX(0);
-        hBox2.setLayoutY(60);
-        hBox2.getChildren().addAll(edit, ta);
-        hBox2.setSpacing(10);
-
-        edit.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                if (text.getText() != "" && oldFiled.getText() != "" && newFiled.getText() != "") {
-                    ReName.replaceFileName(text.getText(), oldFiled.getText(), newFiled.getText());
-                    ta.setText("批量修改完成!");
-                }
-            }
-        });
-
-
-        // 布局类
-        AnchorPane root = new AnchorPane();
-        root.getChildren().addAll(hBox, hBox1, hBox2);
-
         // 场景配置
-        Scene scene = new Scene(root);
+        Scene scene = new Scene(bor);
         primaryStage.setScene(scene);
 
-
         primaryStage.setTitle("文件批处理工具");
+        primaryStage.getIcons().add(new Image("image/folder.png"));
         primaryStage.setWidth(width / 2);
         primaryStage.setHeight(height / 2);
         primaryStage.setMinWidth(width / 2);
@@ -120,6 +78,33 @@ public class App extends Application {
         primaryStage.setMaxHeight(height);
         primaryStage.show();
 
+        AnchorPane replacePane = new ReplacePane().replacePane(primaryStage, width);
+        AnchorPane beginAndEndPane = new BeginAndEndPane().beginAndEndPane(primaryStage, width);
+        bor.setCenter(replacePane);
+        // 点击按钮触发事件，切换中心区域
+        topB1.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                if (!replacePane.equals(bor.getCenter())) {
+                    System.out.println("切换到字符替换的布局");
+                    bor.setCenter(replacePane);
+                }
+            }
+        });
+        topB2.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                if (!beginAndEndPane.equals(bor.getCenter())) {
+                    System.out.println("切换到文件名前后添加字符的布局");
+                    bor.setCenter(beginAndEndPane);
+                }
+            }
+        });
+
 
     }
+
+
+
+
 }
