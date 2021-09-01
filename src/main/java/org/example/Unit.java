@@ -9,7 +9,6 @@ import javafx.scene.control.TextField;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -72,7 +71,7 @@ public class Unit {
 
         // 点击按钮，选择文件夹
         Button buttonFileChoose = new Button("选择文件路径");
-        if (StringUtils.isNotEmpty(buttonText)) {
+        if (buttonText != null && !"".equals(buttonText.replaceAll(" ", ""))) {
             buttonFileChoose.setText(buttonText);
         }
         buttonFileChoose.setPrefWidth(100);

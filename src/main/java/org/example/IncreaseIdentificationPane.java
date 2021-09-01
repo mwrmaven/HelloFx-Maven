@@ -11,12 +11,9 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
@@ -142,7 +139,7 @@ public class IncreaseIdentificationPane {
         preText.setPromptText("标识前置固定字符，没有则不填");
         preText.setPrefWidth(textWidth - 40);
         TextField identification = new TextField();
-        identification.setPromptText("初始标识符");
+        identification.setPromptText("初始标识符(新字符)");
         identification.setPrefWidth(textWidth);
         TextField afterText = new TextField();
         afterText.setPromptText("标识后置固定字符，没有则不填");
@@ -206,7 +203,7 @@ public class IncreaseIdentificationPane {
                 String identificationType = ((RadioButton) tgIdenType.getSelectedToggle()).getText();
                 // 标识符前置字符
                 String pre = preText.getText();
-                // 标识符
+                // 标识符(新字符)
                 String iden = identification.getText();
                 // 标识符后置字符
                 String after = afterText.getText();
@@ -218,14 +215,19 @@ public class IncreaseIdentificationPane {
                 String outPath = ((TextField) nodes2.get(1)).getText();
 
                 // 如果选择文件夹路径和选择文件路径都为空则报错
-                if (StringUtils.isEmpty(folderPath) && StringUtils.isEmpty(four)) {
+                if ((folderPath == null || "".equals(folderPath.replaceAll(" ", "")))
+                        && (four == null || "".equals(four.replaceAll(" ", "")))) {
                     ta.setText("请配置“选择文件夹路径”或“选择文件路径”");
                 }
                 // 如果是文件名中插入和替换为：替换字符，则输入框不能为空
-                if (button3.getText().equals(((RadioButton)tg.getSelectedToggle()).getText()) && StringUtils.isEmpty(insertOrReplaceValue)) {
+                if (button3.getText().equals(((RadioButton)tg.getSelectedToggle()).getText())
+                        && (insertOrReplaceValue == null || "".equals(insertOrReplaceValue.replaceAll(" ", "")))) {
                     ta.setText("请输入旧字符");
                 }
-                // 判断标识符
+                // 判断标识符是否为空
+                if (iden == null || "".equals(iden.replaceAll(" ", ""))) {
+                    ta.setText("请输入标识符(新字符)");
+                }
 
 
             }
