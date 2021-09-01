@@ -66,10 +66,12 @@ public class App extends Application {
 
         primaryStage.setTitle("文件批处理工具");
         primaryStage.getIcons().add(new Image("image/folder.png"));
-        primaryStage.setWidth(width / 2);
-        primaryStage.setHeight(height / 2);
-        primaryStage.setMinWidth(width / 2);
-        primaryStage.setMinHeight(height / 2);
+        double w = width / 2 + 200;
+        double h = height / 2 + 200;
+        primaryStage.setWidth(w);
+        primaryStage.setHeight(h);
+        primaryStage.setMinWidth(w);
+        primaryStage.setMinHeight(h);
         primaryStage.setMaxWidth(width);
         primaryStage.setMaxHeight(height);
         primaryStage.show();
@@ -81,7 +83,7 @@ public class App extends Application {
         // 根据步长修改文件名
         FlowPane increaseIdentification =
                 new IncreaseIdentificationPane().increaseIdentification(primaryStage, width);
-        bor.setCenter(replacePane);
+        bor.setCenter(increaseIdentification);
 
         Map<Button, Pane> buttonAndPane = new HashMap<>();
         buttonAndPane.put(topB1, replacePane);

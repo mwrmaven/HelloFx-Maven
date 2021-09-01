@@ -9,6 +9,7 @@ import javafx.scene.control.TextField;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -62,7 +63,7 @@ public class Unit {
      * @param width
      * @return
      */
-    public List<Node> chooseFile(Stage primaryStage, double width) {
+    public List<Node> chooseFile(Stage primaryStage, double width, String buttonText) {
         // 选择文件夹/文件路径，并输入到文本框
         TextField text = new TextField();
         // 输入框中禁止编辑
@@ -71,6 +72,9 @@ public class Unit {
 
         // 点击按钮，选择文件夹
         Button buttonFileChoose = new Button("选择文件路径");
+        if (StringUtils.isNotEmpty(buttonText)) {
+            buttonFileChoose.setText(buttonText);
+        }
         buttonFileChoose.setPrefWidth(100);
         buttonFileChoose.setAlignment(Pos.CENTER);
         buttonFileChoose.setOnAction(new EventHandler<ActionEvent>() {
