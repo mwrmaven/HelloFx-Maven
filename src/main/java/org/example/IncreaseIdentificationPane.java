@@ -3,7 +3,6 @@ package org.example;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.MapChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -14,6 +13,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
@@ -76,9 +76,13 @@ public class IncreaseIdentificationPane {
         HBox hBox4 = new HBox();
         hBox4.setSpacing(20);
         hBox4.setPadding(new Insets(10));
+        TextField num = new TextField();
+        num.setPromptText("请输入生成文件的个数");
+
         nodes1.forEach(item -> {
             hBox4.getChildren().addAll(item);
         });
+        hBox4.getChildren().addAll(num);
         hBox4.setVisible(false);
         hBox4.setManaged(false);
 
@@ -118,15 +122,15 @@ public class IncreaseIdentificationPane {
         hBox5.setPadding(new Insets(10));
         hBox5.setSpacing(20);
         Label label5 = new Label("初始标识符的类型: ");
-        RadioButton rbiWord = new RadioButton("字母");
+//        RadioButton rbiWord = new RadioButton("字母");
         RadioButton rbiNum = new RadioButton("数字");
-        RadioButton rbiTime = new RadioButton("时间(格式为: yyyyMMdd 或 yyyy-MM-dd 或 yyyy_MM_dd; 例如: 2021_08_31)");
+        RadioButton rbiTime = new RadioButton("时间(格式为: yyyyMMdd 或 yyyy-MM-dd 或 yyyy__MM__dd; 例如: 2021__08__31)");
         ToggleGroup tgIdenType = new ToggleGroup();
-        rbiWord.setToggleGroup(tgIdenType);
+//        rbiWord.setToggleGroup(tgIdenType);
         rbiNum.setToggleGroup(tgIdenType);
         rbiTime.setToggleGroup(tgIdenType);
         rbiTime.setSelected(true);
-        hBox5.getChildren().addAll(label5, rbiWord, rbiNum, rbiTime);
+        hBox5.getChildren().addAll(label5, rbiNum, rbiTime);
 
         // 递增标识的配置
         double textWidth = (width / 2 - 240) / 3;
@@ -182,7 +186,7 @@ public class IncreaseIdentificationPane {
         ta.setEditable(false);
         FlowPane root = new FlowPane();
         root.setOrientation(Orientation.VERTICAL);
-        root.getChildren().addAll(hBox1, hBox2, hBox3, hBox4, hBox5, hBox6, hBox7, edit, ta);
+        root.getChildren().addAll(hBox2, hBox3, hBox4, hBox1, hBox5, hBox6, hBox7, edit, ta);
         // 由于edit和ta没有放到中间布局类中，所以需要分别给edit和ta配置
         FlowPane.setMargin(edit, new Insets(10));
         FlowPane.setMargin(ta, new Insets(10));
@@ -213,25 +217,89 @@ public class IncreaseIdentificationPane {
                 String stepU = String.valueOf(cb.getValue());
                 // 输出路径
                 String outPath = ((TextField) nodes2.get(1)).getText();
+                // 生成文件分数
+                String filesNum = num.getText();
 
                 // 如果选择文件夹路径和选择文件路径都为空则报错
-                if ((folderPath == null || "".equals(folderPath.replaceAll(" ", "")))
-                        && (four == null || "".equals(four.replaceAll(" ", "")))) {
+                if (StringUtils.isEmpty(folderPath) && StringUtils.isEmpty(four)) {
                     ta.setText("请配置“选择文件夹路径”或“选择文件路径”");
                 }
                 // 如果是文件名中插入和替换为：替换字符，则输入框不能为空
                 if (button3.getText().equals(((RadioButton)tg.getSelectedToggle()).getText())
-                        && (insertOrReplaceValue == null || "".equals(insertOrReplaceValue.replaceAll(" ", "")))) {
+                        && StringUtils.isEmpty(insertOrReplaceValue)) {
                     ta.setText("请输入旧字符");
                 }
                 // 判断标识符是否为空
-                if (iden == null || "".equals(iden.replaceAll(" ", ""))) {
+                if (StringUtils.isEmpty(iden)) {
                     ta.setText("请输入标识符(新字符)");
                 }
+                if (create.getText().equals(((RadioButton) tgParent.getSelectedToggle()).getText())
+                        && !filesNum.matches("[0-9]+")) {
+                    ta.setText("请输入生成文件的个数");
+                }
+                // 判断标识符类型
+                if (identificationType.equals(rbiNum.getText())
+                        && !iden.matches("[0-9]+")) {
+                    ta.setText("标识符请输入数字");
+                }
+                if (identificationType.equals(rbiTime.getText())) {
+                    if (!iden.matches("[0-9]{8}") && !iden.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")
+                            && !iden.matches("[0-9]{4}_[0-9]{2}_[0-9]{2}")){
+                        ta.setText("标识符请输入时间格式");
+                    }
+                }
 
-
+                // 根据用户选择的条件进行批量处理
+                if (create.getText().equals(((RadioButton) tgParent.getSelectedToggle()).getText())) {
+                    // 根据模板文件创建文件
+                    createFile();
+                } else {
+                    // 只替换文件名
+                    onlyReplaceName();
+                }
             }
         });
         return root;
     }
+
+    private void createFile() {
+        // 后置插入
+
+        // 前置插入
+
+        // 替换字符
+
+    }
+
+    private void onlyReplaceName() {
+        // 后置插入
+
+        // 前置插入
+
+        // 替换字符
+
+    }
+
+    private void afterInsert() {
+        // 数字格式
+
+        // 时间格式
+
+    }
+
+    private void preInsert() {
+        // 数字格式
+
+        // 时间格式
+
+    }
+
+    private void replace() {
+        // 数字格式
+
+        // 时间格式
+
+    }
+
+
 }
