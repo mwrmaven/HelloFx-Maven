@@ -217,7 +217,7 @@ public class IncreaseIdentificationPane {
                 String stepU = String.valueOf(cb.getValue());
                 // 输出路径
                 String outPath = ((TextField) nodes2.get(1)).getText();
-                // 生成文件分数
+                // 生成文件份数
                 String filesNum = num.getText();
 
                 // 如果选择文件夹路径和选择文件路径都为空则报错
@@ -252,31 +252,74 @@ public class IncreaseIdentificationPane {
                 // 根据用户选择的条件进行批量处理
                 if (create.getText().equals(((RadioButton) tgParent.getSelectedToggle()).getText())) {
                     // 根据模板文件创建文件
-                    createFile();
+                    createFile(insertOrReplaceKey, insertOrReplaceValue, four, Integer.valueOf(filesNum),
+                            identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath);
                 } else {
                     // 只替换文件名
-                    onlyReplaceName();
+                    onlyReplaceName(insertOrReplaceKey, insertOrReplaceValue, folderPath,
+                            identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath);
                 }
             }
         });
         return root;
     }
 
-    private void createFile() {
-        // 后置插入
+    /**
+     * 根据模板文件创建文件
+     * @param insertOrReplaceKey 文件名中目标是 后置插入/前置插入/替换字符
+     * @param insertOrReplaceValue 如果为替换字符，则这个参数为旧字符
+     * @param filePath 模板文件路径
+     * @param fileNum 生成文件的个数
+     * @param identificationType 初始标识符的类型 数字/时间
+     * @param pre 前置固定字符
+     * @param iden 初始标识符
+     * @param after 后置固定字符
+     * @param stepN 步长
+     * @param stepU 步长单位
+     * @param outPath 文件输出路径
+     */
+    private void createFile(String insertOrReplaceKey, String insertOrReplaceValue, String filePath, int fileNum,
+                            String identificationType, String pre, String iden, String after, int stepN,
+                            String stepU, String outPath) {
+        if ("后置插入".equals(insertOrReplaceKey)) {
+            // 后置插入
 
-        // 前置插入
+        } else if ("前置插入".equals(insertOrReplaceKey)) {
+            // 前置插入
 
-        // 替换字符
+        } else if ("替换字符".equals(insertOrReplaceKey)) {
+            // 替换字符
+        }
+
+
 
     }
 
-    private void onlyReplaceName() {
-        // 后置插入
+    /**
+     * 只替换文件名
+     * @param insertOrReplaceKey 文件名中目标是 后置插入/前置插入/替换字符
+     * @param insertOrReplaceValue 如果为替换字符，则这个参数为旧字符
+     * @param folderPath 文件夹路径
+     * @param identificationType 初始标识符的类型 数字/时间
+     * @param pre 前置固定字符
+     * @param iden 初始标识符
+     * @param after 后置固定字符
+     * @param stepN 步长
+     * @param stepU 步长单位
+     * @param outPath 文件输出路径
+     */
+    private void onlyReplaceName(String insertOrReplaceKey, String insertOrReplaceValue, String folderPath,
+                                 String identificationType, String pre, String iden, String after, int stepN,
+                                 String stepU, String outPath) {
+        if ("后置插入".equals(insertOrReplaceKey)) {
+            // 后置插入
 
-        // 前置插入
+        } else if ("前置插入".equals(insertOrReplaceKey)) {
+            // 前置插入
 
-        // 替换字符
+        } else if ("替换字符".equals(insertOrReplaceKey)) {
+            // 替换字符
+        }
 
     }
 
