@@ -15,6 +15,8 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -124,7 +126,7 @@ public class IncreaseIdentificationPane {
         Label label5 = new Label("初始标识符的类型: ");
 //        RadioButton rbiWord = new RadioButton("字母");
         RadioButton rbiNum = new RadioButton("数字");
-        RadioButton rbiTime = new RadioButton("时间(格式为: yyyyMMdd 或 yyyy-MM-dd 或 yyyy__MM__dd; 例如: 2021__08__31)");
+        RadioButton rbiTime = new RadioButton("时间(格式为: yyyyMMdd 或 yyyy-MM-dd 或 yyyy_MM_dd; 例如: 2021_08_31)");
         ToggleGroup tgIdenType = new ToggleGroup();
 //        rbiWord.setToggleGroup(tgIdenType);
         rbiNum.setToggleGroup(tgIdenType);
@@ -233,6 +235,11 @@ public class IncreaseIdentificationPane {
                 if (StringUtils.isEmpty(iden)) {
                     ta.setText("请输入标识符(新字符)");
                 }
+                // 判断步长是否为空
+                if (StringUtils.isEmpty(stepN)) {
+                    ta.setText("请输入递增的步长");
+                }
+
                 if (create.getText().equals(((RadioButton) tgParent.getSelectedToggle()).getText())
                         && !filesNum.matches("[0-9]+")) {
                     ta.setText("请输入生成文件的个数");
@@ -253,7 +260,7 @@ public class IncreaseIdentificationPane {
                 if (create.getText().equals(((RadioButton) tgParent.getSelectedToggle()).getText())) {
                     // 根据模板文件创建文件
                     createFile(insertOrReplaceKey, insertOrReplaceValue, four, Integer.valueOf(filesNum),
-                            identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath);
+                            identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath, ta);
                 } else {
                     // 只替换文件名
                     onlyReplaceName(insertOrReplaceKey, insertOrReplaceValue, folderPath,
@@ -267,7 +274,7 @@ public class IncreaseIdentificationPane {
     /**
      * 根据模板文件创建文件
      * @param insertOrReplaceKey 文件名中目标是 后置插入/前置插入/替换字符
-     * @param insertOrReplaceValue 如果为替换字符，则这个参数为旧字符
+     * @param insertOrReplaceValue 如果为替换字符，则这个参数为旧字符，否则无用
      * @param filePath 模板文件路径
      * @param fileNum 生成文件的个数
      * @param identificationType 初始标识符的类型 数字/时间
@@ -277,12 +284,29 @@ public class IncreaseIdentificationPane {
      * @param stepN 步长
      * @param stepU 步长单位
      * @param outPath 文件输出路径
+     * @param ta 文本显示框，用来显示提示信息
      */
     private void createFile(String insertOrReplaceKey, String insertOrReplaceValue, String filePath, int fileNum,
                             String identificationType, String pre, String iden, String after, int stepN,
-                            String stepU, String outPath) {
+                            String stepU, String outPath, TextArea ta) {
+        List<String> idnetity = new ArrayList<>();
+        // 标识符类型
+        if ("数字".equals(identificationType)) {
+            if (!iden.matches("[0-9]+")) {
+                ta.setText("请输入正整数");
+            }
+            for (int i = 0; i < fileNum; i++) {
+
+            }
+        } else if ("时间".equals(identificationType)) {
+
+        } else {
+            return;
+        }
+
         if ("后置插入".equals(insertOrReplaceKey)) {
             // 后置插入
+
 
         } else if ("前置插入".equals(insertOrReplaceKey)) {
             // 前置插入
@@ -298,7 +322,7 @@ public class IncreaseIdentificationPane {
     /**
      * 只替换文件名
      * @param insertOrReplaceKey 文件名中目标是 后置插入/前置插入/替换字符
-     * @param insertOrReplaceValue 如果为替换字符，则这个参数为旧字符
+     * @param insertOrReplaceValue 如果为替换字符，则这个参数为旧字符，否则无用
      * @param folderPath 文件夹路径
      * @param identificationType 初始标识符的类型 数字/时间
      * @param pre 前置固定字符
@@ -311,8 +335,19 @@ public class IncreaseIdentificationPane {
     private void onlyReplaceName(String insertOrReplaceKey, String insertOrReplaceValue, String folderPath,
                                  String identificationType, String pre, String iden, String after, int stepN,
                                  String stepU, String outPath) {
+        // 获取文件夹下所有的文件名
+        File folder = new File(folderPath);
+        File[] files = folder.listFiles();
+
+
         if ("后置插入".equals(insertOrReplaceKey)) {
             // 后置插入
+            for (File f : files) {
+                if (f.isFile()) {
+                    System.out.println(f.getPath());
+                }
+
+            }
 
         } else if ("前置插入".equals(insertOrReplaceKey)) {
             // 前置插入
