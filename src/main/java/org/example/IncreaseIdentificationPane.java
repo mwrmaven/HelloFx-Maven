@@ -1,5 +1,6 @@
 package org.example;
 
+import com.mavenr.file.ReName;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -16,7 +17,12 @@ import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -259,8 +265,13 @@ public class IncreaseIdentificationPane {
                 // 根据用户选择的条件进行批量处理
                 if (create.getText().equals(((RadioButton) tgParent.getSelectedToggle()).getText())) {
                     // 根据模板文件创建文件
-                    createFile(insertOrReplaceKey, insertOrReplaceValue, four, Integer.valueOf(filesNum),
-                            identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath, ta);
+                    try {
+                        createFile(insertOrReplaceKey, insertOrReplaceValue, four, Integer.valueOf(filesNum),
+                                identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath, ta);
+                    } catch (Exception e) {
+                        ta.setText("根据模板文件创建文件");
+                        e.printStackTrace();
+                    }
                 } else {
                     // 只替换文件名
                     onlyReplaceName(insertOrReplaceKey, insertOrReplaceValue, folderPath,
@@ -288,35 +299,87 @@ public class IncreaseIdentificationPane {
      */
     private void createFile(String insertOrReplaceKey, String insertOrReplaceValue, String filePath, int fileNum,
                             String identificationType, String pre, String iden, String after, int stepN,
-                            String stepU, String outPath, TextArea ta) {
-        List<String> idnetity = new ArrayList<>();
+                            String stepU, String outPath, TextArea ta) throws IOException, ParseException {
+        int index = filePath.lastIndexOf(File.separator);
+        String fileFolder = filePath.substring(0, index);
+        String fileName = filePath.substring(index + 1);
+
+        List<String> identity = new ArrayList<>();
+        identity.add(iden);
         // 标识符类型
         if ("数字".equals(identificationType)) {
-            if (!iden.matches("[0-9]+")) {
-                ta.setText("请输入正整数");
-            }
+            int start = Integer.parseInt(iden);
             for (int i = 0; i < fileNum; i++) {
-
+                start += stepN;
+                identity.add(String.valueOf(start));
             }
         } else if ("时间".equals(identificationType)) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (iden.contains("_")) {
+                sdf = new SimpleDateFormat("yyyy_MM_dd");
+            }
+            Date date = sdf.parse(iden);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
 
+            int dateType = 0;
+            if ("天".equals(stepU)) {
+                dateType = Calendar.DAY_OF_MONTH;
+            } else if ("周".equals(stepU)) {
+                dateType = Calendar.WEEK_OF_MONTH;
+            } else if ("月".equals(stepU)) {
+                dateType = Calendar.MONTH;
+            } else if ("年".equals(stepU)) {
+                dateType = Calendar.YEAR;
+            }
+
+            for (int i = 0; i < fileNum; i++) {
+                calendar.add(dateType, stepN);
+                identity.add(sdf.format(calendar.getTime()));
+            }
         } else {
             return;
         }
 
-        if ("后置插入".equals(insertOrReplaceKey)) {
-            // 后置插入
-
-
-        } else if ("前置插入".equals(insertOrReplaceKey)) {
-            // 前置插入
-
-        } else if ("替换字符".equals(insertOrReplaceKey)) {
-            // 替换字符
+        if (StringUtils.isEmpty(outPath)) {
+            outPath = fileFolder;
         }
 
+        if (!File.separator.equals(outPath.substring(outPath.length() - 1))) {
+            outPath += File.separator;
+        }
 
-
+        if ("后置插入".equals(insertOrReplaceKey)) {
+            // 后置插入
+            for (int i = 0; i < identity.size(); i++) {
+                fileName = fileName.substring(0, fileName.lastIndexOf("."))
+                        + pre + identity.get(i) + after
+                        + fileName.substring(fileName.lastIndexOf("."));
+                File newFile = new File(outPath + fileName);
+                newFile.createNewFile();
+            }
+        } else if ("前置插入".equals(insertOrReplaceKey)) {
+            // 前置插入
+            for (int i = 0; i < identity.size(); i++) {
+                fileName = pre + identity.get(i) + after
+                        + fileName;
+                File newFile = new File(outPath + fileName);
+                newFile.createNewFile();
+            }
+        } else if ("替换字符".equals(insertOrReplaceKey)) {
+            if (StringUtils.isEmpty(insertOrReplaceValue)) {
+                ta.setText("旧字符不能为空");
+                return;
+            }
+            // 替换字符
+            for (int i = 0; i < identity.size(); i++) {
+                fileName = fileName.substring(0, fileName.lastIndexOf("."))
+                        .replaceAll(insertOrReplaceValue, pre + identity.get(i) + after)
+                        + fileName.substring(fileName.lastIndexOf("."));
+                File newFile = new File(outPath + fileName);
+                newFile.createNewFile();
+            }
+        }
     }
 
     /**
@@ -357,27 +420,5 @@ public class IncreaseIdentificationPane {
         }
 
     }
-
-    private void afterInsert() {
-        // 数字格式
-
-        // 时间格式
-
-    }
-
-    private void preInsert() {
-        // 数字格式
-
-        // 时间格式
-
-    }
-
-    private void replace() {
-        // 数字格式
-
-        // 时间格式
-
-    }
-
 
 }
