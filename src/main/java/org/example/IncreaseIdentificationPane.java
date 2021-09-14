@@ -17,7 +17,9 @@ import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -352,19 +354,20 @@ public class IncreaseIdentificationPane {
         if ("后置插入".equals(insertOrReplaceKey)) {
             // 后置插入
             for (int i = 0; i < identity.size(); i++) {
-                fileName = fileName.substring(0, fileName.lastIndexOf("."))
+                String newFileName = fileName.substring(0, fileName.lastIndexOf("."))
                         + pre + identity.get(i) + after
                         + fileName.substring(fileName.lastIndexOf("."));
-                File newFile = new File(outPath + fileName);
-                newFile.createNewFile();
+                File newFile = new File(outPath + newFileName);
+                Files.copy(new File(filePath).toPath(), newFile.toPath());
+
             }
         } else if ("前置插入".equals(insertOrReplaceKey)) {
             // 前置插入
             for (int i = 0; i < identity.size(); i++) {
-                fileName = pre + identity.get(i) + after
+                String newFileName = pre + identity.get(i) + after
                         + fileName;
-                File newFile = new File(outPath + fileName);
-                newFile.createNewFile();
+                File newFile = new File(outPath + newFileName);
+                Files.copy(new File(filePath).toPath(), newFile.toPath());
             }
         } else if ("替换字符".equals(insertOrReplaceKey)) {
             if (StringUtils.isEmpty(insertOrReplaceValue)) {
@@ -373,11 +376,11 @@ public class IncreaseIdentificationPane {
             }
             // 替换字符
             for (int i = 0; i < identity.size(); i++) {
-                fileName = fileName.substring(0, fileName.lastIndexOf("."))
+                String newFileName = fileName.substring(0, fileName.lastIndexOf("."))
                         .replaceAll(insertOrReplaceValue, pre + identity.get(i) + after)
                         + fileName.substring(fileName.lastIndexOf("."));
-                File newFile = new File(outPath + fileName);
-                newFile.createNewFile();
+                File newFile = new File(outPath + newFileName);
+                Files.copy(new File(filePath).toPath(), newFile.toPath());
             }
         }
     }
