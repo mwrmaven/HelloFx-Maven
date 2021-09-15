@@ -22,10 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author mavenr
@@ -278,8 +276,8 @@ public class IncreaseIdentificationPane {
                     // 只替换文件名
                     try {
                         onlyReplaceName(insertOrReplaceKey, insertOrReplaceValue, folderPath,
-                                identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath);
-                    } catch (ParseException e) {
+                                identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath, ta);
+                    } catch (Exception e) {
                         ta.setText("文件名称修改出错");
                         e.printStackTrace();
                     }
@@ -405,17 +403,31 @@ public class IncreaseIdentificationPane {
      */
     private void onlyReplaceName(String insertOrReplaceKey, String insertOrReplaceValue, String folderPath,
                                  String identificationType, String pre, String iden, String after, int stepN,
-                                 String stepU, String outPath) throws ParseException {
+                                 String stepU, String outPath, TextArea ta) throws ParseException, IOException {
         // 获取文件夹下所有的文件名
         File folder = new File(folderPath);
         File[] files = folder.listFiles();
-        // 判断文件数量
-        int fileNum = 0;
+        List<File> fs = new ArrayList<>();
+
         for (File f : files) {
-            if (f.isFile()) {
-                fileNum++;
+            if (f.isFile() && !f.getName().startsWith(".")) {
+                fs.add(f);
             }
         }
+        // 按文件名排序
+        fs = fs.stream().sorted(new Comparator<File>() {
+            @Override
+            public int compare(File o1, File o2) {
+                return (int) (o1.lastModified() - o2.lastModified());
+//                return o1.getName().compareToIgnoreCase(o2.getName());
+            }
+        }).collect(Collectors.toList());
+
+        // 打印文件名
+        fs.forEach(item -> System.out.println(item.getName()));
+
+        // 文件数量
+        int fileNum = fs.size();
 
         List<String> identity = new ArrayList<>();
         identity.add(iden);
@@ -426,7 +438,7 @@ public class IncreaseIdentificationPane {
                 start += stepN;
                 identity.add(String.valueOf(start));
             }
-        } else if ("时间".equals(identificationType)) {
+        } else if ("时间(格式为: yyyyMMdd 或 yyyy-MM-dd 或 yyyy_MM_dd; 例如: 2021_08_31)".equals(identificationType)) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             if (iden.contains("_")) {
                 sdf = new SimpleDateFormat("yyyy_MM_dd");
@@ -462,22 +474,39 @@ public class IncreaseIdentificationPane {
             outPath += File.separator;
         }
 
-
-        if ("后置插入".equals(insertOrReplaceKey)) {
-            // 后置插入
-            for (File f : files) {
-                if (f.isFile()) {
-                    System.out.println(f.getPath());
+        identity.forEach(item -> {
+            System.out.println(item);
+        });
+        for (int i = 0; i < fs.size(); i++) {
+            File item = fs.get(i);
+            String id = identity.get(i);
+            String name = item.getName();
+            if ("后置插入".equals(insertOrReplaceKey)) {
+                String newFileName = name.substring(0, name.lastIndexOf("."))
+                        + pre + identity.get(i) + after
+                        + name.substring(name.lastIndexOf("."));
+                File newFile = new File(outPath + newFileName);
+                Files.copy(item.toPath(), newFile.toPath());
+            } else if ("前置插入".equals(insertOrReplaceKey)) {
+                // 前置插入
+                String newFileName = pre + identity.get(i) + after
+                        + name;
+                File newFile = new File(outPath + newFileName);
+                Files.copy(item.toPath(), newFile.toPath());
+            } else if ("替换字符".equals(insertOrReplaceKey)) {
+                if (StringUtils.isEmpty(insertOrReplaceValue)) {
+                    ta.setText("旧字符不能为空");
+                    return;
                 }
-
+                // 替换字符
+                String newFileName = name.substring(0, name.lastIndexOf("."))
+                        .replaceAll(insertOrReplaceValue, pre + identity.get(i) + after)
+                        + name.substring(name.lastIndexOf("."));
+                File newFile = new File(outPath + newFileName);
+                Files.copy(item.toPath(), newFile.toPath());
             }
-
-        } else if ("前置插入".equals(insertOrReplaceKey)) {
-            // 前置插入
-
-        } else if ("替换字符".equals(insertOrReplaceKey)) {
-            // 替换字符
         }
+
 
     }
 
