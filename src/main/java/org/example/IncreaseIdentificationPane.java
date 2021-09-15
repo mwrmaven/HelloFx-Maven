@@ -271,13 +271,18 @@ public class IncreaseIdentificationPane {
                         createFile(insertOrReplaceKey, insertOrReplaceValue, four, Integer.valueOf(filesNum),
                                 identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath, ta);
                     } catch (Exception e) {
-                        ta.setText("根据模板文件创建文件");
+                        ta.setText("根据模板文件创建文件出错");
                         e.printStackTrace();
                     }
                 } else {
                     // 只替换文件名
-                    onlyReplaceName(insertOrReplaceKey, insertOrReplaceValue, folderPath,
-                            identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath);
+                    try {
+                        onlyReplaceName(insertOrReplaceKey, insertOrReplaceValue, folderPath,
+                                identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath);
+                    } catch (ParseException e) {
+                        ta.setText("文件名称修改出错");
+                        e.printStackTrace();
+                    }
                 }
             }
         });
@@ -400,10 +405,62 @@ public class IncreaseIdentificationPane {
      */
     private void onlyReplaceName(String insertOrReplaceKey, String insertOrReplaceValue, String folderPath,
                                  String identificationType, String pre, String iden, String after, int stepN,
-                                 String stepU, String outPath) {
+                                 String stepU, String outPath) throws ParseException {
         // 获取文件夹下所有的文件名
         File folder = new File(folderPath);
         File[] files = folder.listFiles();
+        // 判断文件数量
+        int fileNum = 0;
+        for (File f : files) {
+            if (f.isFile()) {
+                fileNum++;
+            }
+        }
+
+        List<String> identity = new ArrayList<>();
+        identity.add(iden);
+        // 标识符类型
+        if ("数字".equals(identificationType)) {
+            int start = Integer.parseInt(iden);
+            for (int i = 0; i < fileNum; i++) {
+                start += stepN;
+                identity.add(String.valueOf(start));
+            }
+        } else if ("时间".equals(identificationType)) {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            if (iden.contains("_")) {
+                sdf = new SimpleDateFormat("yyyy_MM_dd");
+            }
+            Date date = sdf.parse(iden);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+
+            int dateType = 0;
+            if ("天".equals(stepU)) {
+                dateType = Calendar.DAY_OF_MONTH;
+            } else if ("周".equals(stepU)) {
+                dateType = Calendar.WEEK_OF_MONTH;
+            } else if ("月".equals(stepU)) {
+                dateType = Calendar.MONTH;
+            } else if ("年".equals(stepU)) {
+                dateType = Calendar.YEAR;
+            }
+
+            for (int i = 0; i < fileNum; i++) {
+                calendar.add(dateType, stepN);
+                identity.add(sdf.format(calendar.getTime()));
+            }
+        } else {
+            return;
+        }
+
+        if (StringUtils.isEmpty(outPath)) {
+            outPath = folderPath;
+        }
+
+        if (!File.separator.equals(outPath.substring(outPath.length() - 1))) {
+            outPath += File.separator;
+        }
 
 
         if ("后置插入".equals(insertOrReplaceKey)) {
