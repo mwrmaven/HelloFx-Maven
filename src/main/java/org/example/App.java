@@ -33,13 +33,11 @@ public class App extends Application {
     public void start(Stage primaryStage) {
 
         // 设置顶部区域
-        Button topB1 = new Button("替换文件名");
-        Button topB2 = new Button("文件名前添加字符");
-        Button topB3 = new Button("递增标识替换文件名");
+        Button topB1 = new Button(Common.TOP_BUTTON_1);
+        Button topB2 = new Button(Common.TOP_BUTTON_2);
         // 设置按钮属性
         topB1.setPrefHeight(30);
         topB2.setPrefHeight(30);
-        topB3.setPrefHeight(30);
         // 横向布局的创建以及配置
         HBox hb = new HBox();
         hb.setPrefHeight(50);
@@ -48,7 +46,7 @@ public class App extends Application {
         hb.setAlignment(Pos.CENTER_LEFT);
         hb.setPadding(new Insets(10));
         // 将按钮组件添加到横向布局中
-        hb.getChildren().addAll(topB1, topB2, topB3);
+        hb.getChildren().addAll(topB1, topB2);
 
         // 方位布局，并设置方位布局的顶部和中心区域
         BorderPane bor = new BorderPane();
@@ -64,7 +62,7 @@ public class App extends Application {
         Scene scene = new Scene(bor);
         primaryStage.setScene(scene);
 
-        primaryStage.setTitle("文件批处理工具");
+        primaryStage.setTitle(Common.STAGE_TITLE);
         primaryStage.getIcons().add(new Image("image/folder.png"));
         double w = width / 2 + 200;
         double h = height / 2 + 200;
@@ -78,8 +76,6 @@ public class App extends Application {
 
         // 基本的文件名字符替换
         AnchorPane replacePane = new ReplacePane().replacePane(primaryStage, width);
-        // 文件名前后添加字符
-        AnchorPane beginAndEndPane = new BeginAndEndPane().beginAndEndPane(primaryStage, width);
         // 根据步长修改文件名
         FlowPane increaseIdentification =
                 new IncreaseIdentificationPane().increaseIdentification(primaryStage, width);
@@ -87,8 +83,7 @@ public class App extends Application {
 
         Map<Button, Pane> buttonAndPane = new HashMap<>();
         buttonAndPane.put(topB1, replacePane);
-        buttonAndPane.put(topB2, beginAndEndPane);
-        buttonAndPane.put(topB3, increaseIdentification);
+        buttonAndPane.put(topB2, increaseIdentification);
 
         // 配置方位布局类的中心位置触发事件
         setBorderPaneCenter(buttonAndPane, bor);

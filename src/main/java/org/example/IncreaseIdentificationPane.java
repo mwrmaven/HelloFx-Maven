@@ -1,6 +1,5 @@
 package org.example;
 
-import com.mavenr.file.ReName;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -17,7 +16,6 @@ import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.text.ParseException;
@@ -49,12 +47,12 @@ public class IncreaseIdentificationPane {
         hBox2.setLayoutY(30);
         hBox2.setSpacing(20);
         hBox2.setAlignment(Pos.CENTER_LEFT);
-        Label label = new Label("文件名中插入或替换: ");
+        Label label = new Label(Common.EDIT_TYPE_LABLE);
         // 创建单选组和单选按钮
         ToggleGroup tg = new ToggleGroup();
-        RadioButton button1 = new RadioButton("后置插入");
-        RadioButton button2 = new RadioButton("前置插入");
-        RadioButton button3 = new RadioButton("替换字符");
+        RadioButton button1 = new RadioButton(Common.EDIT_TYPE_1);
+        RadioButton button2 = new RadioButton(Common.EDIT_TYPE_2);
+        RadioButton button3 = new RadioButton(Common.EDIT_TYPE_3);
         // 将单选按钮添加到单选组
         button1.setToggleGroup(tg);
         button2.setToggleGroup(tg);
@@ -63,7 +61,7 @@ public class IncreaseIdentificationPane {
         button1.setSelected(true);
         // 选中替换字符后显示的文本框
         TextField textField = new TextField();
-        textField.setPromptText("请输入旧字符");
+        textField.setPromptText(Common.EDIT_TYPE_3_PROMPT_TEXT);
         textField.setVisible(false);
         // 配置按钮的触发事件
         tg.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
@@ -85,7 +83,7 @@ public class IncreaseIdentificationPane {
         hBox4.setSpacing(20);
         hBox4.setPadding(new Insets(10));
         TextField num = new TextField();
-        num.setPromptText("请输入生成文件的个数");
+        num.setPromptText(Common.CREATE_TYPE_1_PROMPT_TEXT);
 
         nodes1.forEach(item -> {
             hBox4.getChildren().addAll(item);
@@ -95,10 +93,10 @@ public class IncreaseIdentificationPane {
         hBox4.setManaged(false);
 
         HBox hBox3 = new HBox();
-        Label labelOfHBox2 = new Label("根据模板文件创建文件或只替换文件名: ");
+        Label labelOfHBox2 = new Label(Common.CREATE_TYPE_LABLE);
         ToggleGroup tgParent = new ToggleGroup();
-        RadioButton create = new RadioButton("根据模板文件创建文件");
-        RadioButton replace = new RadioButton("只替换文件名");
+        RadioButton create = new RadioButton(Common.CREATE_TYPE_1);
+        RadioButton replace = new RadioButton(Common.CREATE_TYPE_2);
         create.setToggleGroup(tgParent);
         replace.setToggleGroup(tgParent);
         replace.setSelected(true);
@@ -132,7 +130,7 @@ public class IncreaseIdentificationPane {
         Label label5 = new Label("初始标识符的类型: ");
 //        RadioButton rbiWord = new RadioButton("字母");
         RadioButton rbiNum = new RadioButton("数字");
-        RadioButton rbiTime = new RadioButton("时间(格式为: yyyyMMdd 或 yyyy-MM-dd 或 yyyy_MM_dd; 例如: 2021_08_31)");
+        RadioButton rbiTime = new RadioButton("时间(格式为: yyyyMMdd 或 yyyy-MM-dd 或 yyyy___MM_dd; 例如: 2021_08_31)");
         ToggleGroup tgIdenType = new ToggleGroup();
 //        rbiWord.setToggleGroup(tgIdenType);
         rbiNum.setToggleGroup(tgIdenType);
