@@ -81,6 +81,9 @@ public class Unit {
             public void handle(ActionEvent event) {
                 FileChooser fc = new FileChooser();
                 File file = fc.showOpenDialog(primaryStage);
+                if (file == null) {
+                    return;
+                }
                 String path = file.getPath();
                 text.setText(path);
             }

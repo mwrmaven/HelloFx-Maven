@@ -33,6 +33,13 @@
             <version>1.0</version>
         </dependency>
 
+        <!-- RichTextFX -->
+        <dependency>
+            <groupId>org.fxmisc.richtext</groupId>
+            <artifactId>richtextfx</artifactId>
+            <version>0.10.6</version>
+        </dependency>
+
 
 
 <!--        <dependency>-->
