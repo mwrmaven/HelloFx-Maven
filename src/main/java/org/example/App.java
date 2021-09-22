@@ -82,7 +82,7 @@ public class App extends Application {
         FlowPane increaseIdentification =
                 new IncreaseIdentificationPane().increaseIdentification(primaryStage, width);
         // 比较两个文件的内容
-        AnchorPane ctf = new CompareTwoFiles().compare(primaryStage, width);
+        AnchorPane ctf = new CompareTwoFiles().compare(primaryStage, width, h);
 
         bor.setCenter(ctf);
         Map<Button, Pane> buttonAndPane = new HashMap<>();
