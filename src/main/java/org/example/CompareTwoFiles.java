@@ -1,5 +1,6 @@
 package org.example;
 
+import com.mavenr.encrypt.MD5;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -16,12 +17,16 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
 import org.fxmisc.richtext.InlineCssTextArea;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -40,7 +45,7 @@ public class CompareTwoFiles {
         hBox.setPadding(new Insets(10));
         hBox.setSpacing(10);
         // 左边部分
-        double leftWidth = (width / 2 + 200) / 2;
+        double leftWidth = (width / 2 + 100) / 2;
         VBox left = new VBox();
         left.setPrefWidth(leftWidth);
         left.setSpacing(10);
@@ -54,32 +59,11 @@ public class CompareTwoFiles {
         }
         left.getChildren().addAll(leftTop);
 
-        // 为按钮添加点击事件
-        ((TextField) newChoose.get(1)).textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                // 文本区域
-                String newFilePath = ((TextField) newChoose.get(1)).getText();
-                StringBuilder newContents = new StringBuilder();
-                try {
-                    BufferedReader br = new BufferedReader(new FileReader(new File(newFilePath)));
-                    String temp;
-                    while ((temp = br.readLine()) != null) {
-                        newContents.append(temp).append("\n");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
 
-                InlineCssTextArea newArea = new InlineCssTextArea(newContents.toString());
-                newArea.setPrefHeight(height - 120);
-                left.getChildren().addAll(newArea);
-            }
-        });
 
         // 右边部分
         VBox right = new VBox();
-        right.setPrefWidth((width / 2 + 200) / 2);
+        right.setPrefWidth((width / 2 + 100) / 2);
         right.setSpacing(10);
         HBox rightTop = new HBox();
         rightTop.setSpacing(10);
@@ -90,15 +74,103 @@ public class CompareTwoFiles {
         }
         right.getChildren().addAll(rightTop);
 
-        // 为按钮添加点击事件
+        // 为左按钮添加点击事件
+        ((TextField) newChoose.get(1)).textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                // 文本区域
+                String newFilePath = ((TextField) newChoose.get(1)).getText();
+                List<int[]> newIndex = new ArrayList<>();
+                List<String> newMd5s = new ArrayList<>();
+                StringBuilder newContents = new StringBuilder();
+                try {
+                    BufferedReader br = new BufferedReader(new FileReader(new File(newFilePath)));
+                    String temp;
+                    int num = 0;
+                    while ((temp = br.readLine()) != null) {
+                        newContents.append(temp).append("\n");
+                        String md5 = MD5.encode(temp);
+                        int[] range = new int[2];
+                        range[0] = num;
+                        num += temp.length() + 1;
+                        range[1] = num;
+                        newIndex.add(range);
+                        newMd5s.add(md5);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                InlineCssTextArea newArea = new InlineCssTextArea(newContents.toString());
+                newArea.setPrefHeight(height - 120);
+                left.getChildren().addAll(newArea);
+
+                // 获取新旧两个文件内容
+                String oldFilePath = ((TextField) oldChoose.get(1)).getText();
+                StringBuilder oldContents = new StringBuilder();
+                List<int[]> oldIndex = new ArrayList<>();
+                List<String> oldMd5s = new ArrayList<>();
+                if (!StringUtils.isEmpty(oldFilePath)) {
+                    try {
+                        BufferedReader br = new BufferedReader(new FileReader(new File(oldFilePath)));
+                        String temp;
+                        int num = 0;
+                        while ((temp = br.readLine()) != null) {
+                            oldContents.append(temp).append("\n");
+                            String md5 = MD5.encode(temp);
+                            int[] range = new int[2];
+                            range[0] = num;
+                            num += temp.length() + 1;
+                            range[1] = num;
+                            oldIndex.add(range);
+                            oldMd5s.add(md5);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                // 匹配右文件，设置左文件的文本颜色
+                int newFlag = 0;
+                int oldFlag = 0;
+                for (int i = 0; i < newMd5s.size(); i++) {
+                    if (i >= oldMd5s.size()) {
+                        // 新文件中大于i的都是新增的
+                        newArea.setStyle(newIndex.get(i)[0], newIndex.get(newIndex.size() - 1)[1], "-fx-fill: green");
+                        break;
+                    }
+                    String newMd5 = newMd5s.get(i);
+                    if (oldMd5s.lastIndexOf(newMd5) != -1 && oldMd5s.lastIndexOf(newMd5) > oldFlag) {
+                        newArea.setStyle(newIndex.get(newFlag)[0], newIndex.get(i)[1], "-fx-fill: red");
+                        newFlag = i;
+                        oldFlag = oldMd5s.lastIndexOf(newMd5);
+                        continue;
+                    }
+                    if (oldMd5s.lastIndexOf(newMd5) == i) {
+                        newFlag = i;
+                        oldFlag = i;
+                    }
+                }
+//                for (int i = 0; i < newMd5s.size(); i++) {
+//                    if (i >= oldMd5s.size()) {
+//                        // 新增的
+//                        continue;
+//                    }
+//                    String newMd5 = newMd5s.get(i);
+//
+//                }
+            }
+        });
+
+        // 为右按钮添加点击事件
         ((TextField) oldChoose.get(1)).textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
                 // 文本区域
-                String newFilePath = ((TextField) oldChoose.get(1)).getText();
+                String oldFilePath = ((TextField) oldChoose.get(1)).getText();
                 StringBuilder oldContents = new StringBuilder();
                 try {
-                    BufferedReader br = new BufferedReader(new FileReader(new File(newFilePath)));
+                    BufferedReader br = new BufferedReader(new FileReader(new File(oldFilePath)));
                     String temp;
                     while ((temp = br.readLine()) != null) {
                         oldContents.append(temp).append("\n");
