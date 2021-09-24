@@ -59,8 +59,6 @@ public class CompareTwoFiles {
         }
         left.getChildren().addAll(leftTop);
 
-
-
         // 右边部分
         VBox right = new VBox();
         right.setPrefWidth((width / 2 + 100) / 2);
@@ -78,87 +76,7 @@ public class CompareTwoFiles {
         ((TextField) newChoose.get(1)).textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                // 文本区域
-                String newFilePath = ((TextField) newChoose.get(1)).getText();
-                List<int[]> newIndex = new ArrayList<>();
-                List<String> newMd5s = new ArrayList<>();
-                StringBuilder newContents = new StringBuilder();
-                try {
-                    BufferedReader br = new BufferedReader(new FileReader(new File(newFilePath)));
-                    String temp;
-                    int num = 0;
-                    while ((temp = br.readLine()) != null) {
-                        newContents.append(temp).append("\n");
-                        String md5 = MD5.encode(temp);
-                        int[] range = new int[2];
-                        range[0] = num;
-                        num += temp.length() + 1;
-                        range[1] = num;
-                        newIndex.add(range);
-                        newMd5s.add(md5);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                InlineCssTextArea newArea = new InlineCssTextArea(newContents.toString());
-                newArea.setPrefHeight(height - 120);
-                left.getChildren().addAll(newArea);
-
-                // 获取新旧两个文件内容
-                String oldFilePath = ((TextField) oldChoose.get(1)).getText();
-                StringBuilder oldContents = new StringBuilder();
-                List<int[]> oldIndex = new ArrayList<>();
-                List<String> oldMd5s = new ArrayList<>();
-                if (!StringUtils.isEmpty(oldFilePath)) {
-                    try {
-                        BufferedReader br = new BufferedReader(new FileReader(new File(oldFilePath)));
-                        String temp;
-                        int num = 0;
-                        while ((temp = br.readLine()) != null) {
-                            oldContents.append(temp).append("\n");
-                            String md5 = MD5.encode(temp);
-                            int[] range = new int[2];
-                            range[0] = num;
-                            num += temp.length() + 1;
-                            range[1] = num;
-                            oldIndex.add(range);
-                            oldMd5s.add(md5);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                // 匹配右文件，设置左文件的文本颜色
-                int newFlag = 0;
-                int oldFlag = 0;
-                for (int i = 0; i < newMd5s.size(); i++) {
-                    if (i >= oldMd5s.size()) {
-                        // 新文件中大于i的都是新增的
-                        newArea.setStyle(newIndex.get(i)[0], newIndex.get(newIndex.size() - 1)[1], "-fx-fill: green");
-                        break;
-                    }
-                    String newMd5 = newMd5s.get(i);
-                    if (oldMd5s.lastIndexOf(newMd5) != -1 && oldMd5s.lastIndexOf(newMd5) > oldFlag) {
-                        newArea.setStyle(newIndex.get(newFlag)[0], newIndex.get(i)[1], "-fx-fill: red");
-                        newFlag = i;
-                        oldFlag = oldMd5s.lastIndexOf(newMd5);
-                        continue;
-                    }
-                    if (oldMd5s.lastIndexOf(newMd5) == i) {
-                        newFlag = i;
-                        oldFlag = i;
-                    }
-                }
-//                for (int i = 0; i < newMd5s.size(); i++) {
-//                    if (i >= oldMd5s.size()) {
-//                        // 新增的
-//                        continue;
-//                    }
-//                    String newMd5 = newMd5s.get(i);
-//
-//                }
+                changeFile(newChoose, height, left, right, oldChoose);
             }
         });
 
@@ -166,22 +84,7 @@ public class CompareTwoFiles {
         ((TextField) oldChoose.get(1)).textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                // 文本区域
-                String oldFilePath = ((TextField) oldChoose.get(1)).getText();
-                StringBuilder oldContents = new StringBuilder();
-                try {
-                    BufferedReader br = new BufferedReader(new FileReader(new File(oldFilePath)));
-                    String temp;
-                    while ((temp = br.readLine()) != null) {
-                        oldContents.append(temp).append("\n");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                InlineCssTextArea oldArea = new InlineCssTextArea(oldContents.toString());
-                oldArea.setPrefHeight(height - 120);
-                right.getChildren().addAll(oldArea);
+                changeFile(newChoose, height, left, right, oldChoose);
             }
         });
 
@@ -197,5 +100,104 @@ public class CompareTwoFiles {
         ap.getChildren().addAll(hBox);
         ap.setPadding(new Insets(10));
         return ap;
+    }
+
+    public void changeFile(List<Node> newChoose, double height, VBox left, VBox right,List<Node> oldChoose) {
+        // 文本区域
+        String newFilePath = ((TextField) newChoose.get(1)).getText();
+        List<int[]> newIndex = new ArrayList<>();
+        List<String> newMd5s = new ArrayList<>();
+        StringBuilder newContents = new StringBuilder();
+        if (StringUtils.isNotEmpty(newFilePath)) {
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(new File(newFilePath)));
+                String temp;
+                int num = 0;
+                while ((temp = br.readLine()) != null) {
+                    newContents.append(temp).append("\n");
+                    String md5 = MD5.encode(temp);
+                    int[] range = new int[2];
+                    range[0] = num;
+                    num += temp.length() + 1;
+                    range[1] = num;
+                    newIndex.add(range);
+                    newMd5s.add(md5);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println(newContents.toString());
+        if (left.getChildren().size() > 1) {
+            left.getChildren().remove(1);
+        }
+
+        InlineCssTextArea newArea = new InlineCssTextArea(newContents.toString());
+        newArea.setPrefHeight(height - 120);
+        left.getChildren().addAll(newArea);
+
+        // 获取新旧两个文件内容
+        String oldFilePath = ((TextField) oldChoose.get(1)).getText();
+        StringBuilder oldContents = new StringBuilder();
+        List<int[]> oldIndex = new ArrayList<>();
+        List<String> oldMd5s = new ArrayList<>();
+        if (StringUtils.isNotEmpty(oldFilePath)) {
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(new File(oldFilePath)));
+                String temp;
+                int num = 0;
+                while ((temp = br.readLine()) != null) {
+                    oldContents.append(temp).append("\n");
+                    String md5 = MD5.encode(temp);
+                    int[] range = new int[2];
+                    range[0] = num;
+                    num += temp.length() + 1;
+                    range[1] = num;
+                    oldIndex.add(range);
+                    oldMd5s.add(md5);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        InlineCssTextArea oldArea = new InlineCssTextArea(oldContents.toString());
+        oldArea.setPrefHeight(height - 120);
+        right.getChildren().addAll(oldArea);
+
+        // 匹配右文件，设置左文件的文本颜色
+        int newFlag = 0;
+        int oldFlag = 0;
+        for (int i = 0; i < newMd5s.size(); i++) {
+            if (oldFlag >= oldMd5s.size()) {
+                oldFlag = oldMd5s.size();
+            }
+            if (newFlag >= newMd5s.size()) {
+                newFlag = newMd5s.size();
+            }
+            if (i >= oldMd5s.size()) {
+                // 新文件中大于i的都是新增的
+                newArea.setStyle(newIndex.get(i)[0], newIndex.get(newIndex.size() - 1)[1], "-fx-fill: green");
+                break;
+            }
+            String newMd5 = newMd5s.get(i);
+            if (oldMd5s.lastIndexOf(newMd5) != -1 && oldMd5s.lastIndexOf(newMd5) > oldFlag) {
+                newArea.setStyle(newIndex.get(newFlag)[0], newIndex.get(i)[1], "-fx-fill: red");
+                newFlag = i + 1;
+                oldFlag = oldMd5s.lastIndexOf(newMd5) + 1;
+                continue;
+            }
+            if (oldMd5s.lastIndexOf(newMd5) == i) {
+                newFlag = i + 1;
+                oldFlag = i + 1;
+                continue;
+            }
+            if (oldMd5s.lastIndexOf(newMd5) == -1) {
+                newArea.setStyle(newIndex.get(i)[0], newIndex.get(newIndex.size() - 1)[1], "-fx-fill: red");
+                newFlag = i + 1;
+                oldFlag = i + 1;
+            }
+        }
     }
 }
