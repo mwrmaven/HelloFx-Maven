@@ -17,6 +17,9 @@ public class Common {
     // 顶部的按钮3
     public static final String TOP_BUTTON_3 = "比较两个文件内容";
 
+    // 顶部的按钮4
+    public static final String TOP_BUTTON_4 = "文件中的文本行排序";
+
     // 软件窗口的标题
     public static final String STAGE_TITLE = "文件批处理工具";
 

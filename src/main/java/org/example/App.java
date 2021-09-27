@@ -36,10 +36,12 @@ public class App extends Application {
         Button topB1 = new Button(Common.TOP_BUTTON_1);
         Button topB2 = new Button(Common.TOP_BUTTON_2);
         Button topB3 = new Button(Common.TOP_BUTTON_3);
+        Button topB4 = new Button(Common.TOP_BUTTON_4);
         // 设置按钮属性
         topB1.setPrefHeight(30);
         topB2.setPrefHeight(30);
         topB3.setPrefHeight(30);
+        topB4.setPrefHeight(30);
         // 横向布局的创建以及配置
         HBox hb = new HBox();
         hb.setPrefHeight(50);
@@ -48,7 +50,7 @@ public class App extends Application {
         hb.setAlignment(Pos.CENTER_LEFT);
         hb.setPadding(new Insets(10));
         // 将按钮组件添加到横向布局中
-        hb.getChildren().addAll(topB1, topB2, topB3);
+        hb.getChildren().addAll(topB1, topB2, topB3, topB4);
 
         // 方位布局，并设置方位布局的顶部和中心区域
         BorderPane bor = new BorderPane();
@@ -83,12 +85,16 @@ public class App extends Application {
                 new IncreaseIdentificationPane().increaseIdentification(primaryStage, width);
         // 比较两个文件的内容
         AnchorPane ctf = new CompareTwoFiles().compare(primaryStage, width, h);
+        // 文本行排序
+        AnchorPane stl = new SortTextLine().sort(primaryStage, width);
 
-        bor.setCenter(ctf);
+        bor.setCenter(stl);
         Map<Button, Pane> buttonAndPane = new HashMap<>();
         buttonAndPane.put(topB1, replacePane);
         buttonAndPane.put(topB2, increaseIdentification);
         buttonAndPane.put(topB3, ctf);
+        buttonAndPane.put(topB4, stl);
+
 
         // 配置方位布局类的中心位置触发事件
         setBorderPaneCenter(buttonAndPane, bor);
