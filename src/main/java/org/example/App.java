@@ -88,7 +88,7 @@ public class App extends Application {
         // 文本行排序
         AnchorPane stl = new SortTextLine().sort(primaryStage, width);
 
-        bor.setCenter(stl);
+        bor.setCenter(replacePane);
         Map<Button, Pane> buttonAndPane = new HashMap<>();
         buttonAndPane.put(topB1, replacePane);
         buttonAndPane.put(topB2, increaseIdentification);

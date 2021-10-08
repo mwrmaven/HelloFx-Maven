@@ -1,7 +1,12 @@
 package org.example;
 
+import com.mavenr.enums.SortType;
+import com.mavenr.file.FileContentSort;
+import com.mavenr.utils.FileUtil;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -11,9 +16,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import org.apache.commons.lang3.StringUtils;
 
-import javax.swing.*;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,8 +33,6 @@ public class SortTextLine {
     // 排序
     public AnchorPane sort(Stage stage, double width) {
         AnchorPane ap = new AnchorPane();
-
-
 
         // 文件夹获取
         List<Node> folderNodes = unit.chooseFolder(stage, width);
@@ -165,6 +168,65 @@ public class SortTextLine {
         begin.setPrefWidth(100);
         begin.setAlignment(Pos.CENTER);
         vBox.getChildren().add(begin);
+
+
+        begin.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                String filePath = "";
+                if (rb1.getText().equals(((RadioButton) tg.getSelectedToggle()).getText())) {
+                    filePath = ((TextField) fileNodes.get(1)).getText();
+                } else {
+                    filePath = ((TextField) folderNodes.get(1)).getText();
+                }
+
+                // 获取文件集合
+                File file = new File(filePath);
+                List<File> fs = new ArrayList<>();
+                if (file.isDirectory()) {
+                    File[] files = file.listFiles();
+                    for (File f : files) {
+                        fs.add(f);
+                    }
+                } else {
+                    fs.add(file);
+                }
+
+                // 判断是分割符，还是获取字符位置范围
+                RadioButton selectedToggle = (RadioButton) findTg.getSelectedToggle();
+                if (rb3.getText().equals(selectedToggle.getText())) {
+                    // 分割符的方式查找
+                    // 分割符
+                    String separator = split.getText();
+                    if ("|".equals(separator)) {
+                        separator = "\\" + separator;
+                    }
+                    // 关键字位置
+                    String keyIndex = splitNum.getText();
+                    if (((RadioButton) sortToggle.getSelectedToggle()).getText().equals(asc.getText())) {
+                        // 升序
+                        FileContentSort.sortText(fs, separator, Integer.parseInt(keyIndex), SortType.ASC.getCode());
+                    } else {
+                        // 降序
+                        FileContentSort.sortText(fs, separator, Integer.parseInt(keyIndex), SortType.DESC.getCode());
+                    }
+
+                } else {
+                    // 获取字符位置范围
+                    // 起始位置
+                    String startNum = start.getText();
+                    // 结束位置
+                    String endNum = end.getText();
+                    if (((RadioButton) sortToggle.getSelectedToggle()).getText().equals(asc.getText())) {
+                        // 升序
+                        FileContentSort.sortText(fs, Integer.parseInt(startNum), Integer.parseInt(endNum), SortType.ASC.getCode());
+                    } else {
+                        // 降序
+                        FileContentSort.sortText(fs, Integer.parseInt(startNum), Integer.parseInt(endNum), SortType.DESC.getCode());
+                    }
+                }
+            }
+        });
 
         TextArea ta = new TextArea();
         ta.setEditable(false);
