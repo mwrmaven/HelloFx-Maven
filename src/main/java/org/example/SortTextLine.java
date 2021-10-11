@@ -2,7 +2,6 @@ package org.example;
 
 import com.mavenr.enums.SortType;
 import com.mavenr.file.FileContentSort;
-import com.mavenr.utils.FileUtil;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;

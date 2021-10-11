@@ -37,7 +37,7 @@ public class Unit {
 
         // 点击按钮，选择文件夹
         Button buttonFileChoose = new Button("选择文件夹路径");
-        buttonFileChoose.setPrefWidth(100);
+        buttonFileChoose.setPrefWidth(120);
         buttonFileChoose.setAlignment(Pos.CENTER);
         buttonFileChoose.setOnAction(new EventHandler<ActionEvent>() {
             @Override
