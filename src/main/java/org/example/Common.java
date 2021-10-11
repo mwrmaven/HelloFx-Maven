@@ -20,6 +20,9 @@ public class Common {
     // 顶部的按钮4
     public static final String TOP_BUTTON_4 = "文件中的文本行排序";
 
+    // 顶部的按钮5
+    public static final String TOP_BUTTON_5 = "URL编码批量转换";
+
     // 软件窗口的标题
     public static final String STAGE_TITLE = "文件批处理工具";
 

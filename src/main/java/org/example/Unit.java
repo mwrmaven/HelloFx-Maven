@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ public class Unit {
      * 选择文件组件集合
      * @param primaryStage
      * @param width
+     * @param buttonText
      * @return
      */
     public List<Node> chooseFile(Stage primaryStage, double width, String buttonText) {
@@ -90,6 +92,32 @@ public class Unit {
 
         ArrayList<Node> nodes = new ArrayList<>();
         nodes.add(buttonFileChoose);
+        nodes.add(text);
+
+        return nodes;
+    }
+
+    /**
+     * 输入文本的组件集合
+     * @param primaryStage
+     * @param width
+     * @param buttonText
+     * @return
+     */
+    public List<Node> inputText(Stage primaryStage, double width, String buttonText) {
+        Label label = new Label();
+        if (StringUtils.isNotEmpty(buttonText)) {
+            label.setText(buttonText);
+        } else {
+            label.setText("请输入文本");
+        }
+
+        // 输入文本
+        TextField text = new TextField();
+        text.setPrefWidth(width / 2 - 200);
+
+        ArrayList<Node> nodes = new ArrayList<>();
+        nodes.add(label);
         nodes.add(text);
 
         return nodes;
