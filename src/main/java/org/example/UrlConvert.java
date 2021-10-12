@@ -8,15 +8,27 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.xssf.usermodel.*;
 
-import java.io.UnsupportedEncodingException;
+import java.awt.*;
+import java.io.*;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author mavenr
@@ -175,8 +187,35 @@ public class UrlConvert {
                 // 编译后的前置字符和后置字符
                 String afterPre = afterPreTf.getText();
                 String afterEnd = afterEndTf.getText();
+                // 正则去掉字符串中utf-8字符编码的空格
+                byte[] bytes = new byte[]{(byte) 0xC2, (byte) 0xA0};
+                Pattern p = Pattern.compile(new String(bytes, StandardCharsets.UTF_8));
+                Matcher m;
+                m = p.matcher(startPre);
+                startPre = m.replaceAll("");
+                m = p.matcher(startEnd);
+                startEnd = m.replaceAll("");
+                m = p.matcher(afterPre);
+                afterPre = m.replaceAll("");
+                m = p.matcher(afterEnd);
+                afterEnd = m.replaceAll("");
+                startPre = startPre.trim();
+                startEnd = startEnd.trim();
+                afterPre = afterPre.trim();
+                afterEnd = afterEnd.trim();
+                System.out.println("startPre=>>>" + startPre + "<<<");
+                System.out.println("startEnd=>>>" + startEnd + "<<<");
+                System.out.println("afterPre=>>>" + afterPre + "<<<");
+                System.out.println("afterEnd=>>>" + afterEnd + "<<<");
                 // 编译类型
                 String encodeType = ((RadioButton) encodeGroup.getSelectedToggle()).getText();
+                // 文件格式
+                String type = ((RadioButton) fileType.getSelectedToggle()).getText();
+                // excel中url所在的列数
+                int colIndex = 0;
+                if ("EXCEL格式文件".equals(type)) {
+                    colIndex = Integer.parseInt(tf.getText().trim()) - 1;
+                }
 
                 if (toggleText.equals(onlyTextLineRadio.getText())) {
                     // 如果为单个url转换
@@ -202,8 +241,18 @@ public class UrlConvert {
                     ta.setText(convertUrl);
                 } else if (toggleText.equals(folderRadio.getText())) {
                     // 如果为文件夹下所有文件中url批量转换
+                    // 获取文件夹路径
+                    String folderPath = ((TextField) cList.get(1)).getText();
+                    // 获取所有文件
+                    File folder = new File(folderPath);
+                    File[] files = folder.listFiles();
+                    batchFilesAndExportToExcel(files, type, colIndex, startPre, startEnd, afterPre, afterEnd, encodeType, ta);
                 } else {
-
+                    // 如果为文件中url批量转换
+                    String filePath = ((TextField) bList.get(1)).getText();
+                    File file = new File(filePath);
+                    File[] files = new File[]{file};
+                    batchFilesAndExportToExcel(files, type, colIndex, startPre, startEnd, afterPre, afterEnd, encodeType, ta);
                 }
             }
         });
@@ -214,26 +263,239 @@ public class UrlConvert {
     }
 
     /**
-     * url编码
+     * 批量处理文件，并导出到excel文件中
+     * @param files
+     * @param fileType
+     * @param colIndex
+     * @param startPre
+     * @param startEnd
+     * @param afterPre
+     * @param afterEnd
+     * @param encodeType
      */
-    private void encode(String sourceUrl) {
-//        File file = new File("");
-//        XSSFWorkbook workbook = new XSSFWorkbook(new FileInputStream(file));
-//        XSSFSheet sheetAt = workbook.getSheetAt(0);
-//        int lastRowNum = sheetAt.getLastRowNum();
-//        for (int i = 1; i <= lastRowNum; i++) {
-//            XSSFRow row = sheetAt.getRow(i);
-//            String stringCellValue = row.getCell(7).getStringCellValue();
-//            System.out.println(stringCellValue);
-//            System.out.println(URLEncoder.encode(stringCellValue, "utf-8"));
-//        }
+    private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, String startPre, String startEnd,
+                            String afterPre, String afterEnd, String encodeType, TextArea ta) {
+        // 获取文件路径
+        String path = files[0].getPath();
+        // 结果文件路径
+        String newPath = path.substring(0, path.lastIndexOf(File.separator) + 1) + "result.xlsx";
+
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        XSSFSheet sheet = workbook.createSheet("URL转换结果");
+        // 冻结首行
+        sheet.createFreezePane(0, 1);
+        XSSFRow row = sheet.createRow(0);
+        XSSFCell cell0 = row.createCell(0);
+        cell0.setCellValue("原URL");
+        XSSFCell cell1 = row.createCell(1);
+        cell1.setCellValue("处理后的URL");
+        // 设置格式
+        XSSFCellStyle cs = workbook.createCellStyle();
+        // 设置填充方式和背景颜色
+        cs.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        cs.setFillForegroundColor(new XSSFColor(new Color(153, 153, 153)));
+        // 设置居中方式
+        cs.setAlignment(HorizontalAlignment.CENTER);
+        cell0.setCellStyle(cs);
+        cell1.setCellStyle(cs);
+
+        int num = 0;
+        FileOutputStream outputStream = null;
+        try {
+            outputStream = new FileOutputStream(newPath);
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage().contains("另一个程序正在使用此文件，进程无法访问"));
+            if (e.getMessage().contains("另一个程序正在使用此文件，进程无法访问")) {
+                ta.setText(e.getMessage());
+            }
+            return;
+        }
+        // 判断文件格式
+        if ("TXT格式文件".equals(fileType)) {
+            // 读取文件，遍历行
+            for (File f : files) {
+                if (f.getPath().equals(newPath)) {
+                    continue;
+                }
+                // 读取文件
+                FileInputStream inputStream = null;
+                InputStreamReader inputStreamReader = null;
+                BufferedReader br = null;
+                try {
+                    inputStream = new FileInputStream(f);
+                    inputStreamReader = new InputStreamReader(inputStream);
+                    br = new BufferedReader(inputStreamReader);
+                    String line = "";
+                    if ("URL解码".equals(encodeType)) {
+                        while ((line = br.readLine()) != null) {
+                            if (StringUtils.isEmpty(line)) {
+                                continue;
+                            }
+                            num++;
+                            String decode = decode(startPre + line + startEnd);
+                            String result = afterPre + decode + afterEnd;
+                            // 写入excel
+                            XSSFRow rowNew = sheet.createRow(num);
+                            XSSFCell sourceCell = rowNew.createCell(0);
+                            sourceCell.setCellValue(line);
+                            XSSFCell targetCell = rowNew.createCell(1);
+                            targetCell.setCellValue(result);
+                        }
+                    } else {
+                        while ((line = br.readLine()) != null) {
+                            num++;
+                            if (StringUtils.isEmpty(line)) {
+                                continue;
+                            }
+                            String encode = encode(startPre + line + startEnd);
+                            String result = afterPre + encode + afterEnd;
+                            // 写入excel
+                            XSSFRow rowNew = sheet.createRow(num);
+                            XSSFCell sourceCell = rowNew.createCell(0);
+                            sourceCell.setCellValue(line);
+                            XSSFCell targetCell = rowNew.createCell(1);
+                            targetCell.setCellValue(result);
+                        }
+                    }
+                    br.close();
+                    inputStreamReader.close();
+                    inputStream.close();
+                } catch (Exception e) {
+                    try {
+                        if (br != null) {
+                            br.close();
+                        }
+                        if (inputStreamReader != null) {
+                            inputStreamReader.close();
+                        }
+                        if (inputStream != null) {
+                            inputStream.close();
+                        }
+                        if (workbook != null) {
+                            workbook.close();
+                        }
+                        if (outputStream != null) {
+                            outputStream.close();
+                        }
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                    e.printStackTrace();
+                    return;
+                }
+                num++;
+            }
+        } else if ("EXCEL格式文件".equals(fileType)){
+            // 读取文件，遍历单元格
+            for (File f : files) {
+                if (f.getPath().equals(newPath)) {
+                    continue;
+                }
+                // 读取文件
+                FileInputStream inputStream = null;
+                XSSFWorkbook source = null;
+                try {
+                    inputStream = new FileInputStream(f);
+                    source = new XSSFWorkbook(inputStream);
+                    XSSFSheet sheet0 = source.getSheetAt(0);
+                    int rowNum = sheet0.getLastRowNum() + 1;
+                    if ("URL解码".equals(encodeType)) {
+                        for (int i = 1; i < rowNum; i++) {
+                            XSSFRow rowi = sheet0.getRow(i);
+                            XSSFCell cell = rowi.getCell(colIndex);
+                            String sourceUrl = cell.getStringCellValue();
+                            if (StringUtils.isEmpty(sourceUrl)) {
+                                continue;
+                            }
+                            num++;
+                            String decode = decode(startPre + sourceUrl + startEnd);
+                            String result = afterPre + decode + afterEnd;
+                            // 写入excel
+                            XSSFRow rowNew = sheet.createRow(num++);
+                            XSSFCell sourceCell = rowNew.createCell(0);
+                            sourceCell.setCellValue(sourceUrl);
+                            XSSFCell targetCell = rowNew.createCell(1);
+                            targetCell.setCellValue(result);
+                        }
+                    } else {
+                        for (int i = 1; i < rowNum; i++) {
+                            XSSFRow rowi = sheet0.getRow(i);
+                            XSSFCell cell = rowi.getCell(colIndex);
+                            String sourceUrl = cell.getStringCellValue();
+                            if (StringUtils.isEmpty(sourceUrl)) {
+                                continue;
+                            }
+                            num++;
+                            String encode = encode(startPre + sourceUrl + startEnd);
+                            String result = afterPre + encode + afterEnd;
+                            // 写入excel
+                            XSSFRow rowNew = sheet.createRow(num);
+                            XSSFCell sourceCell = rowNew.createCell(0);
+                            sourceCell.setCellValue(sourceUrl);
+                            XSSFCell targetCell = rowNew.createCell(1);
+                            targetCell.setCellValue(result);
+                        }
+                    }
+                    source.close();
+                    inputStream.close();
+                } catch (Exception e) {
+                    try {
+                        if (source != null) {
+                            source.close();
+                        }
+                        if (inputStream != null) {
+                            inputStream.close();
+                        }
+                        if (workbook != null) {
+                            workbook.close();
+                        }
+                        if (outputStream != null) {
+                            outputStream.close();
+                        }
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                    e.printStackTrace();
+                    return;
+                }
+                num++;
+            }
+        }
+        ta.setText("批处理完成，结果文件：" + newPath);
+        try {
+            workbook.write(outputStream);
+            workbook.close();
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
-     * 解码
+     * url编码，默认编码格式 utf-8
+     * @param sourceUrl 要编码的字符串
+     * @return
      */
-    private void decode() {
-
+    private String encode(String sourceUrl) {
+        try {
+            return URLEncoder.encode(sourceUrl, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
+    /**
+     * 解码，默认编码格式 utf-8
+     * @param sourceUrl 要解码的字符串
+     * @return
+     */
+    private String decode(String sourceUrl) {
+        try {
+            return URLDecoder.decode(sourceUrl, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
 }
