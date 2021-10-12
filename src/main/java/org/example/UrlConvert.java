@@ -213,7 +213,7 @@ public class UrlConvert {
                 String type = ((RadioButton) fileType.getSelectedToggle()).getText();
                 // excel中url所在的列数
                 int colIndex = 0;
-                if ("EXCEL格式文件".equals(type)) {
+                if (excelRadio.getText().equals(type) && !onlyTextLineRadio.getText().equals(toggleText)) {
                     colIndex = Integer.parseInt(tf.getText().trim()) - 1;
                 }
 
@@ -361,6 +361,10 @@ public class UrlConvert {
                     inputStreamReader.close();
                     inputStream.close();
                 } catch (Exception e) {
+                    if (e.getMessage().contains("另一个程序正在使用此文件，进程无法访问")) {
+                        ta.setText(e.getMessage());
+                        return;
+                    }
                     try {
                         if (br != null) {
                             br.close();
@@ -439,6 +443,10 @@ public class UrlConvert {
                     source.close();
                     inputStream.close();
                 } catch (Exception e) {
+                    if (e.getMessage().contains("另一个程序正在使用此文件，进程无法访问")) {
+                        ta.setText(e.getMessage());
+                        return;
+                    }
                     try {
                         if (source != null) {
                             source.close();
