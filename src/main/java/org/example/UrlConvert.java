@@ -75,13 +75,13 @@ public class UrlConvert {
         // 文件格式选择
         RadioButton txtRadio = new RadioButton("TXT格式文件");
         RadioButton excelRadio = new RadioButton("EXCEL格式文件");
-        txtRadio.setSelected(true);
+        excelRadio.setSelected(true);
         ToggleGroup fileType = new ToggleGroup();
         txtRadio.setToggleGroup(fileType);
         excelRadio.setToggleGroup(fileType);
         TextField tf = new TextField();
         tf.setPrefWidth(200);
-        tf.setVisible(false);
+        tf.setVisible(true);
         tf.setPromptText("请输入url在excel文件中的第几列");
 
         HBox line3 = new HBox();
