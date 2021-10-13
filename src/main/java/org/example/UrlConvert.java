@@ -302,7 +302,7 @@ public class UrlConvert {
         cell0.setCellValue("货号");
         XSSFCell cell1 = row.createCell(1);
         cell1.setCellValue("原URL");
-        XSSFCell cell2 = row.createCell(1);
+        XSSFCell cell2 = row.createCell(2);
         cell2.setCellValue("处理后的URL");
         // 设置格式
         XSSFCellStyle cs = workbook.createCellStyle();
