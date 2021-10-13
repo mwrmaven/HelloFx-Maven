@@ -17,6 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.xssf.usermodel.*;
@@ -361,7 +362,7 @@ public class UrlConvert {
                     inputStreamReader.close();
                     inputStream.close();
                 } catch (Exception e) {
-                    if (e.getMessage().contains("另一个程序正在使用此文件，进程无法访问")) {
+                    if (e.getMessage() != null && e.getMessage().contains("另一个程序正在使用此文件，进程无法访问")) {
                         ta.setText(e.getMessage());
                         return;
                     }
@@ -406,7 +407,13 @@ public class UrlConvert {
                     if ("URL解码".equals(encodeType)) {
                         for (int i = 1; i < rowNum; i++) {
                             XSSFRow rowi = sheet0.getRow(i);
+                            if (rowi == null) {
+                                continue;
+                            }
                             XSSFCell cell = rowi.getCell(colIndex);
+                            if (cell == null || cell.getCellType() != CellType.STRING) {
+                                continue;
+                            }
                             String sourceUrl = cell.getStringCellValue();
                             if (StringUtils.isEmpty(sourceUrl)) {
                                 continue;
@@ -424,7 +431,13 @@ public class UrlConvert {
                     } else {
                         for (int i = 1; i < rowNum; i++) {
                             XSSFRow rowi = sheet0.getRow(i);
+                            if (rowi == null) {
+                                continue;
+                            }
                             XSSFCell cell = rowi.getCell(colIndex);
+                            if (cell == null) {
+                                continue;
+                            }
                             String sourceUrl = cell.getStringCellValue();
                             if (StringUtils.isEmpty(sourceUrl)) {
                                 continue;
@@ -443,7 +456,7 @@ public class UrlConvert {
                     source.close();
                     inputStream.close();
                 } catch (Exception e) {
-                    if (e.getMessage().contains("另一个程序正在使用此文件，进程无法访问")) {
+                    if (e.getMessage() != null && e.getMessage().contains("另一个程序正在使用此文件，进程无法访问")) {
                         ta.setText(e.getMessage());
                         return;
                     }
