@@ -25,11 +25,11 @@ import org.apache.poi.xssf.usermodel.*;
 import java.awt.*;
 import java.io.*;
 import java.math.BigDecimal;
-import java.net.BindException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,6 +44,22 @@ public class UrlConvert {
     private Unit unit = new Unit();
 
     public AnchorPane convert(Stage primaryStage, double width, double height) {
+        // 加载配置文件
+        Properties properties = new Properties();
+        String path = System.getProperty("user.dir");
+        File configFile = new File(path + "/init.ini");
+        if (!configFile.exists()) {
+            try {
+                configFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            properties.load(new FileInputStream(configFile));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         AnchorPane anchorPane = new AnchorPane();
         VBox vBox = new VBox();
         vBox.setSpacing(10);
@@ -107,6 +123,19 @@ public class UrlConvert {
         TextField endTf = new TextField();
         endTf.setPromptText("没有则不输入");
         line4.getChildren().addAll(label, preLabel, preTf, endLine, endTf);
+
+        HBox line5Pre = new HBox();
+        line5Pre.setSpacing(10);
+        line5Pre.setAlignment(Pos.CENTER_LEFT);
+        Label fixedAfterPreLabel = new Label("编译后在url上追加的固定字符：");
+        CheckBox fixedAfterPreCb = new CheckBox("是否使用追加固定字符");
+        fixedAfterPreCb.setSelected(true);
+        TextField fixedAfterPreTf = new TextField();
+        // 加载配置文件中的参数
+        if (StringUtils.isNotEmpty(properties.getProperty("afterFixedPre"))) {
+            fixedAfterPreTf.setText(properties.getProperty("afterFixedPre"));
+        }
+        line5Pre.getChildren().addAll(fixedAfterPreLabel, fixedAfterPreCb, fixedAfterPreTf);
 
         HBox line5 = new HBox();
         line5.setSpacing(10);
@@ -188,6 +217,15 @@ public class UrlConvert {
         execute.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
+                // 设置配置文件
+                properties.setProperty("afterFixedPre", fixedAfterPreTf.getText());
+                try {
+                    //
+                    properties.store(new FileOutputStream(configFile), "重写afterFixedPre参数");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 ta.setText("");
                 // 首行的数据源类型
                 String toggleText = ((RadioButton) toggleGroup.getSelectedToggle()).getText();
@@ -221,6 +259,10 @@ public class UrlConvert {
                 String encodeType = ((RadioButton) encodeGroup.getSelectedToggle()).getText();
                 // 文件格式
                 String type = ((RadioButton) fileType.getSelectedToggle()).getText();
+                // 获取是否追加固定字符，以及固定字符本身
+                boolean selected = fixedAfterPreCb.isSelected();
+                String fixedAfterPre = fixedAfterPreTf.getText();
+
                 // excel中url所在的列数
                 int colIndex = -1;
                 int goodColIndex = -1;
@@ -258,18 +300,20 @@ public class UrlConvert {
                     // 获取所有文件
                     File folder = new File(folderPath);
                     File[] files = folder.listFiles();
-                    batchFilesAndExportToExcel(files, type, colIndex, goodColIndex, startPre, startEnd, afterPre, afterEnd, encodeType, ta);
+                    batchFilesAndExportToExcel(files, type, colIndex, goodColIndex, startPre, startEnd, afterPre,
+                            afterEnd, encodeType, ta, selected, fixedAfterPre);
                 } else {
                     // 如果为文件中url批量转换
                     String filePath = ((TextField) bList.get(1)).getText();
                     File file = new File(filePath);
                     File[] files = new File[]{file};
-                    batchFilesAndExportToExcel(files, type, colIndex, goodColIndex, startPre, startEnd, afterPre, afterEnd, encodeType, ta);
+                    batchFilesAndExportToExcel(files, type, colIndex, goodColIndex, startPre, startEnd, afterPre,
+                            afterEnd, encodeType, ta, selected, fixedAfterPre);
                 }
             }
         });
 
-        vBox.getChildren().addAll(line1, line2, line3, line4, line5, line6, execute, ta);
+        vBox.getChildren().addAll(line1, line2, line3, line4, line5Pre, line5, line6, execute, ta);
         anchorPane.getChildren().add(vBox);
         return anchorPane;
     }
@@ -286,8 +330,9 @@ public class UrlConvert {
      * @param afterEnd
      * @param encodeType
      */
-    private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, int goodColIndex, String startPre, String startEnd,
-                            String afterPre, String afterEnd, String encodeType, TextArea ta) {
+    private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, int goodColIndex,
+                                            String startPre, String startEnd, String afterPre, String afterEnd,
+                                            String encodeType, TextArea ta, boolean fixedFlag, String fixed) {
         // 获取文件路径
         String path = files[0].getPath();
         // 结果文件路径
@@ -350,6 +395,9 @@ public class UrlConvert {
                             num++;
                             String decode = decode(startPre + line + startEnd);
                             String result = afterPre + decode + afterEnd;
+                            if (fixedFlag) {
+                                result = fixed + result;
+                            }
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
                             XSSFCell sourceCell = rowNew.createCell(0);
@@ -365,6 +413,9 @@ public class UrlConvert {
                             }
                             String encode = encode(startPre + line + startEnd);
                             String result = afterPre + encode + afterEnd;
+                            if (fixedFlag) {
+                                result = fixed + result;
+                            }
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
                             XSSFCell sourceCell = rowNew.createCell(0);
@@ -438,6 +489,9 @@ public class UrlConvert {
                             num++;
                             String decode = decode(startPre + sourceUrl + startEnd);
                             String result = afterPre + decode + afterEnd;
+                            if (fixedFlag) {
+                                result = fixed + result;
+                            }
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
                             XSSFCell gnCell = rowNew.createCell(0);
@@ -465,6 +519,9 @@ public class UrlConvert {
                             num++;
                             String encode = encode(startPre + sourceUrl + startEnd);
                             String result = afterPre + encode + afterEnd;
+                            if (fixedFlag) {
+                                result = fixed + result;
+                            }
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
                             XSSFCell gnCell = rowNew.createCell(0);
