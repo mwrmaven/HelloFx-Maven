@@ -24,6 +24,8 @@ import org.apache.poi.xssf.usermodel.*;
 
 import java.awt.*;
 import java.io.*;
+import java.math.BigDecimal;
+import java.net.BindException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -84,10 +86,14 @@ public class UrlConvert {
         tf.setPrefWidth(200);
         tf.setVisible(true);
         tf.setPromptText("请输入url在excel文件中的第几列");
+        TextField goodsTf = new TextField();
+        goodsTf.setPrefWidth(200);
+        goodsTf.setVisible(true);
+        goodsTf.setPromptText("请输入货号在excel文件中的第几列");
 
         HBox line3 = new HBox();
         line3.setSpacing(10);
-        line3.getChildren().addAll(txtRadio, excelRadio, tf);
+        line3.getChildren().addAll(txtRadio, excelRadio, tf, goodsTf);
         line3.setAlignment(Pos.CENTER_LEFT);
 
         HBox line4 = new HBox();
@@ -167,10 +173,13 @@ public class UrlConvert {
                 if (text.equals(excelRadio.getText())) {
                     // 显示输入框
                     tf.setVisible(true);
+                    goodsTf.setVisible(true);
                 } else {
                     // 不显示输入框
                     tf.setVisible(false);
+                    goodsTf.setVisible(false);
                     tf.setText("");
+                    goodsTf.setText("");
                 }
             }
         });
@@ -213,9 +222,11 @@ public class UrlConvert {
                 // 文件格式
                 String type = ((RadioButton) fileType.getSelectedToggle()).getText();
                 // excel中url所在的列数
-                int colIndex = 0;
+                int colIndex = -1;
+                int goodColIndex = -1;
                 if (excelRadio.getText().equals(type) && !onlyTextLineRadio.getText().equals(toggleText)) {
                     colIndex = Integer.parseInt(tf.getText().trim()) - 1;
+                    goodColIndex = Integer.parseInt(goodsTf.getText().trim()) - 1;
                 }
 
                 if (toggleText.equals(onlyTextLineRadio.getText())) {
@@ -247,13 +258,13 @@ public class UrlConvert {
                     // 获取所有文件
                     File folder = new File(folderPath);
                     File[] files = folder.listFiles();
-                    batchFilesAndExportToExcel(files, type, colIndex, startPre, startEnd, afterPre, afterEnd, encodeType, ta);
+                    batchFilesAndExportToExcel(files, type, colIndex, goodColIndex, startPre, startEnd, afterPre, afterEnd, encodeType, ta);
                 } else {
                     // 如果为文件中url批量转换
                     String filePath = ((TextField) bList.get(1)).getText();
                     File file = new File(filePath);
                     File[] files = new File[]{file};
-                    batchFilesAndExportToExcel(files, type, colIndex, startPre, startEnd, afterPre, afterEnd, encodeType, ta);
+                    batchFilesAndExportToExcel(files, type, colIndex, goodColIndex, startPre, startEnd, afterPre, afterEnd, encodeType, ta);
                 }
             }
         });
@@ -268,13 +279,14 @@ public class UrlConvert {
      * @param files
      * @param fileType
      * @param colIndex
+     * @param goodColIndex
      * @param startPre
      * @param startEnd
      * @param afterPre
      * @param afterEnd
      * @param encodeType
      */
-    private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, String startPre, String startEnd,
+    private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, int goodColIndex, String startPre, String startEnd,
                             String afterPre, String afterEnd, String encodeType, TextArea ta) {
         // 获取文件路径
         String path = files[0].getPath();
@@ -287,9 +299,11 @@ public class UrlConvert {
         sheet.createFreezePane(0, 1);
         XSSFRow row = sheet.createRow(0);
         XSSFCell cell0 = row.createCell(0);
-        cell0.setCellValue("原URL");
+        cell0.setCellValue("货号");
         XSSFCell cell1 = row.createCell(1);
-        cell1.setCellValue("处理后的URL");
+        cell1.setCellValue("原URL");
+        XSSFCell cell2 = row.createCell(1);
+        cell2.setCellValue("处理后的URL");
         // 设置格式
         XSSFCellStyle cs = workbook.createCellStyle();
         // 设置填充方式和背景颜色
@@ -414,6 +428,8 @@ public class UrlConvert {
                             if (cell == null) {
                                 continue;
                             }
+                            String gn = getCellValue(rowi, goodColIndex);
+
                             String sourceUrl = cell.getStringCellValue();
                             if (StringUtils.isEmpty(sourceUrl)) {
                                 continue;
@@ -423,9 +439,11 @@ public class UrlConvert {
                             String result = afterPre + decode + afterEnd;
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
-                            XSSFCell sourceCell = rowNew.createCell(0);
+                            XSSFCell gnCell = rowNew.createCell(0);
+                            gnCell.setCellValue(gn);
+                            XSSFCell sourceCell = rowNew.createCell(1);
                             sourceCell.setCellValue(sourceUrl);
-                            XSSFCell targetCell = rowNew.createCell(1);
+                            XSSFCell targetCell = rowNew.createCell(2);
                             targetCell.setCellValue(result);
                         }
                     } else {
@@ -438,6 +456,7 @@ public class UrlConvert {
                             if (cell == null) {
                                 continue;
                             }
+                            String gn = getCellValue(rowi, goodColIndex);
                             String sourceUrl = cell.getStringCellValue();
                             if (StringUtils.isEmpty(sourceUrl)) {
                                 continue;
@@ -447,9 +466,11 @@ public class UrlConvert {
                             String result = afterPre + encode + afterEnd;
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
-                            XSSFCell sourceCell = rowNew.createCell(0);
+                            XSSFCell gnCell = rowNew.createCell(0);
+                            gnCell.setCellValue(gn);
+                            XSSFCell sourceCell = rowNew.createCell(1);
                             sourceCell.setCellValue(sourceUrl);
-                            XSSFCell targetCell = rowNew.createCell(1);
+                            XSSFCell targetCell = rowNew.createCell(2);
                             targetCell.setCellValue(result);
                         }
                     }
@@ -518,5 +539,37 @@ public class UrlConvert {
             e.printStackTrace();
         }
         return "";
+    }
+
+    /**
+     * 获取单元格的值，并转换为String
+     * @param row
+     * @param colIndex
+     * @return
+     */
+    private String getCellValue(XSSFRow row, int colIndex) {
+        XSSFCell cell = row.getCell(colIndex);
+        if (cell == null || cell.getCellType() == CellType.BLANK
+                || cell.getCellType() == CellType._NONE || cell.getCellType() == CellType.ERROR || colIndex < 0) {
+            return "";
+        } else if (cell.getCellType() == CellType.STRING) {
+            return cell.getStringCellValue();
+        } else if (cell.getCellType() == CellType.BOOLEAN) {
+            boolean booleanCellValue = cell.getBooleanCellValue();
+            return String.valueOf(booleanCellValue);
+        } else if (cell.getCellType() == CellType.NUMERIC) {
+            double numericCellValue = cell.getNumericCellValue();
+            // 去掉double末尾的0
+            BigDecimal bd = new BigDecimal(numericCellValue);
+            BigDecimal noZeroBigDecimal = bd.stripTrailingZeros();
+            // 不使用科学计数法
+            String value = noZeroBigDecimal.toPlainString();
+            return String.valueOf(value);
+        } else if (cell.getCellType() == CellType.FORMULA) {
+            return cell.getStringCellValue();
+        } else {
+            return "";
+        }
+
     }
 }
