@@ -313,6 +313,7 @@ public class UrlConvert {
         cs.setAlignment(HorizontalAlignment.CENTER);
         cell0.setCellStyle(cs);
         cell1.setCellStyle(cs);
+        cell2.setCellStyle(cs);
 
         int num = 0;
         FileOutputStream outputStream = null;
