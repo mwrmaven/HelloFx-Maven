@@ -131,11 +131,30 @@ public class UrlConvert {
         CheckBox fixedAfterPreCb = new CheckBox("是否使用追加固定字符");
         fixedAfterPreCb.setSelected(true);
         TextField fixedAfterPreTf = new TextField();
+        String param = properties.getProperty("afterFixedPre");
         // 加载配置文件中的参数
-        if (StringUtils.isNotEmpty(properties.getProperty("afterFixedPre"))) {
-            fixedAfterPreTf.setText(properties.getProperty("afterFixedPre"));
+        if (StringUtils.isNotEmpty(param)) {
+            fixedAfterPreTf.setText(param);
         }
+        String text = fixedAfterPreTf.getText();
         line5Pre.getChildren().addAll(fixedAfterPreLabel, fixedAfterPreCb, fixedAfterPreTf);
+        // 失去焦点触发保存事件
+        fixedAfterPreTf.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                // 判断内容改变，则保存内容
+                if (!text.equals(fixedAfterPreTf.getText())) {
+                    // 设置配置文件
+                    properties.setProperty("afterFixedPre", fixedAfterPreTf.getText());
+                    try {
+                        //
+                        properties.store(new FileOutputStream(configFile), "重写afterFixedPre参数");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
 
         HBox line5 = new HBox();
         line5.setSpacing(10);
