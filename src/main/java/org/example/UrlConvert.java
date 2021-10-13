@@ -411,7 +411,7 @@ public class UrlConvert {
                                 continue;
                             }
                             XSSFCell cell = rowi.getCell(colIndex);
-                            if (cell == null || cell.getCellType() != CellType.STRING) {
+                            if (cell == null) {
                                 continue;
                             }
                             String sourceUrl = cell.getStringCellValue();
@@ -422,7 +422,7 @@ public class UrlConvert {
                             String decode = decode(startPre + sourceUrl + startEnd);
                             String result = afterPre + decode + afterEnd;
                             // 写入excel
-                            XSSFRow rowNew = sheet.createRow(num++);
+                            XSSFRow rowNew = sheet.createRow(num);
                             XSSFCell sourceCell = rowNew.createCell(0);
                             sourceCell.setCellValue(sourceUrl);
                             XSSFCell targetCell = rowNew.createCell(1);
