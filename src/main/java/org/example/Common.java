@@ -23,6 +23,9 @@ public class Common {
     // 顶部的按钮5
     public static final String TOP_BUTTON_5 = "URL编码批量转换";
 
+    // 顶部的按钮
+    public static final String TOP_BUTTON_6 = "下载公众号文章中音视频";
+
     // 软件窗口的标题
     public static final String STAGE_TITLE = "文件批处理工具";
 

@@ -38,6 +38,7 @@ public class App extends Application {
         Button topB3 = new Button(Common.TOP_BUTTON_3);
         Button topB4 = new Button(Common.TOP_BUTTON_4);
         Button topB5 = new Button(Common.TOP_BUTTON_5);
+        Button topB6 = new Button(Common.TOP_BUTTON_6);
         // 设置按钮属性
         topB1.setPrefHeight(30);
         topB2.setPrefHeight(30);
@@ -52,7 +53,7 @@ public class App extends Application {
         hb.setAlignment(Pos.CENTER_LEFT);
         hb.setPadding(new Insets(10));
         // 将按钮组件添加到横向布局中
-        hb.getChildren().addAll(topB1, topB2, topB3, topB4, topB5);
+        hb.getChildren().addAll(topB1, topB2, topB3, topB4, topB5, topB6);
 
         // 方位布局，并设置方位布局的顶部和中心区域
         BorderPane bor = new BorderPane();
@@ -91,14 +92,17 @@ public class App extends Application {
         AnchorPane stl = new SortTextLine().sort(primaryStage, width);
         // URL编码批量转换
         AnchorPane urlConvert = new UrlConvert().convert(primaryStage, width, h);
+        // 公众号文章中音视频下载
+        AnchorPane downloadDialog = new DownLoadMediaFromArticle().download(primaryStage, width, h);
 
-        bor.setCenter(urlConvert);
+        bor.setCenter(downloadDialog);
         Map<Button, Pane> buttonAndPane = new HashMap<>();
         buttonAndPane.put(topB1, replacePane);
         buttonAndPane.put(topB2, increaseIdentification);
         buttonAndPane.put(topB3, ctf);
         buttonAndPane.put(topB4, stl);
         buttonAndPane.put(topB5, urlConvert);
+        buttonAndPane.put(topB6, downloadDialog);
 
 
         // 配置方位布局类的中心位置触发事件
