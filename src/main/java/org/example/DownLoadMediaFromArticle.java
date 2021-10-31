@@ -1,9 +1,12 @@
 package org.example;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -13,14 +16,16 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.FileUtils;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +36,8 @@ import java.util.stream.Collectors;
  * @Date 2021/10/29 10:11 下午
  */
 public class DownLoadMediaFromArticle {
+
+    private Unit unit = new Unit();
 
     /**
      * 根据公众号文章的url获取文章中包含的音频、视频
@@ -51,10 +58,19 @@ public class DownLoadMediaFromArticle {
         hBox.setSpacing(10);
         hBox.setAlignment(Pos.CENTER_LEFT);
         // 标签
-        Label urlLabel = new Label("请输入公众号文章的url");
+        Label urlLabel = new Label("请输入公众号文章的url：");
         TextField tf = new TextField();
         tf.setPrefWidth(width / 2);
         hBox.getChildren().addAll(urlLabel, tf);
+
+        // 音视频下载地址
+        Label foldUrl = new Label("请选择音视频保存的位置：");
+        List<Node> nodes = unit.chooseFolder(primaryStage, width);
+        HBox foldH = new HBox();
+        foldH.setAlignment(Pos.CENTER_LEFT);
+        foldH.setSpacing(10);
+        foldH.getChildren().add(foldUrl);
+        foldH.getChildren().addAll(nodes);
 
         // 执行按钮
         HBox buttonH = new HBox();
@@ -71,14 +87,13 @@ public class DownLoadMediaFromArticle {
             @Override
             public void handle(ActionEvent event) {
                 List<String> voiceIds = new ArrayList<>();
-                List<String> videoUrls = new ArrayList<>();
+                List<String> voiceUrls = new ArrayList<>();
                 // 获取文章url
                 String url = tf.getText();
                 System.out.println("文章路径" + url);
                 try {
                     // 获取文章中的音视频链接
                     Document document = Jsoup.connect(url).get();
-                    System.out.println(document);
                     Elements mpvoiceList = document.getElementsByTag("mpvoice");
                     if (CollectionUtils.isNotEmpty(mpvoiceList)) {
                         voiceIds = mpvoiceList.stream().map(item -> item.attr("voice_encode_fileid")).collect(Collectors.toList());
@@ -114,14 +129,58 @@ public class DownLoadMediaFromArticle {
                     getVideoUrl = getVideoUrl + "&x5=0";
                     getVideoUrl = getVideoUrl + "&f=json";
 
-                    System.out.println(getVideoUrl);
+                    // 请求获取video url
+                    Connection.Response response = Jsoup.connect(getVideoUrl)
+                            .ignoreContentType(true)
+                            .execute();
+                    String videoUrlBody = response.body();
+                    JSONObject urlJson = JSONObject.parseObject(videoUrlBody);
+                    JSONArray url_info = urlJson.getJSONArray("url_info");
+                    String videoUrl;
+                    JSONObject jsonObject = url_info.getJSONObject(0);
+                    videoUrl = jsonObject.getString("url");
+                    List<String> videoUrls = new ArrayList<>();
+                    videoUrls.add(videoUrl);
+                    System.out.println("视频地址：" + videoUrl);
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("视频地址：" + videoUrl).append("\n");
+                    for (String id : voiceIds) {
+                        String vr = voiceBaseUrl + id;
+                        voiceUrls.add(vr);
+                        sb.append("音频地址：" + vr).append("\n");
+                    }
+
+                    area.setText(sb.toString());
+
+                    // 下载路径
+                    String folder = ((TextField) foldH.getChildren().get(foldH.getChildren().size() - 1)).getText();
+                    if (!folder.endsWith("/")) {
+                        folder += "/";
+                    }
+                    int num = 1;
+                    // 下载音视频----------这里下载视频文件还有问题
+                    for (String voice : voiceUrls) {
+                        Connection.Response response1 = Jsoup.connect(voice)
+                                .ignoreContentType(true).execute();
+                        FileUtils.writeByteArrayToFile(new File(folder + num + ".mp3"), response1.bodyAsBytes());
+                        num++;
+                    }
+
+                    for (String video : videoUrls) {
+                        Connection.Response response1 = Jsoup.connect(video)
+                                .ignoreContentType(true).execute();
+                        FileUtils.writeByteArrayToFile(new File(folder + num + ".mp4"), response1.bodyAsBytes());
+                        num++;
+                    }
+
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         });
 
-        vBox.getChildren().addAll(hBox, buttonH, area);
+        vBox.getChildren().addAll(hBox, foldH, buttonH, area);
         ap.getChildren().add(vBox);
         return ap;
     }
