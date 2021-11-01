@@ -270,6 +270,7 @@ public class UrlConvert {
             public void handle(ActionEvent event) {
                 // 设置配置文件
                 properties.setProperty("afterFixedPre", fixedAfterPreTf.getText());
+                properties.setProperty("fixedAfterFirst", fixedPreAfterFirstTf.getText());
                 try {
                     //
                     properties.store(new FileOutputStream(configFile), "重写afterFixedPre参数");
