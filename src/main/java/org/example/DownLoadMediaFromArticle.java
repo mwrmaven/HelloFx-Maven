@@ -158,9 +158,11 @@ public class DownLoadMediaFromArticle {
                         folder += "/";
                     }
                     int num = 1;
-                    // 下载音视频----------这里下载视频文件还有问题
+                    // 下载音视频
                     for (String voice : voiceUrls) {
                         Connection.Response response1 = Jsoup.connect(voice)
+                                .maxBodySize(0)
+                                .timeout(0)
                                 .ignoreContentType(true).execute();
                         FileUtils.writeByteArrayToFile(new File(folder + num + ".mp3"), response1.bodyAsBytes());
                         num++;
@@ -168,12 +170,14 @@ public class DownLoadMediaFromArticle {
 
                     for (String video : videoUrls) {
                         Connection.Response response1 = Jsoup.connect(video)
+                                .maxBodySize(0)
+                                .timeout(0)
                                 .ignoreContentType(true).execute();
                         FileUtils.writeByteArrayToFile(new File(folder + num + ".mp4"), response1.bodyAsBytes());
                         num++;
                     }
 
-
+                    sb.append("下载完成");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
