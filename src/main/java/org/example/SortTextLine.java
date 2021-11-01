@@ -34,7 +34,7 @@ public class SortTextLine {
         AnchorPane ap = new AnchorPane();
 
         // 文件夹获取
-        List<Node> folderNodes = unit.chooseFolder(stage, width);
+        List<Node> folderNodes = unit.chooseFolder(stage, width, null);
         // 文件获取
         List<Node> fileNodes = unit.chooseFile(stage, width, "获取文件");
 

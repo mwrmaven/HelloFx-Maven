@@ -29,7 +29,7 @@ public class ReplacePane {
 
     public AnchorPane replacePane(Stage primaryStage, double width) {
         // 创建选择文件夹的组件
-        List<Node> nodes = unit.chooseFolder(primaryStage, width);
+        List<Node> nodes = unit.chooseFolder(primaryStage, width, null);
 
         // 横向布局，将选择文件夹的组件添加到横向布局中
         HBox hBox = new HBox();

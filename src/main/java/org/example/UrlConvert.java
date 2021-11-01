@@ -47,7 +47,7 @@ public class UrlConvert {
         // 加载配置文件
         Properties properties = new Properties();
         String path = System.getProperty("user.dir");
-        File configFile = new File(path + "/init.ini");
+        File configFile = new File(path + File.separator + "init.ini");
         if (!configFile.exists()) {
             try {
                 configFile.createNewFile();
@@ -82,7 +82,7 @@ public class UrlConvert {
         // 第二行信息
         List<Node> aList = unit.inputText(primaryStage, width, "请输入单个url");
         List<Node> bList = unit.chooseFile(primaryStage, width, "获取文件");
-        List<Node> cList = unit.chooseFolder(primaryStage, width);
+        List<Node> cList = unit.chooseFolder(primaryStage, width, null);
 
         HBox line2 = new HBox();
         line2.setAlignment(Pos.CENTER_LEFT);
@@ -112,6 +112,38 @@ public class UrlConvert {
         line3.getChildren().addAll(txtRadio, excelRadio, tf, goodsTf);
         line3.setAlignment(Pos.CENTER_LEFT);
 
+        HBox line4Pre = new HBox();
+        line4Pre.setSpacing(10);
+        line4Pre.setAlignment(Pos.CENTER_LEFT);
+        Label fixedPreAfterFirstLable = new Label("编译前在url后面追加的固定字符(在后置字符前)：");
+        CheckBox fixedPreAfterFirstCb = new CheckBox("是否使用追加固定字符");
+        fixedPreAfterFirstCb.setSelected(true);
+        TextField fixedPreAfterFirstTf = new TextField();
+        String fixedAfterFirstParam = properties.getProperty("fixedAfterFirst");
+        // 加载配置文件中的参数
+        if (StringUtils.isNotEmpty(fixedAfterFirstParam)) {
+            fixedPreAfterFirstTf.setText(fixedAfterFirstParam);
+        }
+        line4Pre.getChildren().addAll(fixedPreAfterFirstLable, fixedPreAfterFirstCb, fixedPreAfterFirstTf);
+        String fixedPreAfterFirstTfText= fixedPreAfterFirstTf.getText();
+        // 失去焦点触发保存事件
+        fixedPreAfterFirstTf.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                // 判断内容改变，则保存内容
+                if (!fixedPreAfterFirstTfText.equals(fixedPreAfterFirstTf.getText())) {
+                    // 设置配置文件
+                    properties.setProperty("fixedAfterFirst", fixedPreAfterFirstTf.getText());
+                    try {
+                        // 将参数写入到配置文件
+                        properties.store(new FileOutputStream(configFile), "重写fixedAfterFirst参数");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
         HBox line4 = new HBox();
         line4.setSpacing(10);
         line4.setAlignment(Pos.CENTER_LEFT);
@@ -127,7 +159,7 @@ public class UrlConvert {
         HBox line5Pre = new HBox();
         line5Pre.setSpacing(10);
         line5Pre.setAlignment(Pos.CENTER_LEFT);
-        Label fixedAfterPreLabel = new Label("编译后在url上追加的固定字符：");
+        Label fixedAfterPreLabel = new Label("编译后在url前面追加的固定字符(在前置字符前)：");
         CheckBox fixedAfterPreCb = new CheckBox("是否使用追加固定字符");
         fixedAfterPreCb.setSelected(true);
         TextField fixedAfterPreTf = new TextField();
@@ -136,8 +168,8 @@ public class UrlConvert {
         if (StringUtils.isNotEmpty(param)) {
             fixedAfterPreTf.setText(param);
         }
-        String text = fixedAfterPreTf.getText();
         line5Pre.getChildren().addAll(fixedAfterPreLabel, fixedAfterPreCb, fixedAfterPreTf);
+        String text = fixedAfterPreTf.getText();
         // 失去焦点触发保存事件
         fixedAfterPreTf.focusedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
@@ -147,7 +179,7 @@ public class UrlConvert {
                     // 设置配置文件
                     properties.setProperty("afterFixedPre", fixedAfterPreTf.getText());
                     try {
-                        //
+                        // 将参数写入到配置文件
                         properties.store(new FileOutputStream(configFile), "重写afterFixedPre参数");
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -278,7 +310,12 @@ public class UrlConvert {
                 String encodeType = ((RadioButton) encodeGroup.getSelectedToggle()).getText();
                 // 文件格式
                 String type = ((RadioButton) fileType.getSelectedToggle()).getText();
-                // 获取是否追加固定字符，以及固定字符本身
+                // 获取是否在编译前的url后面追加固定字符（在后置字符前），以及固定字符本身
+                boolean preEncodeAfterFirstSelected = fixedPreAfterFirstCb.isSelected();
+                String preEncodeAfterFirstText = fixedPreAfterFirstTf.getText();
+                System.out.println("编译前固定 " + preEncodeAfterFirstText);
+
+                // 获取是否在编译后的url前面追加固定字符（在前置字符前），以及固定字符本身
                 boolean selected = fixedAfterPreCb.isSelected();
                 String fixedAfterPre = fixedAfterPreTf.getText();
 
@@ -293,7 +330,11 @@ public class UrlConvert {
                 if (toggleText.equals(onlyTextLineRadio.getText())) {
                     // 如果为单个url转换
                     // 获取单个url
-                    String oneUrl = startPre + ((TextField) aList.get(1)).getText() + startEnd;
+                    String oneUrl = startPre + ((TextField) aList.get(1)).getText();
+                    if (preEncodeAfterFirstSelected) {
+                        oneUrl += preEncodeAfterFirstText;
+                    }
+                    oneUrl += startEnd;
                     String convertUrl = "";
                     if (encodeType.equals(encodeRadio.getText())) {
                         // 编码
@@ -311,6 +352,9 @@ public class UrlConvert {
                         }
                     }
                     convertUrl = afterPre + convertUrl + afterEnd;
+                    if (selected) {
+                        convertUrl = fixedAfterPre + convertUrl;
+                    }
                     ta.setText(convertUrl);
                 } else if (toggleText.equals(folderRadio.getText())) {
                     // 如果为文件夹下所有文件中url批量转换
@@ -320,19 +364,19 @@ public class UrlConvert {
                     File folder = new File(folderPath);
                     File[] files = folder.listFiles();
                     batchFilesAndExportToExcel(files, type, colIndex, goodColIndex, startPre, startEnd, afterPre,
-                            afterEnd, encodeType, ta, selected, fixedAfterPre);
+                            afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText, selected, fixedAfterPre);
                 } else {
                     // 如果为文件中url批量转换
                     String filePath = ((TextField) bList.get(1)).getText();
                     File file = new File(filePath);
                     File[] files = new File[]{file};
                     batchFilesAndExportToExcel(files, type, colIndex, goodColIndex, startPre, startEnd, afterPre,
-                            afterEnd, encodeType, ta, selected, fixedAfterPre);
+                            afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText, selected, fixedAfterPre);
                 }
             }
         });
 
-        vBox.getChildren().addAll(line1, line2, line3, line4, line5Pre, line5, line6, execute, ta);
+        vBox.getChildren().addAll(line1, line2, line3, line4Pre, line4, line5Pre, line5, line6, execute, ta);
         anchorPane.getChildren().add(vBox);
         return anchorPane;
     }
@@ -351,7 +395,10 @@ public class UrlConvert {
      */
     private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, int goodColIndex,
                                             String startPre, String startEnd, String afterPre, String afterEnd,
-                                            String encodeType, TextArea ta, boolean fixedFlag, String fixed) {
+                                            String encodeType, TextArea ta, boolean preEncodeFlag, String preEncodeFixed,
+                                            boolean fixedFlag, String fixed) {
+
+        System.out.println("前置是否使用固定：" + preEncodeFlag + " 前置固定" + preEncodeFixed);
         // 获取文件路径
         String path = files[0].getPath();
         // 结果文件路径
@@ -412,7 +459,12 @@ public class UrlConvert {
                                 continue;
                             }
                             num++;
-                            String decode = decode(startPre + line + startEnd);
+                            String source = startPre + line;
+                            if (preEncodeFlag) {
+                                source += preEncodeFixed;
+                            }
+                            source += startEnd;
+                            String decode = decode(source);
                             String result = afterPre + decode + afterEnd;
                             if (fixedFlag) {
                                 result = fixed + result;
@@ -430,7 +482,12 @@ public class UrlConvert {
                             if (StringUtils.isEmpty(line)) {
                                 continue;
                             }
-                            String encode = encode(startPre + line + startEnd);
+                            String source = startPre + line;
+                            if (preEncodeFlag) {
+                                source += preEncodeFixed;
+                            }
+                            source += startEnd;
+                            String encode = encode(source);
                             String result = afterPre + encode + afterEnd;
                             if (fixedFlag) {
                                 result = fixed + result;
@@ -506,7 +563,12 @@ public class UrlConvert {
                                 continue;
                             }
                             num++;
-                            String decode = decode(startPre + sourceUrl + startEnd);
+                            String sourceU = startPre + sourceUrl;
+                            if (preEncodeFlag) {
+                                sourceU += preEncodeFixed;
+                            }
+                            sourceU += startEnd;
+                            String decode = decode(sourceU);
                             String result = afterPre + decode + afterEnd;
                             if (fixedFlag) {
                                 result = fixed + result;
@@ -536,7 +598,12 @@ public class UrlConvert {
                                 continue;
                             }
                             num++;
-                            String encode = encode(startPre + sourceUrl + startEnd);
+                            String sourceU = startPre + sourceUrl;
+                            if (preEncodeFlag) {
+                                sourceU += preEncodeFixed;
+                            }
+                            sourceU += startEnd;
+                            String encode = encode(sourceU);
                             String result = afterPre + encode + afterEnd;
                             if (fixedFlag) {
                                 result = fixed + result;

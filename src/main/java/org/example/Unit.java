@@ -28,7 +28,7 @@ public class Unit {
      * @param width
      * @return
      */
-    public List<Node> chooseFolder(Stage primaryStage, double width) {
+    public List<Node> chooseFolder(Stage primaryStage, double width, String buttonText) {
         // 选择文件夹/文件路径，并输入到文本框
         TextField text = new TextField();
         // 输入框中禁止编辑
@@ -37,6 +37,9 @@ public class Unit {
 
         // 点击按钮，选择文件夹
         Button buttonFileChoose = new Button("选择文件夹路径");
+        if (buttonText != null && !"".equals(buttonText.replaceAll(" ", ""))) {
+            buttonFileChoose.setText(buttonText);
+        }
         buttonFileChoose.setPrefWidth(120);
         buttonFileChoose.setAlignment(Pos.CENTER);
         buttonFileChoose.setOnAction(new EventHandler<ActionEvent>() {

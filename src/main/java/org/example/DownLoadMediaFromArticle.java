@@ -65,7 +65,7 @@ public class DownLoadMediaFromArticle {
 
         // 音视频下载地址
         Label foldUrl = new Label("请选择音视频保存的位置：");
-        List<Node> nodes = unit.chooseFolder(primaryStage, width);
+        List<Node> nodes = unit.chooseFolder(primaryStage, width, null);
         HBox foldH = new HBox();
         foldH.setAlignment(Pos.CENTER_LEFT);
         foldH.setSpacing(10);

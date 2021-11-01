@@ -34,7 +34,7 @@ public class IncreaseIdentificationPane {
     public FlowPane increaseIdentification(Stage stage, double width) {
         Unit unit = new Unit();
         // 创建选择组件
-        List<Node> nodes = unit.chooseFolder(stage, width);
+        List<Node> nodes = unit.chooseFolder(stage, width, null);
         HBox hBox1 = new HBox();
         hBox1.setPadding(new Insets(10));
         hBox1.setSpacing(20);
@@ -182,7 +182,7 @@ public class IncreaseIdentificationPane {
         hBox7.setPadding(new Insets(10));
         hBox7.setSpacing(20);
         hBox7.setAlignment(Pos.CENTER_LEFT);
-        List<Node> nodes2 = unit.chooseFile(stage, width, "文件输出路径");
+        List<Node> nodes2 = unit.chooseFolder(stage, width, "文件输出路径");
         nodes2.forEach(item -> {
             hBox7.getChildren().addAll(item);
         });
