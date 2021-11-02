@@ -159,9 +159,10 @@ public class IncreaseIdentificationPane {
         step.setPrefWidth(60);
         Label stepUnit = new Label("步长单位: ");
         // 单位下拉框
-        ChoiceBox cb = new ChoiceBox(FXCollections.observableArrayList("天", "周", "月", "年"));
+        ChoiceBox cb = new ChoiceBox(FXCollections.observableArrayList(Common.DAY, Common.WEEK,
+                Common.MONTH, Common.YEAR));
         cb.setTooltip(new Tooltip("请选择步长单位"));
-        cb.setValue("月");
+        cb.setValue(Common.DAY);
         hBox6.getChildren().addAll(label6, preText, identification, afterText, step, stepUnit, cb);
         // 设置选择不通标识符类型时，步长单位的隐藏和显示
         tgIdenType.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
@@ -248,12 +249,14 @@ public class IncreaseIdentificationPane {
                         && !filesNum.matches("[0-9]+")) {
                     ta.setText("请输入生成文件的个数");
                 }
+                String keyType = Common.NUMBER;
                 // 判断标识符类型
                 if (identificationType.equals(rbiNum.getText())
                         && !iden.matches("[0-9]+")) {
                     ta.setText("标识符请输入数字");
                 }
                 if (identificationType.equals(rbiTime.getText())) {
+                    keyType = Common.TIME;
                     if (!iden.matches("[0-9]{8}") && !iden.matches("[0-9]{4}-[0-9]{2}-[0-9]{2}")
                             && !iden.matches("[0-9]{4}_[0-9]{2}_[0-9]{2}")){
                         ta.setText("标识符请输入时间格式");
@@ -265,7 +268,7 @@ public class IncreaseIdentificationPane {
                     // 根据模板文件创建文件
                     try {
                         createFile(insertOrReplaceKey, insertOrReplaceValue, four, Integer.valueOf(filesNum),
-                                identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath, ta);
+                                keyType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath, ta);
                     } catch (Exception e) {
                         ta.setText("根据模板文件创建文件出错");
                         e.printStackTrace();
@@ -274,7 +277,7 @@ public class IncreaseIdentificationPane {
                     // 只替换文件名
                     try {
                         onlyReplaceName(insertOrReplaceKey, insertOrReplaceValue, folderPath,
-                                identificationType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath, ta);
+                                keyType, pre, iden, after, Integer.valueOf(stepN), stepU, outPath, ta);
                     } catch (Exception e) {
                         ta.setText("文件名称修改出错");
                         e.printStackTrace();
@@ -291,7 +294,7 @@ public class IncreaseIdentificationPane {
      * @param insertOrReplaceValue 如果为替换字符，则这个参数为旧字符，否则无用
      * @param filePath 模板文件路径
      * @param fileNum 生成文件的个数
-     * @param identificationType 初始标识符的类型 数字/时间
+     * @param keyType 初始标识符的类型 数字/时间
      * @param pre 前置固定字符
      * @param iden 初始标识符
      * @param after 后置固定字符
@@ -301,7 +304,7 @@ public class IncreaseIdentificationPane {
      * @param ta 文本显示框，用来显示提示信息
      */
     private void createFile(String insertOrReplaceKey, String insertOrReplaceValue, String filePath, int fileNum,
-                            String identificationType, String pre, String iden, String after, int stepN,
+                            String keyType, String pre, String iden, String after, int stepN,
                             String stepU, String outPath, TextArea ta) throws IOException, ParseException {
         int index = filePath.lastIndexOf(File.separator);
         String fileFolder = filePath.substring(0, index);
@@ -310,29 +313,42 @@ public class IncreaseIdentificationPane {
         List<String> identity = new ArrayList<>();
         identity.add(iden);
         // 标识符类型
-        if ("数字".equals(identificationType)) {
+        if (Common.NUMBER.equals(keyType)) {
             int start = Integer.parseInt(iden);
             for (int i = 0; i < fileNum; i++) {
                 start += stepN;
                 identity.add(String.valueOf(start));
             }
-        } else if ("时间".equals(identificationType)) {
+        } else if (Common.TIME.equals(keyType)) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             if (iden.contains("_")) {
                 sdf = new SimpleDateFormat("yyyy_MM_dd");
             }
-            Date date = sdf.parse(iden);
+            if (!iden.contains("-") && !iden.contains("_")) {
+                sdf = new SimpleDateFormat("yyyyMMdd");
+            }
+            Date date;
+            try {
+                date = sdf.parse(iden);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                // 提示时间格式错误
+                String text = ta.getText();
+                text = text + "\n" + "标识符时间格式错误";
+                ta.setText(text);
+                return;
+            }
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(date);
 
             int dateType = 0;
-            if ("天".equals(stepU)) {
+            if (Common.DAY.equals(stepU)) {
                 dateType = Calendar.DAY_OF_MONTH;
-            } else if ("周".equals(stepU)) {
+            } else if (Common.WEEK.equals(stepU)) {
                 dateType = Calendar.WEEK_OF_MONTH;
-            } else if ("月".equals(stepU)) {
+            } else if (Common.MONTH.equals(stepU)) {
                 dateType = Calendar.MONTH;
-            } else if ("年".equals(stepU)) {
+            } else if (Common.YEAR.equals(stepU)) {
                 dateType = Calendar.YEAR;
             }
 
@@ -352,7 +368,7 @@ public class IncreaseIdentificationPane {
             outPath += File.separator;
         }
 
-        if ("后置插入".equals(insertOrReplaceKey)) {
+        if (Common.EDIT_TYPE_1.equals(insertOrReplaceKey)) {
             // 后置插入
             for (int i = 0; i < identity.size(); i++) {
                 String newFileName = fileName.substring(0, fileName.lastIndexOf("."))
@@ -362,7 +378,7 @@ public class IncreaseIdentificationPane {
                 Files.copy(new File(filePath).toPath(), newFile.toPath());
 
             }
-        } else if ("前置插入".equals(insertOrReplaceKey)) {
+        } else if (Common.EDIT_TYPE_2.equals(insertOrReplaceKey)) {
             // 前置插入
             for (int i = 0; i < identity.size(); i++) {
                 String newFileName = pre + identity.get(i) + after
@@ -370,7 +386,7 @@ public class IncreaseIdentificationPane {
                 File newFile = new File(outPath + newFileName);
                 Files.copy(new File(filePath).toPath(), newFile.toPath());
             }
-        } else if ("替换字符".equals(insertOrReplaceKey)) {
+        } else if (Common.EDIT_TYPE_3.equals(insertOrReplaceKey)) {
             if (StringUtils.isEmpty(insertOrReplaceValue)) {
                 ta.setText("旧字符不能为空");
                 return;
@@ -391,7 +407,7 @@ public class IncreaseIdentificationPane {
      * @param insertOrReplaceKey 文件名中目标是 后置插入/前置插入/替换字符
      * @param insertOrReplaceValue 如果为替换字符，则这个参数为旧字符，否则无用
      * @param folderPath 文件夹路径
-     * @param identificationType 初始标识符的类型 数字/时间
+     * @param keyType 初始标识符的类型 数字/时间
      * @param pre 前置固定字符
      * @param iden 初始标识符
      * @param after 后置固定字符
@@ -400,7 +416,7 @@ public class IncreaseIdentificationPane {
      * @param outPath 文件输出路径
      */
     private void onlyReplaceName(String insertOrReplaceKey, String insertOrReplaceValue, String folderPath,
-                                 String identificationType, String pre, String iden, String after, int stepN,
+                                 String keyType, String pre, String iden, String after, int stepN,
                                  String stepU, String outPath, TextArea ta) throws ParseException, IOException {
         // 获取文件夹下所有的文件名
         File folder = new File(folderPath);
@@ -417,7 +433,6 @@ public class IncreaseIdentificationPane {
             @Override
             public int compare(File o1, File o2) {
                 return (int) (o1.lastModified() - o2.lastModified());
-//                return o1.getName().compareToIgnoreCase(o2.getName());
             }
         }).collect(Collectors.toList());
 
@@ -430,33 +445,46 @@ public class IncreaseIdentificationPane {
         List<String> identity = new ArrayList<>();
         identity.add(iden);
         // 标识符类型
-        if ("数字".equals(identificationType)) {
+        if (Common.NUMBER.equals(keyType)) {
             int start = Integer.parseInt(iden);
             for (int i = 0; i < fileNum; i++) {
                 start += stepN;
                 identity.add(String.valueOf(start));
             }
-        } else if ("时间(格式为: yyyyMMdd 或 yyyy-MM-dd 或 yyyy_MM_dd; 例如: 2021_08_31)".equals(identificationType)) {
+        } else if (Common.TIME.equals(keyType)) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             if (iden.contains("_")) {
                 sdf = new SimpleDateFormat("yyyy_MM_dd");
             }
-            Date date = sdf.parse(iden);
+            if (!iden.contains("-") && !iden.contains("_")) {
+                sdf = new SimpleDateFormat("yyyyMMdd");
+            }
+            Date date;
+            try {
+                date = sdf.parse(iden);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                // 提示时间格式错误
+                String text = ta.getText();
+                text = text + "\n" + "标识符时间格式错误";
+                ta.setText(text);
+                return;
+            }
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(date);
 
             int dateType = 0;
-            if ("天".equals(stepU)) {
+            if (Common.DAY.equals(stepU)) {
                 dateType = Calendar.DAY_OF_MONTH;
-            } else if ("周".equals(stepU)) {
+            } else if (Common.WEEK.equals(stepU)) {
                 dateType = Calendar.WEEK_OF_MONTH;
-            } else if ("月".equals(stepU)) {
+            } else if (Common.MONTH.equals(stepU)) {
                 dateType = Calendar.MONTH;
-            } else if ("年".equals(stepU)) {
+            } else if (Common.YEAR.equals(stepU)) {
                 dateType = Calendar.YEAR;
             }
 
-            for (int i = 0; i < fileNum; i++) {
+            for (int i = 0; i < fileNum - 1; i++) {
                 calendar.add(dateType, stepN);
                 identity.add(sdf.format(calendar.getTime()));
             }
@@ -479,19 +507,19 @@ public class IncreaseIdentificationPane {
             File item = fs.get(i);
             String id = identity.get(i);
             String name = item.getName();
-            if ("后置插入".equals(insertOrReplaceKey)) {
+            if (Common.EDIT_TYPE_1.equals(insertOrReplaceKey)) {
                 String newFileName = name.substring(0, name.lastIndexOf("."))
                         + pre + identity.get(i) + after
                         + name.substring(name.lastIndexOf("."));
                 File newFile = new File(outPath + newFileName);
                 Files.copy(item.toPath(), newFile.toPath());
-            } else if ("前置插入".equals(insertOrReplaceKey)) {
+            } else if (Common.EDIT_TYPE_2.equals(insertOrReplaceKey)) {
                 // 前置插入
                 String newFileName = pre + identity.get(i) + after
                         + name;
                 File newFile = new File(outPath + newFileName);
                 Files.copy(item.toPath(), newFile.toPath());
-            } else if ("替换字符".equals(insertOrReplaceKey)) {
+            } else if (Common.EDIT_TYPE_3.equals(insertOrReplaceKey)) {
                 if (StringUtils.isEmpty(insertOrReplaceValue)) {
                     ta.setText("旧字符不能为空");
                     return;

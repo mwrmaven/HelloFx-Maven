@@ -43,6 +43,11 @@ public class UrlConvert {
 
     private Unit unit = new Unit();
 
+    // 编译前在url后面追加的固定字符(在后置字符前)
+    private static final String FIXEDAFTERFIRST = "fixedAfterFirst";
+    // 编译后在url前面追加的固定字符(在前置字符前)
+    private static final String AFTERFIXEDPRE = "afterFixedPre";
+
     public AnchorPane convert(Stage primaryStage, double width, double height) {
         // 加载配置文件
         Properties properties = new Properties();
@@ -92,8 +97,8 @@ public class UrlConvert {
         }
 
         // 文件格式选择
-        RadioButton txtRadio = new RadioButton("TXT格式文件");
-        RadioButton excelRadio = new RadioButton("EXCEL格式文件");
+        RadioButton txtRadio = new RadioButton(Common.TXT);
+        RadioButton excelRadio = new RadioButton(Common.EXCEL);
         excelRadio.setSelected(true);
         ToggleGroup fileType = new ToggleGroup();
         txtRadio.setToggleGroup(fileType);
@@ -119,7 +124,7 @@ public class UrlConvert {
         CheckBox fixedPreAfterFirstCb = new CheckBox("是否使用追加固定字符");
         fixedPreAfterFirstCb.setSelected(true);
         TextField fixedPreAfterFirstTf = new TextField();
-        String fixedAfterFirstParam = properties.getProperty("fixedAfterFirst");
+        String fixedAfterFirstParam = properties.getProperty(FIXEDAFTERFIRST);
         // 加载配置文件中的参数
         if (StringUtils.isNotEmpty(fixedAfterFirstParam)) {
             fixedPreAfterFirstTf.setText(fixedAfterFirstParam);
@@ -133,10 +138,10 @@ public class UrlConvert {
                 // 判断内容改变，则保存内容
                 if (!fixedPreAfterFirstTfText.equals(fixedPreAfterFirstTf.getText())) {
                     // 设置配置文件
-                    properties.setProperty("fixedAfterFirst", fixedPreAfterFirstTf.getText());
+                    properties.setProperty(FIXEDAFTERFIRST, fixedPreAfterFirstTf.getText());
                     try {
                         // 将参数写入到配置文件
-                        properties.store(new FileOutputStream(configFile), "重写fixedAfterFirst参数");
+                        properties.store(new FileOutputStream(configFile), "重写"+FIXEDAFTERFIRST+"参数");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -163,7 +168,7 @@ public class UrlConvert {
         CheckBox fixedAfterPreCb = new CheckBox("是否使用追加固定字符");
         fixedAfterPreCb.setSelected(true);
         TextField fixedAfterPreTf = new TextField();
-        String param = properties.getProperty("afterFixedPre");
+        String param = properties.getProperty(AFTERFIXEDPRE);
         // 加载配置文件中的参数
         if (StringUtils.isNotEmpty(param)) {
             fixedAfterPreTf.setText(param);
@@ -177,10 +182,10 @@ public class UrlConvert {
                 // 判断内容改变，则保存内容
                 if (!text.equals(fixedAfterPreTf.getText())) {
                     // 设置配置文件
-                    properties.setProperty("afterFixedPre", fixedAfterPreTf.getText());
+                    properties.setProperty(AFTERFIXEDPRE, fixedAfterPreTf.getText());
                     try {
                         // 将参数写入到配置文件
-                        properties.store(new FileOutputStream(configFile), "重写afterFixedPre参数");
+                        properties.store(new FileOutputStream(configFile), "重写"+AFTERFIXEDPRE+"参数");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -203,8 +208,8 @@ public class UrlConvert {
         HBox line6 = new HBox();
         line6.setSpacing(10);
         line6.setAlignment(Pos.CENTER_LEFT);
-        RadioButton encodeRadio = new RadioButton("URL编码");
-        RadioButton decodeRadio = new RadioButton("URL解码");
+        RadioButton encodeRadio = new RadioButton(Common.ENCODE);
+        RadioButton decodeRadio = new RadioButton(Common.DECODE);
         ToggleGroup encodeGroup = new ToggleGroup();
         encodeRadio.setSelected(true);
         encodeRadio.setToggleGroup(encodeGroup);
@@ -269,11 +274,11 @@ public class UrlConvert {
             @Override
             public void handle(ActionEvent event) {
                 // 设置配置文件
-                properties.setProperty("afterFixedPre", fixedAfterPreTf.getText());
-                properties.setProperty("fixedAfterFirst", fixedPreAfterFirstTf.getText());
+                properties.setProperty(AFTERFIXEDPRE, fixedAfterPreTf.getText());
+                properties.setProperty(FIXEDAFTERFIRST, fixedPreAfterFirstTf.getText());
                 try {
                     //
-                    properties.store(new FileOutputStream(configFile), "重写afterFixedPre参数");
+                    properties.store(new FileOutputStream(configFile), "重写"+AFTERFIXEDPRE+"参数");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -439,7 +444,7 @@ public class UrlConvert {
             return;
         }
         // 判断文件格式
-        if ("TXT格式文件".equals(fileType)) {
+        if (Common.TXT.equals(fileType)) {
             // 读取文件，遍历行
             for (File f : files) {
                 if (f.getPath().equals(newPath)) {
@@ -454,7 +459,7 @@ public class UrlConvert {
                     inputStreamReader = new InputStreamReader(inputStream);
                     br = new BufferedReader(inputStreamReader);
                     String line = "";
-                    if ("URL解码".equals(encodeType)) {
+                    if (Common.DECODE.equals(encodeType)) {
                         while ((line = br.readLine()) != null) {
                             if (StringUtils.isEmpty(line)) {
                                 continue;
@@ -533,7 +538,7 @@ public class UrlConvert {
                 }
                 num++;
             }
-        } else if ("EXCEL格式文件".equals(fileType)){
+        } else if (Common.EXCEL.equals(fileType)){
             // 读取文件，遍历单元格
             for (File f : files) {
                 if (f.getPath().equals(newPath)) {
@@ -547,7 +552,7 @@ public class UrlConvert {
                     source = new XSSFWorkbook(inputStream);
                     XSSFSheet sheet0 = source.getSheetAt(0);
                     int rowNum = sheet0.getLastRowNum() + 1;
-                    if ("URL解码".equals(encodeType)) {
+                    if (Common.DECODE.equals(encodeType)) {
                         for (int i = 1; i < rowNum; i++) {
                             XSSFRow rowi = sheet0.getRow(i);
                             if (rowi == null) {

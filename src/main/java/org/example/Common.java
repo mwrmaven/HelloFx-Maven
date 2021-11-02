@@ -50,7 +50,23 @@ public class Common {
     // 创建文件的方式2
     public static final String CREATE_TYPE_2 = "只替换文件名";
 
-    // 初始标识符的类型前置lable
+    // 标识符的类型
+    public static final String NUMBER = "NUMBER";
+    public static final String TIME = "TIME";
+
+    // 时间的步长单位
+    public static final String DAY = "天";
+    public static final String WEEK = "周";
+    public static final String MONTH = "月";
+    public static final String YEAR = "年";
+
+    // 文件格式
+    public static final String TXT = "TXT格式文件";
+    public static final String EXCEL = "EXCEL格式文件";
+
+    // 编码或者解码
+    public static final String DECODE = "URL解码";
+    public static final String ENCODE = "URL编码";
 
 
 

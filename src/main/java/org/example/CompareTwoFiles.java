@@ -88,11 +88,6 @@ public class CompareTwoFiles {
             }
         });
 
-
-
-
-
-
         // 添加左右布局
         hBox.getChildren().addAll(left, right);
         // 布局类
