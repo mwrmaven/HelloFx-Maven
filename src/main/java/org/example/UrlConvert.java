@@ -16,7 +16,9 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -73,9 +75,9 @@ public class UrlConvert {
         vBox.setPadding(new Insets(10));
 
         // url数据源选择，默认为单个文件中url批量转换
-        RadioButton onlyTextLineRadio = new RadioButton("单个url转换");
-        RadioButton oneFileRadio = new RadioButton("单个文件中url批量转换");
-        RadioButton folderRadio = new RadioButton("文件夹下所有文件中url批量转换");
+        RadioButton onlyTextLineRadio = new RadioButton(Common.ONEURL);
+        RadioButton oneFileRadio = new RadioButton(Common.ONEFILE);
+        RadioButton folderRadio = new RadioButton(Common.ONEFOLDER);
         ToggleGroup toggleGroup = new ToggleGroup();
         onlyTextLineRadio.setToggleGroup(toggleGroup);
         oneFileRadio.setToggleGroup(toggleGroup);
@@ -118,6 +120,29 @@ public class UrlConvert {
         line3.setSpacing(10);
         line3.getChildren().addAll(txtRadio, excelRadio, tf, goodsTf);
         line3.setAlignment(Pos.CENTER_LEFT);
+
+        // 选择要拷贝出来的列
+        HBox line3After = new HBox();
+        line3After.setSpacing(10);
+        line3After.setAlignment(Pos.CENTER_LEFT);
+        Label labelCopy = new Label("请选择需要拷贝出来的列（可多选）：");
+        // 创建源文件中标题列的下拉列表
+        ChoiceBox<Col> line3AfterCb = new ChoiceBox<>();
+        line3After.getChildren().addAll(labelCopy, line3AfterCb);
+        // 处理下拉框的显示
+        line3AfterCb.setConverter(new StringConverter<Col>() {
+            @Override
+            public String toString(Col object) {
+                // 出
+                return object.getName();
+            }
+
+            @Override
+            public Col fromString(String string) {
+                // 进
+                return null;
+            }
+        });
 
         HBox line4Pre = new HBox();
         line4Pre.setSpacing(10);
@@ -261,6 +286,61 @@ public class UrlConvert {
                     // 显示输入框
                     tf.setVisible(true);
                     goodsTf.setVisible(true);
+
+                    File file = null;
+                    // 判断源文件格式
+                    String sourceType = ((RadioButton) toggleGroup.getSelectedToggle()).getText();
+                    if (Common.ONEFILE.equals(sourceType)) {
+                        // 获取文件路径
+                        String filePath = ((TextField) bList.get(1)).getText();
+                        if (StringUtils.isEmpty(filePath)) {
+                            ta.setText("请选择源文件");
+                            return;
+                        }
+                        if (!filePath.endsWith(".xls") && !filePath.endsWith(".xlsx")) {
+                            ta.setText("源文件格式错误");
+                            return;
+                        }
+                        file = new File(filePath);
+                    } else if (Common.ONEFOLDER.equals(sourceType)) {
+                        String folderPath = ((TextField) cList.get(1)).getText();
+                        if (StringUtils.isEmpty(folderPath)) {
+                            ta.setText("请选择源文件夹");
+                            return;
+                        }
+                        File[] files = new File(folderPath).listFiles();
+                        if (files.length == 0) {
+                            ta.setText("源文件夹下未查询到文件");
+                            return;
+                        }
+                        file = files[0];
+                        if (!file.getName().endsWith(".xls") && !file.getName().endsWith(".xlsx")) {
+                            ta.setText("源文件夹中文件的格式错误");
+                            return;
+                        }
+                    }
+
+                    try {
+                        // 获取excel的第一行表头
+                        XSSFWorkbook workbook = new XSSFWorkbook(file);
+                        XSSFSheet sheet = workbook.getSheetAt(0);
+                        XSSFRow row = sheet.getRow(0);
+                        int size = row.getLastCellNum();
+                        for (int i = 0; i < size; i++) {
+                            String cellValue = getCellValue(row, i);
+                            if (StringUtils.isNotEmpty(cellValue)) {
+                                // 添加到下拉框中
+                                Col col = new Col(i, cellValue);
+                                line3AfterCb.getItems().add(col);
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (InvalidFormatException e) {
+                        e.printStackTrace();
+                    }
+
+
                 } else {
                     // 不显示输入框
                     tf.setVisible(false);
@@ -384,7 +464,7 @@ public class UrlConvert {
             }
         });
 
-        vBox.getChildren().addAll(line1, line2, line3, line4Pre, line4, line5Pre, line5, line6, execute, ta);
+        vBox.getChildren().addAll(line1, line2, line3, line3After, line4Pre, line4, line5Pre, line5, line6, execute, ta);
         anchorPane.getChildren().add(vBox);
         return anchorPane;
     }
@@ -726,5 +806,34 @@ public class UrlConvert {
             return "";
         }
 
+    }
+}
+
+/**
+ * 列信息字段，当前只包含列下标、列名
+ */
+class Col {
+    private int index;
+    private String name;
+
+    Col(int index, String name) {
+        this.index = index;
+        this.name = name;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }
