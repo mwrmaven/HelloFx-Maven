@@ -28,6 +28,8 @@ import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -404,11 +406,14 @@ public class UrlConvert {
                                             String encodeType, TextArea ta, boolean preEncodeFlag, String preEncodeFixed,
                                             boolean fixedFlag, String fixed) {
 
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+        Date now = new Date();
+
         System.out.println("前置是否使用固定：" + preEncodeFlag + " 前置固定" + preEncodeFixed);
         // 获取文件路径
         String path = files[0].getPath();
         // 结果文件路径
-        String newPath = path.substring(0, path.lastIndexOf(File.separator) + 1) + "result.xlsx";
+        String newPath = path.substring(0, path.lastIndexOf(File.separator) + 1) + "result-" + sdf.format(now) + ".xlsx";
 
         XSSFWorkbook workbook = new XSSFWorkbook();
         XSSFSheet sheet = workbook.createSheet("URL转换结果");
