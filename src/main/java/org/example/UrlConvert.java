@@ -251,6 +251,13 @@ public class UrlConvert {
         toggleGroup.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
             @Override
             public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
+                // 清空下拉选择框
+                line3AfterCb.getItems().clear();
+
+                // 清空文本框中的值
+                ((TextField) bList.get(1)).clear();
+                ((TextField) cList.get(1)).clear();
+
                 String radioText = ((RadioButton) newValue).getText();
                 line2.getChildren().clear();
                 if (radioText.equals(onlyTextLineRadio.getText())) {
@@ -281,6 +288,9 @@ public class UrlConvert {
         fileType.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
             @Override
             public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
+                // 清空下拉选择框
+                line3AfterCb.getItems().clear();
+
                 String text = ((RadioButton) newValue).getText();
                 if (text.equals(excelRadio.getText())) {
                     // 显示输入框
@@ -326,6 +336,7 @@ public class UrlConvert {
                         XSSFSheet sheet = workbook.getSheetAt(0);
                         XSSFRow row = sheet.getRow(0);
                         int size = row.getLastCellNum();
+                        line3AfterCb.getItems().clear();
                         for (int i = 0; i < size; i++) {
                             String cellValue = getCellValue(row, i);
                             if (StringUtils.isNotEmpty(cellValue)) {
@@ -347,6 +358,86 @@ public class UrlConvert {
                     goodsTf.setVisible(false);
                     tf.setText("");
                     goodsTf.setText("");
+                }
+            }
+        });
+
+        // 监听文本输入框
+        ((TextField) bList.get(1)).textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                // 判断选中的数据源是单个文件，且文件格式选择的是excel格式
+                if (Common.ONEFILE.equals(((RadioButton)toggleGroup.getSelectedToggle()).getText())
+                        && Common.EXCEL.equals(((RadioButton)fileType.getSelectedToggle()).getText())) {
+                    if (!newValue.endsWith(".xls") && !newValue.endsWith(".xlsx")) {
+                        ta.setText("请选择xls或xlsx后缀格式的文件");
+                        return;
+                    } else {
+                        File file = new File(newValue);
+                        try {
+                            // 获取excel的第一行表头
+                            XSSFWorkbook workbook = new XSSFWorkbook(file);
+                            XSSFSheet sheet = workbook.getSheetAt(0);
+                            XSSFRow row = sheet.getRow(0);
+                            int size = row.getLastCellNum();
+                            line3AfterCb.getItems().clear();
+                            for (int i = 0; i < size; i++) {
+                                String cellValue = getCellValue(row, i);
+                                if (StringUtils.isNotEmpty(cellValue)) {
+                                    // 添加到下拉框中
+                                    Col col = new Col(i, cellValue);
+                                    line3AfterCb.getItems().add(col);
+                                }
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } catch (InvalidFormatException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        });
+
+        // 监听文本输入框
+        ((TextField) cList.get(1)).textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                // 判断选中的数据源是单个文件，且文件格式选择的是excel格式
+                if (Common.ONEFOLDER.equals(((RadioButton)toggleGroup.getSelectedToggle()).getText())
+                        && Common.EXCEL.equals(((RadioButton)fileType.getSelectedToggle()).getText())) {
+                    File file;
+                    File[] files = new File(newValue).listFiles();
+                    if (files.length == 0) {
+                        ta.setText("源文件夹下未查询到文件");
+                        return;
+                    }
+                    file = files[0];
+                    if (!file.getName().endsWith(".xls") && !file.getName().endsWith(".xlsx")) {
+                        ta.setText("源文件夹中文件的格式错误");
+                        return;
+                    }
+                    try {
+                        // 获取excel的第一行表头
+                        XSSFWorkbook workbook = new XSSFWorkbook(file);
+                        XSSFSheet sheet = workbook.getSheetAt(0);
+                        XSSFRow row = sheet.getRow(0);
+                        int size = row.getLastCellNum();
+                        line3AfterCb.getItems().clear();
+                        for (int i = 0; i < size; i++) {
+                            String cellValue = getCellValue(row, i);
+                            if (StringUtils.isNotEmpty(cellValue)) {
+                                // 添加到下拉框中
+                                Col col = new Col(i, cellValue);
+                                line3AfterCb.getItems().add(col);
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (InvalidFormatException e) {
+                        e.printStackTrace();
+                    }
+
                 }
             }
         });
