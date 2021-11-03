@@ -1,5 +1,6 @@
 package org.example;
 
+import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -12,6 +13,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.ChoiceBoxListCell;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -127,18 +129,27 @@ public class UrlConvert {
         line3After.setAlignment(Pos.CENTER_LEFT);
         Label labelCopy = new Label("请选择需要拷贝出来的列（可多选）：");
         // 创建源文件中标题列的下拉列表
-        ChoiceBox<Col> line3AfterCb = new ChoiceBox<>();
+//        ChoiceBox<Col> line3AfterCb = new ChoiceBox<>();
+        ChoiceBox<CheckBox> line3AfterCb = new ChoiceBox<>();
+        CheckBox cbb = new CheckBox();
+        cbb.setText("cesshi");
+
+        CheckBox cbb1 = new CheckBox();
+        cbb1.setText("test");
+        line3AfterCb.getItems().add(cbb);
+        line3AfterCb.getItems().add(cbb1);
+
         line3After.getChildren().addAll(labelCopy, line3AfterCb);
         // 处理下拉框的显示
-        line3AfterCb.setConverter(new StringConverter<Col>() {
+        line3AfterCb.setConverter(new StringConverter<CheckBox>() {
             @Override
-            public String toString(Col object) {
+            public String toString(CheckBox object) {
                 // 出
-                return object.getName();
+                return object.getText();
             }
 
             @Override
-            public Col fromString(String string) {
+            public CheckBox fromString(String string) {
                 // 进
                 return null;
             }
@@ -342,7 +353,7 @@ public class UrlConvert {
                             if (StringUtils.isNotEmpty(cellValue)) {
                                 // 添加到下拉框中
                                 Col col = new Col(i, cellValue);
-                                line3AfterCb.getItems().add(col);
+//                                line3AfterCb.getItems().add(col);
                             }
                         }
                     } catch (IOException e) {
@@ -386,7 +397,7 @@ public class UrlConvert {
                                 if (StringUtils.isNotEmpty(cellValue)) {
                                     // 添加到下拉框中
                                     Col col = new Col(i, cellValue);
-                                    line3AfterCb.getItems().add(col);
+//                                    line3AfterCb.getItems().add(col);
                                 }
                             }
                         } catch (IOException e) {
@@ -429,7 +440,7 @@ public class UrlConvert {
                             if (StringUtils.isNotEmpty(cellValue)) {
                                 // 添加到下拉框中
                                 Col col = new Col(i, cellValue);
-                                line3AfterCb.getItems().add(col);
+//                                line3AfterCb.getItems().add(col);
                             }
                         }
                     } catch (IOException e) {
