@@ -13,6 +13,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.cell.CheckBoxListCell;
 import javafx.scene.control.cell.ChoiceBoxListCell;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author mavenr
@@ -131,15 +133,53 @@ public class UrlConvert {
         // 创建源文件中标题列的下拉列表
 //        ChoiceBox<Col> line3AfterCb = new ChoiceBox<>();
         ChoiceBox<CheckBox> line3AfterCb = new ChoiceBox<>();
+        ComboBox<CheckBox> format = new MultiComboBox<CheckBox>().format();
         CheckBox cbb = new CheckBox();
         cbb.setText("cesshi");
+        cbb.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                format.setButtonCell(new ListCell<CheckBox>() {
+                    @Override
+                    protected void updateItem(CheckBox item, boolean empty) {
+                        super.updateItem(item, empty);
+                        // 使用过滤，选出被选中的对象
+                        String selected = format.getItems().stream().filter(CheckBox::isSelected)
+                                .map(CheckBox::getText)
+                                .collect(Collectors.joining(","));
+                        // 设置按钮的文本
+                        setText(selected);
+                    }
+                });
+            }
+        });
 
         CheckBox cbb1 = new CheckBox();
         cbb1.setText("test");
+        cbb1.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                format.setButtonCell(new ListCell<CheckBox>() {
+                    @Override
+                    protected void updateItem(CheckBox item, boolean empty) {
+                        super.updateItem(item, empty);
+                        // 使用过滤，选出被选中的对象
+                        String selected = format.getItems().stream().filter(CheckBox::isSelected)
+                                .map(CheckBox::getText)
+                                .collect(Collectors.joining(","));
+                        // 设置按钮的文本
+                        setText(selected);
+                    }
+                });
+            }
+        });
         line3AfterCb.getItems().add(cbb);
         line3AfterCb.getItems().add(cbb1);
 
-        line3After.getChildren().addAll(labelCopy, line3AfterCb);
+
+        format.getItems().addAll(cbb, cbb1);
+
+        line3After.getChildren().addAll(labelCopy, line3AfterCb, format);
         // 处理下拉框的显示
         line3AfterCb.setConverter(new StringConverter<CheckBox>() {
             @Override
@@ -352,7 +392,8 @@ public class UrlConvert {
                             String cellValue = getCellValue(row, i);
                             if (StringUtils.isNotEmpty(cellValue)) {
                                 // 添加到下拉框中
-                                Col col = new Col(i, cellValue);
+                                Col col = new Col();
+                                col.setName(cellValue);
 //                                line3AfterCb.getItems().add(col);
                             }
                         }
@@ -396,7 +437,8 @@ public class UrlConvert {
                                 String cellValue = getCellValue(row, i);
                                 if (StringUtils.isNotEmpty(cellValue)) {
                                     // 添加到下拉框中
-                                    Col col = new Col(i, cellValue);
+                                    Col col = new Col();
+                                    col.setName(cellValue);
 //                                    line3AfterCb.getItems().add(col);
                                 }
                             }
@@ -439,7 +481,8 @@ public class UrlConvert {
                             String cellValue = getCellValue(row, i);
                             if (StringUtils.isNotEmpty(cellValue)) {
                                 // 添加到下拉框中
-                                Col col = new Col(i, cellValue);
+                                Col col = new Col();
+                                col.setName(cellValue);
 //                                line3AfterCb.getItems().add(col);
                             }
                         }
@@ -911,31 +954,3 @@ public class UrlConvert {
     }
 }
 
-/**
- * 列信息字段，当前只包含列下标、列名
- */
-class Col {
-    private int index;
-    private String name;
-
-    Col(int index, String name) {
-        this.index = index;
-        this.name = name;
-    }
-
-    public int getIndex() {
-        return index;
-    }
-
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-}
