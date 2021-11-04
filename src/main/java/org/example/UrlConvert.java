@@ -1,8 +1,11 @@
 package org.example;
 
+import com.sun.javafx.scene.control.skin.ChoiceBoxSkin;
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -19,6 +22,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import javafx.util.StringConverter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -130,70 +134,13 @@ public class UrlConvert {
         line3After.setSpacing(10);
         line3After.setAlignment(Pos.CENTER_LEFT);
         Label labelCopy = new Label("请选择需要拷贝出来的列（可多选）：");
-        // 创建源文件中标题列的下拉列表
-//        ChoiceBox<Col> line3AfterCb = new ChoiceBox<>();
-        ChoiceBox<CheckBox> line3AfterCb = new ChoiceBox<>();
-        ComboBox<CheckBox> format = new MultiComboBox<CheckBox>().format();
-        CheckBox cbb = new CheckBox();
-        cbb.setText("cesshi");
-        cbb.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                format.setButtonCell(new ListCell<CheckBox>() {
-                    @Override
-                    protected void updateItem(CheckBox item, boolean empty) {
-                        super.updateItem(item, empty);
-                        // 使用过滤，选出被选中的对象
-                        String selected = format.getItems().stream().filter(CheckBox::isSelected)
-                                .map(CheckBox::getText)
-                                .collect(Collectors.joining(","));
-                        // 设置按钮的文本
-                        setText(selected);
-                    }
-                });
-            }
-        });
 
-        CheckBox cbb1 = new CheckBox();
-        cbb1.setText("test");
-        cbb1.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent event) {
-                format.setButtonCell(new ListCell<CheckBox>() {
-                    @Override
-                    protected void updateItem(CheckBox item, boolean empty) {
-                        super.updateItem(item, empty);
-                        // 使用过滤，选出被选中的对象
-                        String selected = format.getItems().stream().filter(CheckBox::isSelected)
-                                .map(CheckBox::getText)
-                                .collect(Collectors.joining(","));
-                        // 设置按钮的文本
-                        setText(selected);
-                    }
-                });
-            }
-        });
-        line3AfterCb.getItems().add(cbb);
-        line3AfterCb.getItems().add(cbb1);
-
-
-        format.getItems().addAll(cbb, cbb1);
-
-        line3After.getChildren().addAll(labelCopy, line3AfterCb, format);
-        // 处理下拉框的显示
-        line3AfterCb.setConverter(new StringConverter<CheckBox>() {
-            @Override
-            public String toString(CheckBox object) {
-                // 出
-                return object.getText();
-            }
-
-            @Override
-            public CheckBox fromString(String string) {
-                // 进
-                return null;
-            }
-        });
+        // 创建源文件中标题列的下拉列表------------------------------------------------------------------------------------
+        MultiComboBox<Col> mcb = new MultiComboBox<>();
+        ObservableList<Col> titles = FXCollections.observableArrayList();
+        ComboBox<Col> comboBox = mcb.createComboBox(titles, width / 3);
+        line3After.getChildren().addAll(labelCopy, comboBox);
+        // 创建源文件中标题列的下拉列表------------------------------------------------------------------------------------
 
         HBox line4Pre = new HBox();
         line4Pre.setSpacing(10);
@@ -302,8 +249,8 @@ public class UrlConvert {
         toggleGroup.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
             @Override
             public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
-                // 清空下拉选择框
-                line3AfterCb.getItems().clear();
+                // 清理多选框
+                comboBox.getItems().clear();
 
                 // 清空文本框中的值
                 ((TextField) bList.get(1)).clear();
@@ -339,8 +286,8 @@ public class UrlConvert {
         fileType.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
             @Override
             public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
-                // 清空下拉选择框
-                line3AfterCb.getItems().clear();
+                // 清理多选框
+                comboBox.getItems().clear();
 
                 String text = ((RadioButton) newValue).getText();
                 if (text.equals(excelRadio.getText())) {
@@ -387,16 +334,21 @@ public class UrlConvert {
                         XSSFSheet sheet = workbook.getSheetAt(0);
                         XSSFRow row = sheet.getRow(0);
                         int size = row.getLastCellNum();
-                        line3AfterCb.getItems().clear();
+
+                        ObservableList<Col> objects = FXCollections.observableArrayList();
                         for (int i = 0; i < size; i++) {
                             String cellValue = getCellValue(row, i);
                             if (StringUtils.isNotEmpty(cellValue)) {
                                 // 添加到下拉框中
                                 Col col = new Col();
                                 col.setName(cellValue);
-//                                line3AfterCb.getItems().add(col);
+                                col.setIndex(i);
+                                objects.add(col);
                             }
                         }
+
+                        comboBox.getItems().clear();
+                        comboBox.setItems(objects);
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (InvalidFormatException e) {
@@ -432,16 +384,19 @@ public class UrlConvert {
                             XSSFSheet sheet = workbook.getSheetAt(0);
                             XSSFRow row = sheet.getRow(0);
                             int size = row.getLastCellNum();
-                            line3AfterCb.getItems().clear();
+                            ObservableList<Col> objects = FXCollections.observableArrayList();
                             for (int i = 0; i < size; i++) {
                                 String cellValue = getCellValue(row, i);
                                 if (StringUtils.isNotEmpty(cellValue)) {
                                     // 添加到下拉框中
                                     Col col = new Col();
                                     col.setName(cellValue);
-//                                    line3AfterCb.getItems().add(col);
+                                    col.setIndex(i);
+                                    objects.add(col);
                                 }
                             }
+                            comboBox.getItems().clear();
+                            comboBox.setItems(objects);
                         } catch (IOException e) {
                             e.printStackTrace();
                         } catch (InvalidFormatException e) {
@@ -476,16 +431,18 @@ public class UrlConvert {
                         XSSFSheet sheet = workbook.getSheetAt(0);
                         XSSFRow row = sheet.getRow(0);
                         int size = row.getLastCellNum();
-                        line3AfterCb.getItems().clear();
+                        ObservableList<Col> objects = FXCollections.observableArrayList();
                         for (int i = 0; i < size; i++) {
                             String cellValue = getCellValue(row, i);
                             if (StringUtils.isNotEmpty(cellValue)) {
                                 // 添加到下拉框中
                                 Col col = new Col();
                                 col.setName(cellValue);
-//                                line3AfterCb.getItems().add(col);
+                                col.setIndex(i);
                             }
                         }
+                        comboBox.getItems().clear();
+                        comboBox.setItems(objects);
                     } catch (IOException e) {
                         e.printStackTrace();
                     } catch (InvalidFormatException e) {
@@ -952,5 +909,7 @@ public class UrlConvert {
         }
 
     }
+
+
 }
 

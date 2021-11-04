@@ -1,5 +1,8 @@
 package org.example;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+
 /**
  * @Author mavenr
  * @Classname  Col
@@ -8,14 +11,16 @@ package org.example;
  */
 public class Col {
     private String name;
-    private boolean selected;
+    private Integer index;
+    private BooleanProperty selected = new SimpleBooleanProperty();
 
-    public boolean isSelected() {
-        return selected;
+
+    public Integer getIndex() {
+        return index;
     }
 
-    public void setSelected(boolean selected) {
-        this.selected = selected;
+    public void setIndex(Integer index) {
+        this.index = index;
     }
 
     public String getName() {
@@ -24,5 +29,17 @@ public class Col {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isSelected() {
+        return selected.get();
+    }
+
+    public BooleanProperty selectedProperty() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected.set(selected);
     }
 }

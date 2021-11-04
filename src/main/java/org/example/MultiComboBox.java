@@ -1,11 +1,10 @@
 package org.example;
 
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import javafx.beans.property.BooleanProperty;
+import javafx.collections.ObservableList;
 import javafx.scene.control.*;
+import javafx.util.Callback;
 
 import java.util.stream.Collectors;
 
@@ -16,12 +15,10 @@ import java.util.stream.Collectors;
  * @Description 多选下拉框（依赖资料，https://cloud.tencent.com/developer/ask/189402）
  * @Date 2021/11/3 17:30
  */
-public class MultiComboBox<T extends CheckBox> {
+public class MultiComboBox<T extends Col> {
 
-    private ComboBox<T> cb;
-
-    public ComboBox<T> format() {
-        cb = new ComboBox<T>(){
+    public ComboBox<T> createComboBox(ObservableList<T> items, double prefWidth) {
+        ComboBox<T> comboBox = new ComboBox<T>(items){
             @Override
             protected Skin<?> createDefaultSkin() {
                 return new ComboBoxListViewSkin<T>(this) {
@@ -34,24 +31,57 @@ public class MultiComboBox<T extends CheckBox> {
             }
         };
 
-        // 设置button按钮上显示的文本
-//        cb.setOnAction(new EventHandler<ActionEvent>() {
-//            @Override
-//            public void handle(ActionEvent event) {
-//                cb.setButtonCell(new ListCell<T>() {
-//                    @Override
-//                    protected void updateItem(T item, boolean empty) {
-//                        super.updateItem(item, empty);
-//                        // 使用过滤，选出被选中的对象
-//                        String selected = cb.getItems().stream().filter(CheckBox::isSelected)
-//                                .map(CheckBox::getText)
-//                                .collect(Collectors.joining(","));
-//                        // 设置按钮的文本
-//                        setText(selected);
-//                    }
-//                });
-//            }
-//        });
-        return cb;
+        comboBox.setPrefWidth(prefWidth);
+        comboBox.setItems(items);
+
+        comboBox.setCellFactory(new Callback<ListView<T>, ListCell<T>>() {
+            @Override
+            public ListCell<T> call(ListView<T> param) {
+                return new ListCell<T>(){
+                    private CheckBox cb = new CheckBox();
+                    private BooleanProperty booleanProperty;
+                    {
+                        cb.setOnAction(e -> getListView().getSelectionModel().select(getItem()));
+                    }
+
+                    @Override
+                    protected void updateItem(T item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (!empty) {
+                            if (booleanProperty != null) {
+                                // 解绑多选框的选择状态
+                                cb.selectedProperty().unbindBidirectional(booleanProperty);
+                            }
+                            // 获取下拉项目中项目的选择状态
+                            booleanProperty = item.selectedProperty();
+                            // 设置多选框的选择状态
+                            cb.selectedProperty().bindBidirectional(booleanProperty);
+                            setGraphic(cb);
+                            setText(item.getName());
+                        } else {
+                            setGraphic(null);
+                            setText(null);
+                        }
+                    }
+                };
+            }
+        });
+
+        comboBox.setButtonCell(new ListCell<T>() {
+            @Override
+            protected void updateItem(T item, boolean empty) {
+                super.updateItem(item, empty);
+                // 使用过滤，选出被选中的对象
+                String selected = comboBox.getItems().stream().filter(T::isSelected)
+                        .map(T::getName)
+                        .collect(Collectors.joining(","));
+                // 设置按钮的文本---------------------------------------------------------
+                setText(selected);
+            }
+        });
+
+        return comboBox;
     }
+
+
 }
