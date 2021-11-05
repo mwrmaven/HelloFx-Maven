@@ -1,7 +1,5 @@
 package org.example;
 
-import com.sun.javafx.scene.control.skin.ChoiceBoxSkin;
-import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -16,14 +14,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.CheckBoxListCell;
-import javafx.scene.control.cell.ChoiceBoxListCell;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.util.Callback;
-import javafx.util.StringConverter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.CellType;
@@ -38,12 +33,12 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @author mavenr
@@ -119,14 +114,10 @@ public class UrlConvert {
         tf.setPrefWidth(200);
         tf.setVisible(true);
         tf.setPromptText("请输入url在excel文件中的第几列");
-        TextField goodsTf = new TextField();
-        goodsTf.setPrefWidth(200);
-        goodsTf.setVisible(true);
-        goodsTf.setPromptText("请输入货号在excel文件中的第几列");
 
         HBox line3 = new HBox();
         line3.setSpacing(10);
-        line3.getChildren().addAll(txtRadio, excelRadio, tf, goodsTf);
+        line3.getChildren().addAll(txtRadio, excelRadio, tf);
         line3.setAlignment(Pos.CENTER_LEFT);
 
         // 选择要拷贝出来的列
@@ -135,12 +126,11 @@ public class UrlConvert {
         line3After.setAlignment(Pos.CENTER_LEFT);
         Label labelCopy = new Label("请选择需要拷贝出来的列（可多选）：");
 
-        // 创建源文件中标题列的下拉列表------------------------------------------------------------------------------------
+        // 创建源文件中标题列的下拉列表
         MultiComboBox<Col> mcb = new MultiComboBox<>();
         ObservableList<Col> titles = FXCollections.observableArrayList();
         ComboBox<Col> comboBox = mcb.createComboBox(titles, width / 3);
         line3After.getChildren().addAll(labelCopy, comboBox);
-        // 创建源文件中标题列的下拉列表------------------------------------------------------------------------------------
 
         HBox line4Pre = new HBox();
         line4Pre.setSpacing(10);
@@ -293,7 +283,6 @@ public class UrlConvert {
                 if (text.equals(excelRadio.getText())) {
                     // 显示输入框
                     tf.setVisible(true);
-                    goodsTf.setVisible(true);
 
                     File file = null;
                     // 判断源文件格式
@@ -359,9 +348,7 @@ public class UrlConvert {
                 } else {
                     // 不显示输入框
                     tf.setVisible(false);
-                    goodsTf.setVisible(false);
                     tf.setText("");
-                    goodsTf.setText("");
                 }
             }
         });
@@ -457,6 +444,17 @@ public class UrlConvert {
         execute.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
+                // 获取要拷贝出来的列
+                System.out.println("获取到了选中的列名：" + comboBox.getButtonCell().getText());
+                ObservableList<Col> items = comboBox.getItems();
+                List<Col> cols = new ArrayList<>();
+                for (Col c : items) {
+                    if (c.isSelected()) {
+                        // 选中的列信息
+                        cols.add(c);
+                    }
+                }
+
                 // 设置配置文件
                 properties.setProperty(AFTERFIXEDPRE, fixedAfterPreTf.getText());
                 properties.setProperty(FIXEDAFTERFIRST, fixedPreAfterFirstTf.getText());
@@ -511,10 +509,8 @@ public class UrlConvert {
 
                 // excel中url所在的列数
                 int colIndex = -1;
-                int goodColIndex = -1;
                 if (excelRadio.getText().equals(type) && !onlyTextLineRadio.getText().equals(toggleText)) {
                     colIndex = Integer.parseInt(tf.getText().trim()) - 1;
-                    goodColIndex = Integer.parseInt(goodsTf.getText().trim()) - 1;
                 }
 
                 if (toggleText.equals(onlyTextLineRadio.getText())) {
@@ -553,14 +549,14 @@ public class UrlConvert {
                     // 获取所有文件
                     File folder = new File(folderPath);
                     File[] files = folder.listFiles();
-                    batchFilesAndExportToExcel(files, type, colIndex, goodColIndex, startPre, startEnd, afterPre,
+                    batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
                             afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText, selected, fixedAfterPre);
                 } else {
                     // 如果为文件中url批量转换
                     String filePath = ((TextField) bList.get(1)).getText();
                     File file = new File(filePath);
                     File[] files = new File[]{file};
-                    batchFilesAndExportToExcel(files, type, colIndex, goodColIndex, startPre, startEnd, afterPre,
+                    batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
                             afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText, selected, fixedAfterPre);
                 }
             }
@@ -576,22 +572,23 @@ public class UrlConvert {
      * @param files
      * @param fileType
      * @param colIndex
-     * @param goodColIndex
+     * @param cols
      * @param startPre
      * @param startEnd
      * @param afterPre
      * @param afterEnd
      * @param encodeType
      */
-    private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, int goodColIndex,
+    private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, List<Col> cols,
                                             String startPre, String startEnd, String afterPre, String afterEnd,
                                             String encodeType, TextArea ta, boolean preEncodeFlag, String preEncodeFixed,
                                             boolean fixedFlag, String fixed) {
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date now = new Date();
 
-        System.out.println("前置是否使用固定：" + preEncodeFlag + " 前置固定" + preEncodeFixed);
+        System.out.println("编译前的url后面追加固定字符（在后置字符前）" + preEncodeFlag + " 固定" + preEncodeFixed);
+        System.out.println("编译后在url前面追加的固定字符(在前置字符前) " + fixedFlag + " 固定" + fixed);
         // 获取文件路径
         String path = files[0].getPath();
         // 结果文件路径
@@ -602,12 +599,7 @@ public class UrlConvert {
         // 冻结首行
         sheet.createFreezePane(0, 1);
         XSSFRow row = sheet.createRow(0);
-        XSSFCell cell0 = row.createCell(0);
-        cell0.setCellValue("货号");
-        XSSFCell cell1 = row.createCell(1);
-        cell1.setCellValue("原URL");
-        XSSFCell cell2 = row.createCell(2);
-        cell2.setCellValue("处理后的URL");
+
         // 设置格式
         XSSFCellStyle cs = workbook.createCellStyle();
         // 设置填充方式和背景颜色
@@ -615,7 +607,20 @@ public class UrlConvert {
         cs.setFillForegroundColor(new XSSFColor(new Color(153, 153, 153)));
         // 设置居中方式
         cs.setAlignment(HorizontalAlignment.CENTER);
-        cell0.setCellStyle(cs);
+
+        // 遍历选中的行
+        int count = -1;
+        for (Col c : cols) {
+            count++;
+            XSSFCell cell = row.createCell(count);
+            cell.setCellValue(c.getName());
+            cell.setCellStyle(cs);
+        }
+        XSSFCell cell1 = row.createCell(count + 1);
+        cell1.setCellValue("原URL");
+        XSSFCell cell2 = row.createCell(count + 2);
+        cell2.setCellValue("处理后的URL");
+
         cell1.setCellStyle(cs);
         cell2.setCellStyle(cs);
 
@@ -749,7 +754,6 @@ public class UrlConvert {
                             if (cell == null) {
                                 continue;
                             }
-                            String gn = getCellValue(rowi, goodColIndex);
 
                             String sourceUrl = cell.getStringCellValue();
                             if (StringUtils.isEmpty(sourceUrl)) {
@@ -768,11 +772,17 @@ public class UrlConvert {
                             }
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
-                            XSSFCell gnCell = rowNew.createCell(0);
-                            gnCell.setCellValue(gn);
-                            XSSFCell sourceCell = rowNew.createCell(1);
+                            int max = -1;
+                            for (Col c : cols) {
+                                max++;
+                                int index = c.getIndex();
+                                XSSFCell gnCell = rowNew.createCell(max);
+                                String gn = getCellValue(rowi, index);
+                                gnCell.setCellValue(gn);
+                            }
+                            XSSFCell sourceCell = rowNew.createCell(max + 1);
                             sourceCell.setCellValue(sourceUrl);
-                            XSSFCell targetCell = rowNew.createCell(2);
+                            XSSFCell targetCell = rowNew.createCell(max + 2);
                             targetCell.setCellValue(result);
                         }
                     } else {
@@ -785,7 +795,6 @@ public class UrlConvert {
                             if (cell == null) {
                                 continue;
                             }
-                            String gn = getCellValue(rowi, goodColIndex);
                             String sourceUrl = cell.getStringCellValue();
                             if (StringUtils.isEmpty(sourceUrl)) {
                                 continue;
@@ -803,11 +812,17 @@ public class UrlConvert {
                             }
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
-                            XSSFCell gnCell = rowNew.createCell(0);
-                            gnCell.setCellValue(gn);
-                            XSSFCell sourceCell = rowNew.createCell(1);
+                            int max = -1;
+                            for (Col c : cols) {
+                                max++;
+                                int index = c.getIndex();
+                                XSSFCell gnCell = rowNew.createCell(max);
+                                String gn = getCellValue(rowi, index);
+                                gnCell.setCellValue(gn);
+                            }
+                            XSSFCell sourceCell = rowNew.createCell(max + 1);
                             sourceCell.setCellValue(sourceUrl);
-                            XSSFCell targetCell = rowNew.createCell(2);
+                            XSSFCell targetCell = rowNew.createCell(max + 2);
                             targetCell.setCellValue(result);
                         }
                     }
