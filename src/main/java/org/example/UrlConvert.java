@@ -510,6 +510,10 @@ public class UrlConvert {
                 // excel中url所在的列数
                 int colIndex = -1;
                 if (excelRadio.getText().equals(type) && !onlyTextLineRadio.getText().equals(toggleText)) {
+                    if (StringUtils.isEmpty(tf.getText().trim())) {
+                        ta.setText("请输入url在excel文件中的第几列");
+                        return;
+                    }
                     colIndex = Integer.parseInt(tf.getText().trim()) - 1;
                 }
 
