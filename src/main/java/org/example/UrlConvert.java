@@ -149,7 +149,6 @@ public class UrlConvert {
                 preFixes.getItems().add(p);
             }
         }
-
         preFixes.focusedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
@@ -173,9 +172,33 @@ public class UrlConvert {
                 }
             }
         });
+        // 删除按钮
+        Button deleteButton = new Button("删除选中项");
+        deleteButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                // 移除选中的项
+                String selected = preFixes.getEditor().getText();
+                preFixes.getItems().remove(selected);
+                // 将编辑中设置为空
+                preFixes.getEditor().setText("");
+                // 保存combobox中的选项写入到配置文件
+                String collect = preFixes.getItems().stream().filter(StringUtils::isNotEmpty).collect(Collectors.joining(","));
+                if (!collect.equals(fixedAfterFirstParam)) {
+                    // 将参数写入到配置文件
+                    try {
+                        // 设置配置文件
+                        properties.setProperty(FIXEDAFTERFIRST, collect);
+                        properties.store(new FileOutputStream(configFile), "重写"+FIXEDAFTERFIRST+"参数");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
 
 
-        line4Pre.getChildren().addAll(fixedPreAfterFirstLable, fixedPreAfterFirstCb, preFixes);
+        line4Pre.getChildren().addAll(fixedPreAfterFirstLable, fixedPreAfterFirstCb, preFixes, deleteButton);
 
         HBox line4 = new HBox();
         line4.setSpacing(10);
