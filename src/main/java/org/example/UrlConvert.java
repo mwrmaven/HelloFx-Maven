@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author mavenr
@@ -138,24 +139,33 @@ public class UrlConvert {
         Label fixedPreAfterFirstLable = new Label("编译前在url后面追加的固定字符(在后置字符前)：");
         CheckBox fixedPreAfterFirstCb = new CheckBox("是否使用追加固定字符");
         fixedPreAfterFirstCb.setSelected(true);
-        TextField fixedPreAfterFirstTf = new TextField();
+        //---------------------------------------------------------
         String fixedAfterFirstParam = properties.getProperty(FIXEDAFTERFIRST);
-        // 加载配置文件中的参数
-        if (StringUtils.isNotEmpty(fixedAfterFirstParam)) {
-            fixedPreAfterFirstTf.setText(fixedAfterFirstParam);
+        ComboBox<String> preFixes = new ComboBox<>();
+        preFixes.setEditable(true);
+        String[] splitParams = fixedAfterFirstParam.split(",");
+        for (String p : splitParams) {
+            if (StringUtils.isNotEmpty(p)) {
+                preFixes.getItems().add(p);
+            }
         }
-        line4Pre.getChildren().addAll(fixedPreAfterFirstLable, fixedPreAfterFirstCb, fixedPreAfterFirstTf);
-        String fixedPreAfterFirstTfText= fixedPreAfterFirstTf.getText();
-        // 失去焦点触发保存事件
-        fixedPreAfterFirstTf.focusedProperty().addListener(new ChangeListener<Boolean>() {
+
+        preFixes.focusedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                // 判断内容改变，则保存内容
-                if (!fixedPreAfterFirstTfText.equals(fixedPreAfterFirstTf.getText())) {
-                    // 设置配置文件
-                    properties.setProperty(FIXEDAFTERFIRST, fixedPreAfterFirstTf.getText());
+                // combobox输入的值
+                String newItem = preFixes.getEditor().getText();
+                if (StringUtils.isNotEmpty(newItem) && !preFixes.getItems().contains(newItem)) {
+                    preFixes.getItems().add(newItem);
+                }
+
+                // 将选项写入到配置文件
+                String collect = preFixes.getItems().stream().filter(StringUtils::isNotEmpty).collect(Collectors.joining(","));
+                if (!collect.equals(fixedAfterFirstParam)) {
+                    // 将参数写入到配置文件
                     try {
-                        // 将参数写入到配置文件
+                        // 设置配置文件
+                        properties.setProperty(FIXEDAFTERFIRST, collect);
                         properties.store(new FileOutputStream(configFile), "重写"+FIXEDAFTERFIRST+"参数");
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -163,6 +173,9 @@ public class UrlConvert {
                 }
             }
         });
+
+
+        line4Pre.getChildren().addAll(fixedPreAfterFirstLable, fixedPreAfterFirstCb, preFixes);
 
         HBox line4 = new HBox();
         line4.setSpacing(10);
@@ -444,6 +457,10 @@ public class UrlConvert {
         execute.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
+                // 获取下拉框中的选项
+                String fixedPreAfterFirst = preFixes.getEditor().getText();
+                System.out.println("下拉框中输入的值: " + fixedPreAfterFirst);
+
                 // 获取要拷贝出来的列
                 System.out.println("获取到了选中的列名：" + comboBox.getButtonCell().getText());
                 ObservableList<Col> items = comboBox.getItems();
@@ -456,8 +473,6 @@ public class UrlConvert {
                 }
 
                 // 设置配置文件
-                properties.setProperty(AFTERFIXEDPRE, fixedAfterPreTf.getText());
-                properties.setProperty(FIXEDAFTERFIRST, fixedPreAfterFirstTf.getText());
                 try {
                     //
                     properties.store(new FileOutputStream(configFile), "重写"+AFTERFIXEDPRE+"参数");
@@ -500,7 +515,7 @@ public class UrlConvert {
                 String type = ((RadioButton) fileType.getSelectedToggle()).getText();
                 // 获取是否在编译前的url后面追加固定字符（在后置字符前），以及固定字符本身
                 boolean preEncodeAfterFirstSelected = fixedPreAfterFirstCb.isSelected();
-                String preEncodeAfterFirstText = fixedPreAfterFirstTf.getText();
+                String preEncodeAfterFirstText = fixedPreAfterFirst;
                 System.out.println("编译前固定 " + preEncodeAfterFirstText);
 
                 // 获取是否在编译后的url前面追加固定字符（在前置字符前），以及固定字符本身
