@@ -2,22 +2,16 @@ package org.example;
 
 
 import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import jdk.nashorn.internal.runtime.linker.BoundCallable;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Classname App
@@ -36,6 +30,7 @@ public class App extends Application {
 
         // 使用TabPane，页面切换
         TabPane tp = new TabPane();
+        tp.setTabMinHeight(30);
 
         // 页面1、2、3、4、5、6
         Tab tab1 = new Tab(Common.TOP_BUTTON_1);
@@ -44,6 +39,14 @@ public class App extends Application {
         Tab tab4 = new Tab(Common.TOP_BUTTON_4);
         Tab tab5 = new Tab(Common.TOP_BUTTON_5);
         Tab tab6 = new Tab(Common.TOP_BUTTON_6);
+        // 设置切换tab的样式
+        String style = "-fx-font-weight: bold; -fx-border-radius: 10 10 0 0; -fx-background-radius: 10 10 0 0; -fx-focus-color: transparent";
+        tab1.setStyle(style);
+        tab2.setStyle(style);
+        tab3.setStyle(style);
+        tab4.setStyle(style);
+        tab5.setStyle(style);
+        tab6.setStyle(style);
 
         // 不可关闭
         tab1.setClosable(false);
