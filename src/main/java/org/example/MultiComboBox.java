@@ -34,6 +34,7 @@ public class MultiComboBox<T extends Col> {
         comboBox.setPrefWidth(prefWidth);
         comboBox.setItems(items);
 
+        // 设置下拉元素的显示内容
         comboBox.setCellFactory(new Callback<ListView<T>, ListCell<T>>() {
             @Override
             public ListCell<T> call(ListView<T> param) {
@@ -67,6 +68,7 @@ public class MultiComboBox<T extends Col> {
             }
         });
 
+        // 设置选项按钮上的显示内容
         comboBox.setButtonCell(new ListCell<T>() {
             @Override
             protected void updateItem(T item, boolean empty) {
