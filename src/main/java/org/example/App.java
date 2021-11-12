@@ -2,8 +2,11 @@ package org.example;
 
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
@@ -30,7 +33,8 @@ public class App extends Application {
 
         // 使用TabPane，页面切换
         TabPane tp = new TabPane();
-        tp.setTabMinHeight(30);
+        tp.setStyle("-fx-font-size: 14;");
+        tp.setTabMinHeight(50);
 
         // 页面1、2、3、4、5、6
         Tab tab1 = new Tab(Common.TOP_BUTTON_1);
@@ -40,13 +44,15 @@ public class App extends Application {
         Tab tab5 = new Tab(Common.TOP_BUTTON_5);
         Tab tab6 = new Tab(Common.TOP_BUTTON_6);
         // 设置切换tab的样式
-        String style = "-fx-font-weight: bold; -fx-border-radius: 10 10 0 0; -fx-background-radius: 10 10 0 0; -fx-focus-color: transparent";
-        tab1.setStyle(style);
-        tab2.setStyle(style);
-        tab3.setStyle(style);
-        tab4.setStyle(style);
-        tab5.setStyle(style);
-        tab6.setStyle(style);
+        String style = "-fx-font-weight: bold; " +
+                "-fx-background-radius: 10 10 0 0; " +
+                "-fx-focus-color: transparent; -fx-text-base-color: white; ";
+        tab1.setStyle(style + "-fx-background-color: CornflowerBlue; -fx-pref-height: 30; ");
+        tab2.setStyle(style + "-fx-background-color: LightSeaGreen;  -fx-pref-height: 30; ");
+        tab3.setStyle(style + "-fx-background-color: Orange;  -fx-pref-height: 30; ");
+        tab4.setStyle(style + "-fx-background-color: SandyBrown;  -fx-pref-height: 30; ");
+        tab5.setStyle(style + "-fx-background-color: Pink;  -fx-pref-height: 40; ");
+        tab6.setStyle(style + "-fx-background-color: MediumPurple;  -fx-pref-height: 30; ");
 
         // 不可关闭
         tab1.setClosable(false);
@@ -56,7 +62,21 @@ public class App extends Application {
         tab5.setClosable(false);
         tab6.setClosable(false);
 
+        // 将tab页面添加到tabpane面板
         tp.getTabs().addAll(tab1, tab2, tab3, tab4, tab5, tab6);
+
+        // 设置切换tab时高度的设置
+        tp.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Tab>() {
+            @Override
+            public void changed(ObservableValue<? extends Tab> observable, Tab oldValue, Tab newValue) {
+                // 改变标签的状态
+                String newStyle = newValue.getStyle();
+                newValue.setStyle(newStyle.replace(" -fx-pref-height: 30; ", " -fx-pref-height: 40; "));
+
+                String oldStyle = oldValue.getStyle();
+                oldValue.setStyle(oldStyle.replace(" -fx-pref-height: 40; ", " -fx-pref-height: 30; "));
+            }
+        });
 
         // 获取屏幕的宽、高
         Screen screen = Screen.getPrimary();
@@ -80,8 +100,8 @@ public class App extends Application {
         primaryStage.setMaxHeight(height);
         primaryStage.show();
 
-        // 默认选中第一页
-        tp.getSelectionModel().select(tab1);
+        // 默认选中url编码批量转换页
+        tp.getSelectionModel().select(tab5);
 
         // 基本的文件名字符替换
         AnchorPane replacePane = new ReplacePane().replacePane(primaryStage, width);

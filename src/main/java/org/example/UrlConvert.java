@@ -14,6 +14,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -25,6 +26,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.xssf.usermodel.*;
+import org.example.button.BatchButton;
 
 import java.awt.*;
 import java.io.*;
@@ -267,7 +269,11 @@ public class UrlConvert {
         decodeRadio.setToggleGroup(encodeGroup);
         line6.getChildren().addAll(encodeRadio, decodeRadio);
 
-        Button execute = new Button("批量处理");
+        // 批量处理按钮
+        BatchButton button = new BatchButton();
+        Button execute = button.createInstance();
+
+        // 页面中的文本域
         TextArea ta = new TextArea();
         ta.setWrapText(true);
 
