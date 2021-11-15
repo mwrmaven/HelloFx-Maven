@@ -47,9 +47,9 @@ public class App extends Application {
         String style = "-fx-font-weight: bold; " +
                 "-fx-background-radius: 10 10 0 0; " +
                 "-fx-focus-color: transparent; -fx-text-base-color: white; ";
-        tab1.setStyle(style + "-fx-background-color: CornflowerBlue; -fx-pref-height: 30; ");
+        tab1.setStyle(style + "-fx-background-color: Orange; -fx-pref-height: 30; ");
         tab2.setStyle(style + "-fx-background-color: LightSeaGreen;  -fx-pref-height: 30; ");
-        tab3.setStyle(style + "-fx-background-color: Orange;  -fx-pref-height: 30; ");
+        tab3.setStyle(style + "-fx-background-color: CornflowerBlue;  -fx-pref-height: 30; ");
         tab4.setStyle(style + "-fx-background-color: SandyBrown;  -fx-pref-height: 30; ");
         tab5.setStyle(style + "-fx-background-color: Pink;  -fx-pref-height: 40; ");
         tab6.setStyle(style + "-fx-background-color: MediumPurple;  -fx-pref-height: 30; ");
@@ -91,7 +91,7 @@ public class App extends Application {
         primaryStage.setTitle(Common.STAGE_TITLE);
         primaryStage.getIcons().add(new Image("image/folder.png"));
         double w = width / 2 + 200;
-        double h = height / 2 + 200;
+        double h = height / 2 + 300;
         primaryStage.setWidth(w);
         primaryStage.setHeight(h);
         primaryStage.setMinWidth(w);

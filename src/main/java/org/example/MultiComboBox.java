@@ -82,6 +82,9 @@ public class MultiComboBox<T extends Col> {
             }
         });
 
+        // 设置样式
+        comboBox.setStyle("-fx-background-color: #DBDBDB; -fx-background-radius: 4;");
+
         return comboBox;
     }
 
