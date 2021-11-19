@@ -15,6 +15,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import org.example.button.BatchButton;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -163,9 +164,13 @@ public class SortTextLine {
         sortType.getChildren().addAll(sortLabel, asc, desc);
         vBox.getChildren().add(sortType);
 
-        Button begin = new Button("开始处理");
-        begin.setPrefWidth(100);
-        begin.setAlignment(Pos.CENTER);
+        // 按钮
+        BatchButton batchButton = new BatchButton();
+        batchButton.setText("开始处理");
+        Button begin = batchButton.createInstance();
+//        Button begin = new Button("开始处理");
+//        begin.setPrefWidth(100);
+//        begin.setAlignment(Pos.CENTER);
         vBox.getChildren().add(begin);
 
 
