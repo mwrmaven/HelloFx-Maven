@@ -6,14 +6,12 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
-import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import jdk.nashorn.internal.runtime.linker.BoundCallable;
 
 
 /**
@@ -30,7 +28,6 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-
         // 使用TabPane，页面切换
         TabPane tp = new TabPane();
         tp.setStyle("-fx-font-size: 14;");
@@ -48,8 +45,8 @@ public class App extends Application {
                 "-fx-background-radius: 10 10 0 0; " +
                 "-fx-focus-color: transparent; -fx-text-base-color: white; ";
         tab1.setStyle(style + "-fx-background-color: CornflowerBlue; -fx-pref-height: 30; ");
-        tab2.setStyle(style + "-fx-background-color: LightSeaGreen;  -fx-pref-height: 30; ");
-        tab3.setStyle(style + "-fx-background-color: Orange;  -fx-pref-height: 30; ");
+        tab2.setStyle(style + "-fx-background-color: Orange;  -fx-pref-height: 30; ");
+        tab3.setStyle(style + "-fx-background-color: LightSeaGreen;  -fx-pref-height: 30; ");
         tab4.setStyle(style + "-fx-background-color: SandyBrown;  -fx-pref-height: 30; ");
         tab5.setStyle(style + "-fx-background-color: Pink;  -fx-pref-height: 40; ");
         tab6.setStyle(style + "-fx-background-color: MediumPurple;  -fx-pref-height: 30; ");
