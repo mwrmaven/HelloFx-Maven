@@ -14,6 +14,7 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
+import org.example.button.BatchButton;
 
 import java.io.File;
 import java.io.IOException;
@@ -188,7 +189,9 @@ public class IncreaseIdentificationPane {
             hBox7.getChildren().addAll(item);
         });
 
-        Button edit = new Button("批量修改");
+        BatchButton batchButton = new BatchButton();
+        batchButton.setText("批量修改");
+        Button edit = batchButton.createInstance();
         TextArea ta = new TextArea();
         ta.setEditable(false);
         FlowPane root = new FlowPane();

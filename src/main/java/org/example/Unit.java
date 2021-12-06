@@ -56,6 +56,10 @@ public class Unit {
         nodes.add(buttonFileChoose);
         nodes.add(text);
 
+        // 设置button样式
+        String style = "-fx-background-color: #FFD700; -fx-background-radius: 4";
+        buttonFileChoose.setStyle(style);
+
         return nodes;
     }
 
@@ -96,6 +100,10 @@ public class Unit {
         ArrayList<Node> nodes = new ArrayList<>();
         nodes.add(buttonFileChoose);
         nodes.add(text);
+
+        // 设置button样式
+        String style = "-fx-background-color: #ffcc33; -fx-background-radius: 4";
+        buttonFileChoose.setStyle(style);
 
         return nodes;
     }

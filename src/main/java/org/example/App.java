@@ -40,16 +40,19 @@ public class App extends Application {
         Tab tab4 = new Tab(Common.TOP_BUTTON_4);
         Tab tab5 = new Tab(Common.TOP_BUTTON_5);
         Tab tab6 = new Tab(Common.TOP_BUTTON_6);
+        Tab tab7 = new Tab("数据库");
         // 设置切换tab的样式
         String style = "-fx-font-weight: bold; " +
                 "-fx-background-radius: 10 10 0 0; " +
                 "-fx-focus-color: transparent; -fx-text-base-color: white; ";
+
         tab1.setStyle(style + "-fx-background-color: CornflowerBlue; -fx-pref-height: 30; ");
         tab2.setStyle(style + "-fx-background-color: Orange;  -fx-pref-height: 30; ");
         tab3.setStyle(style + "-fx-background-color: LightSeaGreen;  -fx-pref-height: 30; ");
         tab4.setStyle(style + "-fx-background-color: SandyBrown;  -fx-pref-height: 30; ");
         tab5.setStyle(style + "-fx-background-color: Pink;  -fx-pref-height: 40; ");
         tab6.setStyle(style + "-fx-background-color: MediumPurple;  -fx-pref-height: 30; ");
+        tab7.setStyle(style + "-fx-background-color: MediumPurple;  -fx-pref-height: 30; ");
 
         // 不可关闭
         tab1.setClosable(false);
@@ -58,9 +61,10 @@ public class App extends Application {
         tab4.setClosable(false);
         tab5.setClosable(false);
         tab6.setClosable(false);
+        tab7.setClosable(false);
 
         // 将tab页面添加到tabpane面板
-        tp.getTabs().addAll(tab1, tab2, tab3, tab4, tab5, tab6);
+        tp.getTabs().addAll(tab1, tab2, tab3, tab4, tab5, tab6, tab7);
 
         // 设置切换tab时高度的设置
         tp.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Tab>() {
@@ -88,7 +92,7 @@ public class App extends Application {
         primaryStage.setTitle(Common.STAGE_TITLE);
         primaryStage.getIcons().add(new Image("image/folder.png"));
         double w = width / 2 + 200;
-        double h = height / 2 + 200;
+        double h = height / 2 + 300;
         primaryStage.setWidth(w);
         primaryStage.setHeight(h);
         primaryStage.setMinWidth(w);
@@ -120,8 +124,7 @@ public class App extends Application {
         tab4.setContent(stl);
         tab5.setContent(urlConvert);
         tab6.setContent(downloadDialog);
-
-
+        tab7.setContent(new Database().handle(primaryStage, width, h));
     }
 
 

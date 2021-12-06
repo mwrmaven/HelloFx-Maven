@@ -17,6 +17,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
+import org.example.button.BatchButton;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -76,7 +77,10 @@ public class DownLoadMediaFromArticle {
         HBox buttonH = new HBox();
         buttonH.setAlignment(Pos.CENTER_LEFT);
         // 按钮
-        Button button = new Button("抓取");
+        BatchButton batchButton = new BatchButton();
+        batchButton.setText("抓取");
+        Button button = batchButton.createInstance();
+
         buttonH.getChildren().add(button);
 
         // 结果显示区域

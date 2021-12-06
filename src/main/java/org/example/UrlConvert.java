@@ -14,12 +14,12 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.CellType;
@@ -114,9 +114,10 @@ public class UrlConvert {
         txtRadio.setToggleGroup(fileType);
         excelRadio.setToggleGroup(fileType);
         TextField tf = new TextField();
-        tf.setPrefWidth(200);
+        tf.setPrefWidth(300);
         tf.setVisible(true);
         tf.setPromptText("请输入url在excel文件中的第几列");
+        // 设置样式为下划线
 
         HBox line3 = new HBox();
         line3.setSpacing(10);
@@ -131,6 +132,8 @@ public class UrlConvert {
 
         // 创建源文件中标题列的下拉列表
         MultiComboBox<Col> mcb = new MultiComboBox<>();
+        // 设置样式
+
         ObservableList<Col> titles = FXCollections.observableArrayList();
         ComboBox<Col> comboBox = mcb.createComboBox(titles, width / 3);
         line3After.getChildren().addAll(labelCopy, comboBox);
@@ -144,6 +147,7 @@ public class UrlConvert {
         //---------------------------------------------------------
         String fixedAfterFirstParam = properties.getProperty(FIXEDAFTERFIRST);
         ComboBox<String> preFixes = new ComboBox<>();
+        // 设置格式
         preFixes.setEditable(true);
         String[] splitParams = fixedAfterFirstParam.split(",");
         for (String p : splitParams) {
@@ -176,6 +180,7 @@ public class UrlConvert {
         });
         // 删除按钮
         Button deleteButton = new Button("删除选中项");
+        deleteButton.setStyle("-fx-background-radius: 4; -fx-background-color: #878787; -fx-text-fill: white;");
         deleteButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -208,9 +213,11 @@ public class UrlConvert {
         Label label = new Label("编译前在url上追加的字符：");
         Label preLabel = new Label("前置字符");
         TextField preTf = new TextField();
+        // 设置样式为下划线
         preTf.setPromptText("没有则不输入");
         Label endLine = new Label("后置字符");
         TextField endTf = new TextField();
+        // 设置样式为下划线
         endTf.setPromptText("没有则不输入");
         line4.getChildren().addAll(label, preLabel, preTf, endLine, endTf);
 
@@ -221,6 +228,7 @@ public class UrlConvert {
         CheckBox fixedAfterPreCb = new CheckBox("是否使用追加固定字符");
         fixedAfterPreCb.setSelected(true);
         TextField fixedAfterPreTf = new TextField();
+        // 设置样式为下划线
         String param = properties.getProperty(AFTERFIXEDPRE);
         // 加载配置文件中的参数
         if (StringUtils.isNotEmpty(param)) {
@@ -252,9 +260,11 @@ public class UrlConvert {
         Label afterlabel = new Label("编译后在url上追加的字符：");
         Label afterPreLabel = new Label("前置字符");
         TextField afterPreTf = new TextField();
+        // 设置样式为下划线
         afterPreTf.setPromptText("没有则不输入");
         Label afterEndLine = new Label("后置字符");
         TextField afterEndTf = new TextField();
+        // 设置样式为下划线
         afterEndTf.setPromptText("没有则不输入");
         line5.getChildren().addAll(afterlabel, afterPreLabel, afterPreTf, afterEndLine, afterEndTf);
 
@@ -721,6 +731,7 @@ public class UrlConvert {
                             sourceCell.setCellValue(line);
                             XSSFCell targetCell = rowNew.createCell(1);
                             targetCell.setCellValue(result);
+
                         }
                     } else {
                         while ((line = br.readLine()) != null) {
@@ -744,6 +755,7 @@ public class UrlConvert {
                             sourceCell.setCellValue(line);
                             XSSFCell targetCell = rowNew.createCell(1);
                             targetCell.setCellValue(result);
+
                         }
                     }
                     br.close();
@@ -872,6 +884,7 @@ public class UrlConvert {
                             sourceCell.setCellValue(sourceUrl);
                             XSSFCell targetCell = rowNew.createCell(max + 2);
                             targetCell.setCellValue(result);
+
                         }
                     }
                     source.close();

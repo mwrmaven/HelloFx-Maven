@@ -14,6 +14,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.example.button.BatchButton;
 
 import java.util.List;
 
@@ -38,7 +39,6 @@ public class ReplacePane {
         }
         // 设置横向布局中组件的间隔，以及padding
         hBox.setSpacing(20);
-        hBox.setPadding(new Insets(10));
 
         Label label1 = new Label();
         label1.setText("旧字符");
@@ -50,14 +50,15 @@ public class ReplacePane {
         TextField newFiled = new TextField();
 
         HBox hBox1 = new HBox();
-        hBox1.setLayoutX(0);
+        hBox1.setLayoutX(10);
         hBox1.setLayoutY(30);
         hBox1.getChildren().addAll(label1, oldFiled, label2, newFiled);
         hBox1.setSpacing(10);
         hBox1.setAlignment(Pos.CENTER_LEFT);
-        hBox1.setPadding(new Insets(10));
 
-        Button edit = new Button("批量修改");
+        BatchButton batchButton = new BatchButton();
+        batchButton.setText("批量修改");
+        Button edit = batchButton.createInstance();
         TextArea ta = new TextArea();
         ta.setEditable(false);
         VBox vBox = new VBox();
@@ -65,7 +66,6 @@ public class ReplacePane {
         vBox.setLayoutY(60);
         vBox.getChildren().addAll(edit, ta);
         vBox.setSpacing(10);
-        vBox.setPadding(new Insets(10));
 
         TextField text = (TextField) nodes.get(1);
         edit.setOnAction(new EventHandler<ActionEvent>() {
@@ -86,7 +86,12 @@ public class ReplacePane {
 
         // 布局类
         AnchorPane root = new AnchorPane();
-        root.getChildren().addAll(hBox, hBox1, vBox);
+        VBox back = new VBox();
+        AnchorPane.setLeftAnchor(back, 10.0);
+        AnchorPane.setTopAnchor(back, 10.0);
+        back.setSpacing(10);
+        back.getChildren().addAll(hBox, hBox1, vBox);
+        root.getChildren().addAll(back);
 
         return root;
     }
