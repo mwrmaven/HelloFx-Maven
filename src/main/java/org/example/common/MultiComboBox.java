@@ -1,4 +1,4 @@
-package org.example;
+package org.example.common;
 
 import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.beans.property.BooleanProperty;

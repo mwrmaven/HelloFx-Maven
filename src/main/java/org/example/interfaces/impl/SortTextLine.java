@@ -16,8 +16,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
-import org.example.Common;
-import org.example.Unit;
+import org.example.common.Common;
+import org.example.util.Unit;
 import org.example.button.BatchButton;
 import org.example.interfaces.Function;
 
@@ -25,6 +25,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @Classname SortTextLine
+ * @Description 文件中的文本行排序
+ * @Date 2021/12/10 10:36
+ * @author mavenr
+ */
 public class SortTextLine implements Function {
 
     private Unit unit = new Unit();

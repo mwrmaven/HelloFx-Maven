@@ -1,4 +1,4 @@
-package org.example;
+package org.example.interfaces.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -17,7 +17,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
+import org.example.common.Common;
+import org.example.util.Unit;
 import org.example.button.BatchButton;
+import org.example.interfaces.Function;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -31,22 +34,38 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * @Author mavenr
- * @Classname  DownLoadMediaFromArticle
- * @Description 从公众号文章中下载音频视频
- * @Date 2021/10/29 10:11 下午
+ * @author mavenr
+ * @Classname DownLoadMediaFromArticle
+ * @Description 下载公众号文章中音视频
+ * @Date 2021/12/10 10:41
  */
-public class DownLoadMediaFromArticle {
+public class DownLoadMediaFromArticle implements Function {
 
     private Unit unit = new Unit();
 
+    @Override
+    public String tabName() {
+        return Common.TOP_BUTTON_6;
+    }
+
+    @Override
+    public String tabStyle() {
+        String style = "-fx-font-weight: bold; " +
+                "-fx-background-radius: 10 10 0 0; " +
+                "-fx-focus-color: transparent; -fx-text-base-color: white; " +
+                "-fx-background-color: MediumPurple;  -fx-pref-height: 30; ";
+        return style;
+    }
+
     /**
      * 根据公众号文章的url获取文章中包含的音频、视频
-     * @param primaryStage
-     * @param width
-     * @param height
+     * @param stage 场景
+     * @param width 屏幕宽度
+     * @param h 窗口高度
+     * @return
      */
-    public AnchorPane download(Stage primaryStage, double width, double height) {
+    @Override
+    public AnchorPane tabPane(Stage stage, double width, double h) {
         AnchorPane ap = new AnchorPane();
 
         // 竖向布局
@@ -66,7 +85,7 @@ public class DownLoadMediaFromArticle {
 
         // 音视频下载地址
         Label foldUrl = new Label("请选择音视频保存的位置：");
-        List<Node> nodes = unit.chooseFolder(primaryStage, width, null);
+        List<Node> nodes = unit.chooseFolder(stage, width, null);
         HBox foldH = new HBox();
         foldH.setAlignment(Pos.CENTER_LEFT);
         foldH.setSpacing(10);
@@ -115,7 +134,7 @@ public class DownLoadMediaFromArticle {
                             for (String param : split) {
                                 if (param.contains("__biz")
                                         || param.contains("mid") || param.contains("idx"))
-                                getVideoUrl = getVideoUrl + "&" + param;
+                                    getVideoUrl = getVideoUrl + "&" + param;
                             }
                         }
                     }

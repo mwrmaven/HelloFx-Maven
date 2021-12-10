@@ -1,9 +1,8 @@
-package org.example;
+package org.example.interfaces.impl;
 
 import com.mavenr.file.ReName;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -14,21 +13,40 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.example.common.Common;
+import org.example.util.Unit;
 import org.example.button.BatchButton;
+import org.example.interfaces.Function;
 
 import java.util.List;
 
 /**
  * @author mavenr
  * @Classname ReplacePane
- * @Description 修改文件名的布局配置
- * @Date 2021/8/30 15:50
+ * @Description 修改文件名
+ * @Date 2021/12/8 13:37
  */
-public class ReplacePane {
+public class ReplacePane implements Function {
 
     private Unit unit = new Unit();
 
-    public AnchorPane replacePane(Stage primaryStage, double width) {
+    @Override
+    public String tabName() {
+        return Common.TOP_BUTTON_1;
+    }
+
+    @Override
+    public String tabStyle() {
+        String style = "-fx-font-weight: bold; " +
+                "-fx-background-radius: 10 10 0 0; " +
+                "-fx-focus-color: transparent; -fx-text-base-color: white; " +
+                "-fx-background-color: CornflowerBlue; -fx-pref-height: 30; ";
+
+        return style;
+    }
+
+    @Override
+    public AnchorPane tabPane(Stage primaryStage, double width, double h) {
         // 创建选择文件夹的组件
         List<Node> nodes = unit.chooseFolder(primaryStage, width, null);
 

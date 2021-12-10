@@ -1,4 +1,4 @@
-package org.example;
+package org.example.interfaces.impl;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -10,11 +10,15 @@ import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
+import org.example.common.Common;
+import org.example.util.Unit;
 import org.example.button.BatchButton;
+import org.example.interfaces.Function;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,12 +31,27 @@ import java.util.stream.Collectors;
 /**
  * @author mavenr
  * @Classname IncreaseIdentificationPane
- * @Description TODO
- * @Date 2021/8/31 14:32
+ * @Description 批量递增标识修改文件名
+ * @Date 2021/12/10 10:36
  */
-public class IncreaseIdentificationPane {
+public class IncreaseIdentificationPane implements Function {
+    @Override
+    public String tabName() {
+        return Common.TOP_BUTTON_2;
+    }
 
-    public FlowPane increaseIdentification(Stage stage, double width) {
+    @Override
+    public String tabStyle() {
+        String style = "-fx-font-weight: bold; " +
+                "-fx-background-radius: 10 10 0 0; " +
+                "-fx-focus-color: transparent; -fx-text-base-color: white; " +
+                "-fx-background-color: Orange;  -fx-pref-height: 30; ";
+        return style;
+    }
+
+    @Override
+    public AnchorPane tabPane(Stage stage, double width, double h) {
+        AnchorPane ap = new AnchorPane();
         Unit unit = new Unit();
         // 创建选择组件
         List<Node> nodes = unit.chooseFolder(stage, width, null);
@@ -288,7 +307,9 @@ public class IncreaseIdentificationPane {
                 }
             }
         });
-        return root;
+
+        ap.getChildren().add(root);
+        return ap;
     }
 
     /**
@@ -538,5 +559,4 @@ public class IncreaseIdentificationPane {
 
 
     }
-
 }

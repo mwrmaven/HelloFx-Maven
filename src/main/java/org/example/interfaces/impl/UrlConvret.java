@@ -1,4 +1,4 @@
-package org.example;
+package org.example.interfaces.impl;
 
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -14,8 +14,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -26,7 +24,12 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.xssf.usermodel.*;
+import org.example.common.Col;
+import org.example.common.Common;
+import org.example.common.MultiComboBox;
+import org.example.util.Unit;
 import org.example.button.BatchButton;
+import org.example.interfaces.Function;
 
 import java.awt.*;
 import java.io.*;
@@ -45,20 +48,34 @@ import java.util.stream.Collectors;
 
 /**
  * @author mavenr
- * @Classname UrlConvert
+ * @Classname UrlConvret
  * @Description URL 编码转换，即编码和解码
- * @Date 2021/10/11 16:59
+ * @Date 2021/12/8 13:28
  */
-public class UrlConvert {
+public class UrlConvret implements Function {
 
     private Unit unit = new Unit();
-
     // 编译前在url后面追加的固定字符(在后置字符前)
     private static final String FIXEDAFTERFIRST = "fixedAfterFirst";
     // 编译后在url前面追加的固定字符(在前置字符前)
     private static final String AFTERFIXEDPRE = "afterFixedPre";
 
-    public AnchorPane convert(Stage primaryStage, double width, double height) {
+    @Override
+    public String tabName() {
+        return Common.TOP_BUTTON_5;
+    }
+
+    @Override
+    public String tabStyle() {
+        String style = "-fx-font-weight: bold; " +
+                "-fx-background-radius: 10 10 0 0; " +
+                "-fx-focus-color: transparent; -fx-text-base-color: white; " +
+                "-fx-background-color: Pink;  -fx-pref-height: 40; ";
+        return style;
+    }
+
+    @Override
+    public AnchorPane tabPane(Stage primaryStage, double width, double h) {
         // 加载配置文件
         Properties properties = new Properties();
         String path = System.getProperty("user.dir");
@@ -986,6 +1003,4 @@ public class UrlConvert {
 
     }
 
-
 }
-

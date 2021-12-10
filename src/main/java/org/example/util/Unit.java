@@ -1,4 +1,4 @@
-package org.example;
+package org.example.util;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;

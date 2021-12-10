@@ -1,4 +1,4 @@
-package org.example;
+package org.example.common;
 
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
