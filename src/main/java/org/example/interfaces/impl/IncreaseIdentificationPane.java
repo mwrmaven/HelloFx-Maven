@@ -13,6 +13,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
 import org.example.common.Common;
@@ -56,15 +57,12 @@ public class IncreaseIdentificationPane implements Function {
         // 创建选择组件
         List<Node> nodes = unit.chooseFolder(stage, width, null);
         HBox hBox1 = new HBox();
-        hBox1.setPadding(new Insets(10));
         hBox1.setSpacing(20);
         for (Node node : nodes) {
             hBox1.getChildren().addAll(node);
         }
 
         HBox hBox2 = new HBox();
-        hBox2.setPadding(new Insets(10));
-        hBox2.setLayoutY(30);
         hBox2.setSpacing(20);
         hBox2.setAlignment(Pos.CENTER_LEFT);
         Label label = new Label(Common.EDIT_TYPE_LABLE);
@@ -101,7 +99,6 @@ public class IncreaseIdentificationPane implements Function {
         List<Node> nodes1 = unit.chooseFile(stage, width, null);
         HBox hBox4 = new HBox();
         hBox4.setSpacing(20);
-        hBox4.setPadding(new Insets(10));
         TextField num = new TextField();
         num.setPromptText(Common.CREATE_TYPE_1_PROMPT_TEXT);
 
@@ -121,7 +118,6 @@ public class IncreaseIdentificationPane implements Function {
         replace.setToggleGroup(tgParent);
         replace.setSelected(true);
         hBox3.getChildren().addAll(labelOfHBox2, create, replace);
-        hBox3.setPadding(new Insets(10));
         hBox3.setSpacing(20);
         hBox3.setAlignment(Pos.CENTER_LEFT);
         // 选择单选时触发的事件
@@ -145,7 +141,6 @@ public class IncreaseIdentificationPane implements Function {
 
         // 递增标识的类型
         HBox hBox5 = new HBox();
-        hBox5.setPadding(new Insets(10));
         hBox5.setSpacing(20);
         Label label5 = new Label("初始标识符的类型: ");
 //        RadioButton rbiWord = new RadioButton("字母");
@@ -161,7 +156,6 @@ public class IncreaseIdentificationPane implements Function {
         // 递增标识的配置
         double textWidth = (width / 2 - 240) / 3;
         HBox hBox6 = new HBox();
-        hBox6.setPadding(new Insets(10));
         hBox6.setSpacing(20);
         hBox6.setAlignment(Pos.CENTER_LEFT);
         Label label6 = new Label("递增标识的配置: ");
@@ -200,7 +194,6 @@ public class IncreaseIdentificationPane implements Function {
 
         // 文件输出路径
         HBox hBox7 = new HBox();
-        hBox7.setPadding(new Insets(10));
         hBox7.setSpacing(20);
         hBox7.setAlignment(Pos.CENTER_LEFT);
         List<Node> nodes2 = unit.chooseFolder(stage, width, "文件输出路径");
@@ -213,12 +206,12 @@ public class IncreaseIdentificationPane implements Function {
         Button edit = batchButton.createInstance();
         TextArea ta = new TextArea();
         ta.setEditable(false);
-        FlowPane root = new FlowPane();
-        root.setOrientation(Orientation.VERTICAL);
+        VBox root = new VBox();
+        root.setPadding(new Insets(10));
+        root.setSpacing(10);
         root.getChildren().addAll(hBox2, hBox3, hBox4, hBox1, hBox5, hBox6, hBox7, edit, ta);
-        // 由于edit和ta没有放到中间布局类中，所以需要分别给edit和ta配置
-        FlowPane.setMargin(edit, new Insets(10));
-        FlowPane.setMargin(ta, new Insets(10));
+        ap.getChildren().add(root);
+
         // 配置edit的点击事件
         edit.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -308,7 +301,7 @@ public class IncreaseIdentificationPane implements Function {
             }
         });
 
-        ap.getChildren().add(root);
+
         return ap;
     }
 
