@@ -229,6 +229,10 @@ public class GenerateText implements Function {
 
                 // 将生成的文本写入到文本文件中
                 String path = ((TextField) nodes.get(1)).getText();
+                if (StringUtils.isEmpty(path)) {
+                    line6.setText("请选择结果路径");
+                    return;
+                }
                 String separator = File.separator;
                 if (!path.endsWith(separator)) {
                     path += separator;
