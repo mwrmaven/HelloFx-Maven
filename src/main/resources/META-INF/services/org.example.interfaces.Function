@@ -4,3 +4,4 @@ org.example.interfaces.impl.ReplacePane
 org.example.interfaces.impl.IncreaseIdentificationPane
 org.example.interfaces.impl.DownLoadMediaFromArticle
 org.example.interfaces.impl.FileCompare
+org.example.interfaces.impl.GenerateText
