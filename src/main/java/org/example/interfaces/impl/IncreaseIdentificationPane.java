@@ -46,7 +46,7 @@ public class IncreaseIdentificationPane implements Function {
         String style = "-fx-font-weight: bold; " +
                 "-fx-background-radius: 10 10 0 0; " +
                 "-fx-focus-color: transparent; -fx-text-base-color: white; " +
-                "-fx-background-color: Orange;  -fx-pref-height: 30; ";
+                "-fx-background-color: #4695d6;  -fx-pref-height: 30; ";
         return style;
     }
 

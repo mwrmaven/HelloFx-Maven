@@ -19,11 +19,19 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.hwpf.extractor.WordExtractor;
+import org.apache.poi.ooxml.POIXMLDocument;
+import org.apache.poi.ooxml.extractor.POIXMLTextExtractor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.example.common.Col;
 import org.example.common.Common;
 import org.example.common.MultiComboBox;
@@ -60,6 +68,8 @@ public class UrlConvret implements Function {
     // 编译后在url前面追加的固定字符(在前置字符前)
     private static final String AFTERFIXEDPRE = "afterFixedPre";
 
+    private static final Pattern pattern = Pattern.compile("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}");
+
     @Override
     public String tabName() {
         return Common.TOP_BUTTON_5;
@@ -70,7 +80,7 @@ public class UrlConvret implements Function {
         String style = "-fx-font-weight: bold; " +
                 "-fx-background-radius: 10 10 0 0; " +
                 "-fx-focus-color: transparent; -fx-text-base-color: white; " +
-                "-fx-background-color: Pink;  -fx-pref-height: 40; ";
+                "-fx-background-color: #ec693f;  -fx-pref-height: 40; ";
         return style;
     }
 
@@ -295,6 +305,16 @@ public class UrlConvret implements Function {
         encodeRadio.setToggleGroup(encodeGroup);
         decodeRadio.setToggleGroup(encodeGroup);
         line6.getChildren().addAll(encodeRadio, decodeRadio);
+
+        // 获取文本模板
+        List<Node> nodes = unit.chooseFile(primaryStage, width, "选择模板文件");
+        ((Button) nodes.get(0)).setPrefWidth(120);
+        HBox template = new HBox();
+        template.setSpacing(10);
+        template.setAlignment(Pos.CENTER_LEFT);
+        for (Node n : nodes) {
+            template.getChildren().add(n);
+        }
 
         // 批量处理按钮
         BatchButton button = new BatchButton();
@@ -588,6 +608,8 @@ public class UrlConvret implements Function {
                     colIndex = Integer.parseInt(tf.getText().trim()) - 1;
                 }
 
+                String templateFilePath = ((TextField) nodes.get(1)).getText();
+
                 if (toggleText.equals(onlyTextLineRadio.getText())) {
                     // 如果为单个url转换
                     // 获取单个url
@@ -625,19 +647,21 @@ public class UrlConvret implements Function {
                     File folder = new File(folderPath);
                     File[] files = folder.listFiles();
                     batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
-                            afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText, selected, fixedAfterPre);
+                            afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
+                            selected, fixedAfterPre, templateFilePath);
                 } else {
                     // 如果为文件中url批量转换
                     String filePath = ((TextField) bList.get(1)).getText();
                     File file = new File(filePath);
                     File[] files = new File[]{file};
                     batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
-                            afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText, selected, fixedAfterPre);
+                            afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
+                            selected, fixedAfterPre, templateFilePath);
                 }
             }
         });
 
-        vBox.getChildren().addAll(line1, line2, line3, line3After, line4Pre, line4, line5Pre, line5, line6, execute, ta);
+        vBox.getChildren().addAll(line1, line2, line3, line3After, line4Pre, line4, line5Pre, line5, line6, template, execute, ta);
         anchorPane.getChildren().add(vBox);
         return anchorPane;
     }
@@ -657,7 +681,7 @@ public class UrlConvret implements Function {
     private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, List<Col> cols,
                                             String startPre, String startEnd, String afterPre, String afterEnd,
                                             String encodeType, TextArea ta, boolean preEncodeFlag, String preEncodeFixed,
-                                            boolean fixedFlag, String fixed) {
+                                            boolean fixedFlag, String fixed, String templateFilePath) {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date now = new Date();
@@ -710,6 +734,58 @@ public class UrlConvret implements Function {
             }
             return;
         }
+
+        // 获取模板文件中的内容
+        File file = new File(templateFilePath);
+        String content = "";
+
+        if (StringUtils.isNotEmpty(templateFilePath) && templateFilePath.endsWith(".doc")) {
+            // word 文档
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream(file);
+                WordExtractor word = new WordExtractor(fis);
+                content = word.getText();
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (fis != null) {
+                        fis.close();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        } else if (StringUtils.isNotEmpty(templateFilePath) && templateFilePath.endsWith(".docx")) {
+            try {
+                OPCPackage opcPackage = POIXMLDocument.openPackage(templateFilePath);
+                POIXMLTextExtractor extractor = new XWPFWordExtractor(opcPackage);
+                content = extractor.getText();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else if (StringUtils.isNotEmpty(templateFilePath)){
+            ta.setText("当前模板文件只支持doc、docx格式");
+        }
+
+        content = content.substring(0, content.length() - 1);
+
+        // 获取文本模板中的参数
+        List<String> params = new ArrayList<>();
+        Matcher matcher = pattern.matcher(content);
+        while (matcher.find()) {
+            String param = matcher.group();
+            String tmp = param.substring(2, param.length() - 1);
+            if (params.contains(tmp.trim())) {
+                continue;
+            }
+            params.add(tmp.trim());
+        }
+
+        // 用于获取转换成doc、docx格式文件的内容
+        List<String> sb = new ArrayList<>();
+
         // 判断文件格式
         if (Common.TXT.equals(fileType)) {
             // 读取文件，遍历行
@@ -850,17 +926,34 @@ public class UrlConvret implements Function {
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
                             int max = -1;
+                            String temp = content;
                             for (Col c : cols) {
                                 max++;
                                 int index = c.getIndex();
                                 XSSFCell gnCell = rowNew.createCell(max);
                                 String gn = getCellValue(rowi, index);
                                 gnCell.setCellValue(gn);
+
+                                // 替换文本模板中的参数
+                                if (params.contains(c.getName())) {
+                                    temp = temp.replaceAll("\\$\\{" + c.getName() + "\\}", gn);
+                                }
                             }
                             XSSFCell sourceCell = rowNew.createCell(max + 1);
                             sourceCell.setCellValue(sourceUrl);
                             XSSFCell targetCell = rowNew.createCell(max + 2);
                             targetCell.setCellValue(result);
+
+                            // 替换文本模板中的参数
+                            if (params.contains("原URL")) {
+                                temp = temp.replaceAll("\\$\\{原URL\\}", sourceUrl);
+                            }
+                            if (params.contains("处理后的URL")) {
+                                temp = temp.replaceAll("\\$\\{处理后的URL\\}", result);
+                            }
+
+                            // 将替换后的文件拼接
+                            sb.add(temp);
                         }
                     } else {
                         for (int i = 1; i < rowNum; i++) {
@@ -889,19 +982,35 @@ public class UrlConvret implements Function {
                             }
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
+                            //
                             int max = -1;
+                            String temp = content;
                             for (Col c : cols) {
                                 max++;
                                 int index = c.getIndex();
                                 XSSFCell gnCell = rowNew.createCell(max);
                                 String gn = getCellValue(rowi, index);
                                 gnCell.setCellValue(gn);
+
+                                // 替换文本模板中的参数
+                                if (params.contains(c.getName())) {
+                                    temp = temp.replaceAll("\\$\\{" + c.getName() + "\\}", gn);
+                                }
                             }
                             XSSFCell sourceCell = rowNew.createCell(max + 1);
                             sourceCell.setCellValue(sourceUrl);
                             XSSFCell targetCell = rowNew.createCell(max + 2);
                             targetCell.setCellValue(result);
+                            // 替换文本模板中的参数
+                            if (params.contains("原URL")) {
+                                temp = temp.replaceAll("\\$\\{原URL\\}", sourceUrl);
+                            }
+                            if (params.contains("处理后的URL")) {
+                                temp = temp.replaceAll("\\$\\{处理后的URL\\}", result);
+                            }
 
+                            // 将替换后的文件拼接
+                            sb.add(temp);
                         }
                     }
                     source.close();
@@ -933,7 +1042,47 @@ public class UrlConvret implements Function {
                 num++;
             }
         }
-        ta.setText("批处理完成，结果文件：" + newPath);
+
+        ta.setText("批处理完成，Excel结果文件：" + newPath);
+
+        if (StringUtils.isNotEmpty(templateFilePath)) {
+            // 将内容输出到word文档
+            String resultWordPath = templateFilePath.substring(0, templateFilePath.lastIndexOf(".")) + "-" + sdf.format(now) + ".docx";
+            FileOutputStream fos = null;
+            try {
+                fos = new FileOutputStream(resultWordPath);
+
+                XWPFDocument document = new XWPFDocument();
+                for (String ctn : sb) {
+                    String[] split = ctn.split("\n");
+                    for (String s : split) {
+                        if (StringUtils.isEmpty(s)) {
+                            continue;
+                        }
+                        XWPFParagraph paragraph = document.createParagraph();
+                        XWPFRun run = paragraph.createRun();
+                        run.setText(s);
+                    }
+                    XWPFParagraph paragraph = document.createParagraph();
+                    XWPFRun run = paragraph.createRun();
+                    run.setText("\n");
+                }
+
+                document.write(fos);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (fos != null) {
+                    try {
+                        fos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            ta.setText(ta.getText() + "\n" + "批处理完成，Word结果文件：" + resultWordPath);
+        }
+
         try {
             workbook.write(outputStream);
             workbook.close();

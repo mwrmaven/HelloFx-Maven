@@ -53,7 +53,7 @@ public class DownLoadMediaFromArticle implements Function {
         String style = "-fx-font-weight: bold; " +
                 "-fx-background-radius: 10 10 0 0; " +
                 "-fx-focus-color: transparent; -fx-text-base-color: white; " +
-                "-fx-background-color: MediumPurple;  -fx-pref-height: 30; ";
+                "-fx-background-color: #fa6e57;  -fx-pref-height: 30; ";
         return style;
     }
 

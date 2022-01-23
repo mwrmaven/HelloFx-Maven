@@ -48,7 +48,7 @@ public class FileCompare  implements Function {
         String style = "-fx-font-weight: bold; " +
                 "-fx-background-radius: 10 10 0 0; " +
                 "-fx-focus-color: transparent; -fx-text-base-color: white; " +
-                "-fx-background-color: CadetBlue;  -fx-pref-height: 30; ";
+                "-fx-background-color: #23B5AF;  -fx-pref-height: 30; ";
         return style;
     }
 

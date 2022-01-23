@@ -1,8 +1,5 @@
 package org.example.interfaces.impl;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -39,7 +36,7 @@ import java.util.regex.Pattern;
  */
 public class GenerateText implements Function {
 
-    private static final Pattern pattern = Pattern.compile("\\$\\{[\\w]*\\}");
+    private static final Pattern pattern = Pattern.compile("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}");
 
     private final Unit unit = new Unit();
 
@@ -53,7 +50,7 @@ public class GenerateText implements Function {
         String style = "-fx-font-weight: bold; " +
                 "-fx-background-radius: 10 10 0 0; " +
                 "-fx-focus-color: transparent; -fx-text-base-color: white; " +
-                "-fx-background-color: Cyan;  -fx-pref-height: 30; ";
+                "-fx-background-color: #9068be;  -fx-pref-height: 30; ";
         return style;
     }
 
