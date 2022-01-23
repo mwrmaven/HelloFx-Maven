@@ -769,7 +769,9 @@ public class UrlConvret implements Function {
             ta.setText("当前模板文件只支持doc、docx格式");
         }
 
-        content = content.substring(0, content.length() - 1);
+        if (content.length() > 0) {
+            content = content.substring(0, content.length() - 1);
+        }
 
         // 获取文本模板中的参数
         List<String> params = new ArrayList<>();
