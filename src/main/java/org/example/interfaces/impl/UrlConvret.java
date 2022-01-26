@@ -744,6 +744,16 @@ public class UrlConvret implements Function {
             FileInputStream fis = null;
             try {
                 fis = new FileInputStream(file);
+                XWPFDocument document = new XWPFDocument(fis);
+                List<XWPFParagraph> paragraphs = document.getParagraphs();
+
+                for (int i = 0; i < paragraphs.size(); i++) {
+                    // 倒数第几行
+                    int index = paragraphs.size() - i + 1;
+                    XWPFParagraph paragraph = paragraphs.get(i);
+                    paragraph.getRuns();
+
+                }
                 WordExtractor word = new WordExtractor(fis);
                 content = word.getText();
             } catch (Exception e) {
