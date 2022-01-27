@@ -1044,7 +1044,8 @@ public class UrlConvret implements Function {
                                 }
 
                                 String value = nameAndValue.get(text);
-                                if (k == 0 && x.getText().matches("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}") && (StringUtils.isNotEmpty(value) || StringUtils.isNotBlank(value))) {
+                                if ((k == 0 && x.getText().matches("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}") && (StringUtils.isNotEmpty(value) || StringUtils.isNotBlank(value)))
+                                        || (k == 0 && !x.getText().matches("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}"))) {
                                     // 添加一行空白数据
                                     XWPFParagraph newX = newDocument.createParagraph();
                                     XWPFRun run = newX.createRun();
