@@ -1036,16 +1036,27 @@ public class UrlConvret implements Function {
                             targetCell.setCellValue(result);
 
                             // 替换文本模板中的参数
-
-                            for (XWPFParagraph x : docxParagraphs) {
+                            for (int k = 0; k < docxParagraphs.size(); k++) {
+                                XWPFParagraph x = docxParagraphs.get(k);
                                 String text = x.getText();
-                                if (x.getText().matches("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}")) {
+                                if (text.matches("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}")) {
                                     text = text.substring(text.indexOf("{") + 1, text.lastIndexOf("}"));
                                 }
+
+                                String value = nameAndValue.get(text);
+                                if (k == 0 && x.getText().matches("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}") && (StringUtils.isNotEmpty(value) || StringUtils.isNotBlank(value))) {
+                                    // 添加一行空白数据
+                                    XWPFParagraph newX = newDocument.createParagraph();
+                                    XWPFRun run = newX.createRun();
+                                    run.setText("\n");
+                                    newX.addRun(run);
+                                    newParagraphs.add(newX);
+                                }
+
                                 XWPFParagraph newX = newDocument.createParagraph();
                                 XWPFRun run = newX.createRun();
                                 if (colNames.contains(text)) {
-                                    run.setText(x.getText().replaceAll("\\$\\{" + text + "\\}", nameAndValue.get(text)));
+                                    run.setText(x.getText().replaceAll("\\$\\{" + text + "\\}", value));
                                 } else if (x.getText().contains("原URL")) {
                                     run.setText(x.getText().replaceAll("\\$\\{原URL\\}", sourceUrl));
                                 } else if (x.getText().contains("处理后的URL")) {
@@ -1057,12 +1068,6 @@ public class UrlConvret implements Function {
                                 newX.addRun(run);
                                 newParagraphs.add(newX);
                             }
-                            // 添加一行空白数据
-                            XWPFParagraph newX = newDocument.createParagraph();
-                            XWPFRun run = newX.createRun();
-                            run.setText("\n");
-                            newX.addRun(run);
-                            newParagraphs.add(newX);
                         }
                     }
                     source.close();
