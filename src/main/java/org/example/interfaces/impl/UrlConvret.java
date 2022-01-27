@@ -18,8 +18,12 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
+import org.apache.poi.hwpf.usermodel.Paragraph;
+import org.apache.poi.hwpf.usermodel.Range;
 import org.apache.poi.ooxml.POIXMLDocument;
 import org.apache.poi.ooxml.extractor.POIXMLTextExtractor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -46,10 +50,8 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -69,6 +71,9 @@ public class UrlConvret implements Function {
     private static final String AFTERFIXEDPRE = "afterFixedPre";
 
     private static final Pattern pattern = Pattern.compile("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}");
+
+    private static final String OR = "或";
+    private static final String AND = "并且";
 
     @Override
     public String tabName() {
@@ -151,16 +156,14 @@ public class UrlConvret implements Function {
         line3.getChildren().addAll(txtRadio, excelRadio, tf);
         line3.setAlignment(Pos.CENTER_LEFT);
 
+        // 创建源文件中标题列的下拉列表
+        MultiComboBox<Col> mcb = new MultiComboBox<>();
+
         // 选择要拷贝出来的列
         HBox line3After = new HBox();
         line3After.setSpacing(10);
         line3After.setAlignment(Pos.CENTER_LEFT);
         Label labelCopy = new Label("请选择需要拷贝出来的列（可多选）：");
-
-        // 创建源文件中标题列的下拉列表
-        MultiComboBox<Col> mcb = new MultiComboBox<>();
-        // 设置样式
-
         ObservableList<Col> titles = FXCollections.observableArrayList();
         ComboBox<Col> comboBox = mcb.createComboBox(titles, width / 3);
         line3After.getChildren().addAll(labelCopy, comboBox);
@@ -473,6 +476,7 @@ public class UrlConvret implements Function {
                             }
                             comboBox.getItems().clear();
                             comboBox.setItems(objects);
+
                         } catch (IOException e) {
                             e.printStackTrace();
                         } catch (InvalidFormatException e) {
@@ -515,6 +519,7 @@ public class UrlConvret implements Function {
                                 Col col = new Col();
                                 col.setName(cellValue);
                                 col.setIndex(i);
+                                objects.add(col);
                             }
                         }
                         comboBox.getItems().clear();
@@ -735,69 +740,56 @@ public class UrlConvret implements Function {
             return;
         }
 
-        // 获取模板文件中的内容
+        // 获取模板文件中的段落
         File file = new File(templateFilePath);
-        String content = "";
-
-        if (StringUtils.isNotEmpty(templateFilePath) && templateFilePath.endsWith(".doc")) {
-            // word 文档
-            FileInputStream fis = null;
-            try {
-                fis = new FileInputStream(file);
-                XWPFDocument document = new XWPFDocument(fis);
-                List<XWPFParagraph> paragraphs = document.getParagraphs();
-
-                for (int i = 0; i < paragraphs.size(); i++) {
-                    // 倒数第几行
-                    int index = paragraphs.size() - i + 1;
-                    XWPFParagraph paragraph = paragraphs.get(i);
-                    paragraph.getRuns();
-
-                }
-                WordExtractor word = new WordExtractor(fis);
-                content = word.getText();
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
+        List<XWPFParagraph> docxParagraphs = new ArrayList<>();
+        List<Paragraph> docParagraphs = new ArrayList<>();
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(file);
+            if (StringUtils.isNotEmpty(templateFilePath) && templateFilePath.endsWith(".doc")) {
                 try {
-                    if (fis != null) {
-                        fis.close();
+                    HWPFDocument doc = new HWPFDocument(fis);
+                    Range range = doc.getRange();
+                    for (int i = 0; i < range.numParagraphs(); i++) {
+                        docParagraphs.add(range.getParagraph(i));
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
+                } finally {
+                    try {
+                        if (fis != null) {
+                            fis.close();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            } else if (StringUtils.isNotEmpty(templateFilePath) && templateFilePath.endsWith(".docx")) {
+                try {
+                    XWPFDocument docx = new XWPFDocument(fis);
+                    docxParagraphs = docx.getParagraphs();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (StringUtils.isNotEmpty(templateFilePath)){
+                ta.setText("当前模板文件只支持doc、docx格式");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-        } else if (StringUtils.isNotEmpty(templateFilePath) && templateFilePath.endsWith(".docx")) {
-            try {
-                OPCPackage opcPackage = POIXMLDocument.openPackage(templateFilePath);
-                POIXMLTextExtractor extractor = new XWPFWordExtractor(opcPackage);
-                content = extractor.getText();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else if (StringUtils.isNotEmpty(templateFilePath)){
-            ta.setText("当前模板文件只支持doc、docx格式");
-        }
-
-        if (content.length() > 0) {
-            content = content.substring(0, content.length() - 1);
-        }
-
-        // 获取文本模板中的参数
-        List<String> params = new ArrayList<>();
-        Matcher matcher = pattern.matcher(content);
-        while (matcher.find()) {
-            String param = matcher.group();
-            String tmp = param.substring(2, param.length() - 1);
-            if (params.contains(tmp.trim())) {
-                continue;
-            }
-            params.add(tmp.trim());
         }
 
         // 用于获取转换成doc、docx格式文件的内容
-        List<String> sb = new ArrayList<>();
-
+        List<XWPFParagraph> newParagraphs = new ArrayList<>();
+        XWPFDocument newDocument = new XWPFDocument();
         // 判断文件格式
         if (Common.TXT.equals(fileType)) {
             // 读取文件，遍历行
@@ -909,6 +901,9 @@ public class UrlConvret implements Function {
                     source = new XSSFWorkbook(inputStream);
                     XSSFSheet sheet0 = source.getSheetAt(0);
                     int rowNum = sheet0.getLastRowNum() + 1;
+                    Map<String, Col> nameAndCol = cols.stream().collect(Collectors.toMap(Col::getName, item -> item, (a, b) -> a));
+                    Set<String> colNames = nameAndCol.keySet();
+                    Map<String, String> nameAndValue = new HashMap<>();
                     if (Common.DECODE.equals(encodeType)) {
                         for (int i = 1; i < rowNum; i++) {
                             XSSFRow rowi = sheet0.getRow(i);
@@ -938,18 +933,22 @@ public class UrlConvret implements Function {
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
                             int max = -1;
-                            String temp = content;
+                            boolean flag = true;
                             for (Col c : cols) {
                                 max++;
                                 int index = c.getIndex();
-                                XSSFCell gnCell = rowNew.createCell(max);
                                 String gn = getCellValue(rowi, index);
+                                XSSFCell gnCell = rowNew.createCell(max);
                                 gnCell.setCellValue(gn);
-
-                                // 替换文本模板中的参数
-                                if (params.contains(c.getName())) {
-                                    temp = temp.replaceAll("\\$\\{" + c.getName() + "\\}", gn);
+                                nameAndValue.put(c.getName(), gn);
+                                if (StringUtils.isNotEmpty(gn) && StringUtils.isNotBlank(gn)) {
+                                    flag = false;
                                 }
+                            }
+                            if (flag) {
+                                sheet.removeRow(rowNew);
+                                num--;
+                                continue;
                             }
                             XSSFCell sourceCell = rowNew.createCell(max + 1);
                             sourceCell.setCellValue(sourceUrl);
@@ -957,15 +956,33 @@ public class UrlConvret implements Function {
                             targetCell.setCellValue(result);
 
                             // 替换文本模板中的参数
-                            if (params.contains("原URL")) {
-                                temp = temp.replaceAll("\\$\\{原URL\\}", sourceUrl);
-                            }
-                            if (params.contains("处理后的URL")) {
-                                temp = temp.replaceAll("\\$\\{处理后的URL\\}", result);
-                            }
 
-                            // 将替换后的文件拼接
-                            sb.add(temp);
+                            for (XWPFParagraph x : docxParagraphs) {
+                                String text = x.getText();
+                                if (x.getText().matches("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}")) {
+                                    text = text.substring(text.indexOf("{") + 1, text.lastIndexOf("}"));
+                                }
+                                XWPFParagraph newX = newDocument.createParagraph();
+                                XWPFRun run = newX.createRun();
+                                if (colNames.contains(text)) {
+                                    run.setText(x.getText().replaceAll("\\$\\{" + text + "\\}", nameAndValue.get(text)));
+                                } else if (x.getText().contains("原URL")) {
+                                    run.setText(x.getText().replaceAll("\\$\\{原URL\\}", sourceUrl));
+                                } else if (x.getText().contains("处理后的URL")) {
+                                    run.setText(x.getText().replaceAll("\\$\\{处理后的URL\\}", result));
+                                } else {
+                                    run.setText(x.getText());
+                                }
+                                run.getCTR().setRPr(x.getRuns().get(0).getCTR().getRPr());
+                                newX.addRun(run);
+                                newParagraphs.add(newX);
+                            }
+                            // 添加一行空白数据
+                            XWPFParagraph newX = newDocument.createParagraph();
+                            XWPFRun run = newX.createRun();
+                            run.setText("\n");
+                            newX.addRun(run);
+                            newParagraphs.add(newX);
                         }
                     } else {
                         for (int i = 1; i < rowNum; i++) {
@@ -994,35 +1011,58 @@ public class UrlConvret implements Function {
                             }
                             // 写入excel
                             XSSFRow rowNew = sheet.createRow(num);
-                            //
+
                             int max = -1;
-                            String temp = content;
+                            boolean flag = true;
                             for (Col c : cols) {
                                 max++;
                                 int index = c.getIndex();
                                 XSSFCell gnCell = rowNew.createCell(max);
                                 String gn = getCellValue(rowi, index);
                                 gnCell.setCellValue(gn);
-
-                                // 替换文本模板中的参数
-                                if (params.contains(c.getName())) {
-                                    temp = temp.replaceAll("\\$\\{" + c.getName() + "\\}", gn);
+                                nameAndValue.put(c.getName(), gn);
+                                if (StringUtils.isNotEmpty(gn) && StringUtils.isNotBlank(gn)) {
+                                    flag = false;
                                 }
+                            }
+                            if (flag) {
+                                sheet.removeRow(rowNew);
+                                num--;
+                                continue;
                             }
                             XSSFCell sourceCell = rowNew.createCell(max + 1);
                             sourceCell.setCellValue(sourceUrl);
                             XSSFCell targetCell = rowNew.createCell(max + 2);
                             targetCell.setCellValue(result);
-                            // 替换文本模板中的参数
-                            if (params.contains("原URL")) {
-                                temp = temp.replaceAll("\\$\\{原URL\\}", sourceUrl);
-                            }
-                            if (params.contains("处理后的URL")) {
-                                temp = temp.replaceAll("\\$\\{处理后的URL\\}", result);
-                            }
 
-                            // 将替换后的文件拼接
-                            sb.add(temp);
+                            // 替换文本模板中的参数
+
+                            for (XWPFParagraph x : docxParagraphs) {
+                                String text = x.getText();
+                                if (x.getText().matches("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}")) {
+                                    text = text.substring(text.indexOf("{") + 1, text.lastIndexOf("}"));
+                                }
+                                XWPFParagraph newX = newDocument.createParagraph();
+                                XWPFRun run = newX.createRun();
+                                if (colNames.contains(text)) {
+                                    run.setText(x.getText().replaceAll("\\$\\{" + text + "\\}", nameAndValue.get(text)));
+                                } else if (x.getText().contains("原URL")) {
+                                    run.setText(x.getText().replaceAll("\\$\\{原URL\\}", sourceUrl));
+                                } else if (x.getText().contains("处理后的URL")) {
+                                    run.setText(x.getText().replaceAll("\\$\\{处理后的URL\\}", result));
+                                } else {
+                                    run.setText(x.getText());
+                                }
+                                run.getCTR().setRPr(x.getRuns().get(0).getCTR().getRPr());
+                                newX.addRun(run);
+                                newParagraphs.add(newX);
+                            }
+                            // 添加一行空白数据
+                            XWPFParagraph newX = newDocument.createParagraph();
+                            XWPFRun run = newX.createRun();
+                            run.setText("\n");
+                            newX.addRun(run);
+                            newParagraphs.add(newX);
                         }
                     }
                     source.close();
@@ -1055,32 +1095,13 @@ public class UrlConvret implements Function {
             }
         }
 
-        ta.setText("批处理完成，Excel结果文件：" + newPath);
-
         if (StringUtils.isNotEmpty(templateFilePath)) {
             // 将内容输出到word文档
             String resultWordPath = templateFilePath.substring(0, templateFilePath.lastIndexOf(".")) + "-" + sdf.format(now) + ".docx";
             FileOutputStream fos = null;
             try {
                 fos = new FileOutputStream(resultWordPath);
-
-                XWPFDocument document = new XWPFDocument();
-                for (String ctn : sb) {
-                    String[] split = ctn.split("\n");
-                    for (String s : split) {
-                        if (StringUtils.isEmpty(s)) {
-                            continue;
-                        }
-                        XWPFParagraph paragraph = document.createParagraph();
-                        XWPFRun run = paragraph.createRun();
-                        run.setText(s);
-                    }
-                    XWPFParagraph paragraph = document.createParagraph();
-                    XWPFRun run = paragraph.createRun();
-                    run.setText("\n");
-                }
-
-                document.write(fos);
+                newDocument.write(fos);
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
@@ -1092,7 +1113,7 @@ public class UrlConvret implements Function {
                     }
                 }
             }
-            ta.setText(ta.getText() + "\n" + "批处理完成，Word结果文件：" + resultWordPath);
+            ta.setText("批处理完成，Word结果文件：" + resultWordPath);
         }
 
         try {
@@ -1102,6 +1123,7 @@ public class UrlConvret implements Function {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        ta.setText(ta.getText() + "\n" + "批处理完成，Excel结果文件：" + newPath);
     }
 
     /**
