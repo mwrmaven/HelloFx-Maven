@@ -708,7 +708,7 @@ public class UrlConvret implements Function {
         XSSFCellStyle cs = workbook.createCellStyle();
         // 设置填充方式和背景颜色
         cs.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-        cs.setFillForegroundColor(new XSSFColor(new Color(153, 153, 153)));
+        cs.setFillForegroundColor(new XSSFColor(new byte[]{(byte) 153, (byte) 153, (byte) 153}, new DefaultIndexedColorMap()));
         // 设置居中方式
         cs.setAlignment(HorizontalAlignment.CENTER);
 
