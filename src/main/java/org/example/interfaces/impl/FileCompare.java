@@ -145,19 +145,19 @@ public class FileCompare  implements Function {
 
     /**
      * 获取指定路径的文件内容，并打印出来
-     * @param newValue 文件的路径
+     * @param filePath 文件的路径
      * @param textArea 文本内容区域
      * @return 文件内容
      */
-    public String getContent(String newValue, TextArea textArea) {
+    public String getContent(String filePath, TextArea textArea) {
         // 判断新文件格式
-        if (!newValue.endsWith(".txt") && !newValue.endsWith(".doc") && !newValue.endsWith(".docx")) {
+        if (!filePath.endsWith(".txt") && !filePath.endsWith(".doc") && !filePath.endsWith(".docx")) {
             textArea.setText("当前只能匹配txt格式或doc、docx格式文件");
             return "";
         }
 
-        File file = new File(newValue);
-        if (newValue.endsWith(".txt")) {
+        File file = new File(filePath);
+        if (filePath.endsWith(".txt")) {
             // txt文件
             FileReader fileReader = null;
             BufferedReader br = null;
@@ -187,7 +187,7 @@ public class FileCompare  implements Function {
                     e.printStackTrace();
                 }
             }
-        } else if (newValue.endsWith(".doc")){
+        } else if (filePath.endsWith(".doc")){
             // word 文档
             FileInputStream fis = null;
             try {
@@ -207,9 +207,9 @@ public class FileCompare  implements Function {
                     e.printStackTrace();
                 }
             }
-        } else if (newValue.endsWith(".docx")) {
+        } else if (filePath.endsWith(".docx")) {
             try {
-                OPCPackage opcPackage = POIXMLDocument.openPackage(newValue);
+                OPCPackage opcPackage = POIXMLDocument.openPackage(filePath);
                 POIXMLTextExtractor extractor = new XWPFWordExtractor(opcPackage);
                 String content = extractor.getText();
                 textArea.setText(content);
