@@ -62,7 +62,7 @@ import java.util.stream.Collectors;
  * @Description URL 编码转换，即编码和解码
  * @Date 2021/12/8 13:28
  */
-public class UrlConvret implements Function {
+public class UrlConvert implements Function {
 
     private Unit unit = new Unit();
     // 编译前在url后面追加的固定字符(在后置字符前)
