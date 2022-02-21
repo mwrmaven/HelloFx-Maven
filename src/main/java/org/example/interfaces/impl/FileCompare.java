@@ -141,7 +141,7 @@ public class FileCompare  implements Function {
                 String oldContent = getContent(oldField.getText(), oldTextArea);
 
                 // 比较两边的文本
-                compareString(newContent, oldContent, newTextArea);
+                compareString(newContent, oldContent, newTextArea, oldTextArea);
             }
         });
 
@@ -218,16 +218,28 @@ public class FileCompare  implements Function {
                 }
             }
         } else if (filePath.endsWith(".docx")) {
+            OPCPackage opcPackage = null;
+            POIXMLTextExtractor extractor = null;
             try {
-                OPCPackage opcPackage = POIXMLDocument.openPackage(filePath);
-                POIXMLTextExtractor extractor = new XWPFWordExtractor(opcPackage);
+                opcPackage = POIXMLDocument.openPackage(filePath);
+                extractor = new XWPFWordExtractor(opcPackage);
                 String content = extractor.getText();
-//                textArea.setText(content);
                 textArea.clear();
                 textArea.appendText(content);
                 return content;
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                try {
+                    if (extractor != null) {
+                        extractor.close();
+                    }
+                    if (opcPackage != null) {
+                        opcPackage.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return "";
@@ -239,19 +251,26 @@ public class FileCompare  implements Function {
      * @param oldContent
      * @param newTextArea
      */
-    public void compareString(String newContent, String oldContent, InlineCssTextArea newTextArea) {
+    public void compareString(String newContent, String oldContent, InlineCssTextArea newTextArea, InlineCssTextArea oldTextArea) {
         List<List<String>> newList = getMD5AndResource(newContent);
         List<List<String>> oldList = getMD5AndResource(oldContent);
 
         if (CollectionUtils.isNotEmpty(newList) && CollectionUtils.isNotEmpty(oldList)) {
-            // 正向遍历，找出不同
+
             List<String> newMD5List = newList.get(0);
             List<String> oldMD5List = oldList.get(0);
             int newSize = newMD5List.size();
             int oldSize = oldMD5List.size();
-            int count = Math.min(newSize, oldSize);
             int flag = -1;
-            for (int i = 0; i < count; i++) {
+
+            int newStartLine = -1;
+            int oldStartLine = -1;
+
+            // 正向遍历，找出不同的起始位置
+            for (int i = 0; i < newSize; i++) {
+                if (i > oldSize - 1) {
+                    break;
+                }
                 String newMD5 = newMD5List.get(i);
                 String oldMD5 = oldMD5List.get(i);
                 if (!newMD5.equals(oldMD5)) {
@@ -259,17 +278,14 @@ public class FileCompare  implements Function {
                     break;
                 }
             }
-            // 根据flag来设置不同部分（以红色表示）
-            if (flag == -1) {
-                return;
-            }
+            newStartLine = flag;
+            oldStartLine = flag;
 
-            // 注意，这里的newContent的编码不明确，所以暂不使用 newContent.length - 1 求end
             int start = 0;
-            int end = 0;
+            int oldStart = 0;
             for (int i = 0; i < flag; i++) {
                 start += newList.get(1).get(i).length() + 1;
-                end += newList.get(1).get(i).length() + 1;
+                oldStart += oldList.get(1).get(i).length() + 1;
             }
             // 判断具体的开始位置
             String newLine = newList.get(1).get(flag);
@@ -277,19 +293,96 @@ public class FileCompare  implements Function {
             for (int i = 0; i < Math.min(newLine.length(), oldLine.length()); i++) {
                 if (newLine.charAt(i) == oldLine.charAt(i)) {
                     start += 1;
+                    oldStart += 1;
                 } else {
                     break;
                 }
             }
 
-            for (int i = flag; i < newSize; i++) {
+            flag = -1;
+            int descFlag = -1;
+            // 反向遍历，获取结束位置
+            for (int i = 0; i < newSize ; i++) {
+                int newIndex = newSize - i - 1;
+                int oldIndex = oldSize - i - 1;
+                if (oldIndex < 0) {
+                    break;
+                }
+                String newMD5 = newMD5List.get(newIndex);
+                String oldMD5 = oldMD5List.get(oldIndex);
+                if (!newMD5.equals(oldMD5)) {
+                    flag = newIndex;
+                    descFlag = oldIndex;
+                    System.out.println("new: " + newList.get(1).get(newIndex));
+                    System.out.println("old: " + oldList.get(1).get(oldIndex));
+                    System.out.println("----------------------------------------");
+                    break;
+                }
+            }
+
+            int end = 0;
+            int oldEnd = 0;
+            for (int i = 0; i < flag; i++) {
                 end += newList.get(1).get(i).length() + 1;
             }
-            end -= 1;
+            for (int i = 0; i < descFlag; i++) {
+                oldEnd += oldList.get(1).get(i).length() + 1;
+            }
+            // 判断具体的开始位置
+            String newLine1 = newList.get(1).get(flag);
+            String oldLine1 = oldList.get(1).get(descFlag);
+
+            int sum = 0;
+            for (int i = 0; i < Math.min(newLine1.length(), oldLine1.length()); i++) {
+                if (newLine1.charAt(newLine1.length() - i - 1) != oldLine1.charAt(oldLine1.length() - i - 1)) {
+                    sum += 1;
+                } else {
+                    break;
+                }
+            }
+            end += newLine1.length() - sum + 1;
+            oldEnd += oldLine1.length() - sum + 1;
+            System.out.println("start = " + start  + "; end = " + end);
 
             newTextArea.setStyle(start, end, "-fx-fill: red");
+            oldTextArea.setStyle(oldStart, oldEnd, "-fx-fill: red");
+
+            // 从开始行到结束行，判断新文件中在旧文件中相同的，把行颜色标为黑色
+            List<Integer> sameNewLines = new ArrayList<>();
+            List<Integer> sameOldLines = new ArrayList<>();
+            List<String> strings = oldMD5List.subList(oldStartLine, descFlag + 1);
+            List<String> haveLine = new ArrayList();
+            for (int i = newStartLine; i <= flag; i++) {
+                if (haveLine.contains(newMD5List.get(i))) {
+                    continue;
+                }
+                int i1 = strings.indexOf(newMD5List.get(i));
+                if (i1 != -1) {
+                    haveLine.add(newMD5List.get(i));
+                    sameNewLines.add(i);
+                    sameOldLines.add(oldStartLine + i1);
+                }
+            }
+            int num = 0;
+            for (int i = 0; i < newSize; i++) {
+                int lineSize = newList.get(1).get(i).length() + 1;
+                if (sameNewLines.contains(i)) {
+                    newTextArea.setStyle(num, num + lineSize, "-fx-fill: black");
+                }
+                num += lineSize;
+            }
+
+            num = 0;
+            for (int i = 0; i < oldSize; i++) {
+                int lineSize = oldList.get(1).get(i).length() + 1;
+                if (sameOldLines.contains(i)) {
+                    oldTextArea.setStyle(num, num + lineSize, "-fx-fill: black");
+                }
+                num += lineSize;
+            }
         }
     }
+
 
     /**
      * 获取每行数据对应的md5码，以及每行数据的原数据
