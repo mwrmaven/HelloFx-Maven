@@ -230,9 +230,19 @@ public class SortTextLine implements Function {
                         return;
                     }
 
-                    if ("|".equals(separator)) {
-                        separator = "\\" + separator;
+                    String expWord = "$()*+.[?^{|\\";
+
+                    StringBuilder temp = new StringBuilder();
+                    for (char c : separator.toCharArray()) {
+                        if (expWord.contains(String.valueOf(c))) {
+                            temp.append("\\").append(c);
+                        } else {
+                            temp.append(c);
+                        }
                     }
+
+                    separator = temp.toString();
+
                     // 关键字位置
                     String keyIndex = splitNum.getText();
                     if (StringUtils.isBlank(keyIndex)) {
@@ -240,14 +250,15 @@ public class SortTextLine implements Function {
                         return;
                     }
                     ta.setText("开始处理……");
+                    String resultFilePath = "";
                     if (((RadioButton) sortToggle.getSelectedToggle()).getText().equals(asc.getText())) {
                         // 升序
-                        FileContentSort.sortText(fs, separator, Integer.parseInt(keyIndex), SortType.ASC.getCode());
+                        resultFilePath  = FileContentSort.sortText(fs, separator, Integer.parseInt(keyIndex), SortType.ASC.getCode());
                     } else {
                         // 降序
-                        FileContentSort.sortText(fs, separator, Integer.parseInt(keyIndex), SortType.DESC.getCode());
+                        resultFilePath  = FileContentSort.sortText(fs, separator, Integer.parseInt(keyIndex), SortType.DESC.getCode());
                     }
-                    ta.setText("处理完成！");
+                    ta.setText("处理完成！结果文件路径为：\n" + resultFilePath);
                 } else {
                     // 获取字符位置范围
                     // 起始位置
@@ -259,14 +270,15 @@ public class SortTextLine implements Function {
                         return;
                     }
                     ta.setText("开始处理……");
+                    String resultFilePath = "";
                     if (((RadioButton) sortToggle.getSelectedToggle()).getText().equals(asc.getText())) {
                         // 升序
-                        FileContentSort.sortText(fs, Integer.parseInt(startNum), Integer.parseInt(endNum), SortType.ASC.getCode());
+                        resultFilePath = FileContentSort.sortText(fs, Integer.parseInt(startNum), Integer.parseInt(endNum), SortType.ASC.getCode());
                     } else {
                         // 降序
-                        FileContentSort.sortText(fs, Integer.parseInt(startNum), Integer.parseInt(endNum), SortType.DESC.getCode());
+                        resultFilePath = FileContentSort.sortText(fs, Integer.parseInt(startNum), Integer.parseInt(endNum), SortType.DESC.getCode());
                     }
-                    ta.setText("处理完成！");
+                    ta.setText("处理完成！结果文件路径为：\n" + resultFilePath);
                 }
             }
         });
