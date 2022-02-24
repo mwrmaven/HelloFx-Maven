@@ -219,7 +219,7 @@ public class GenerateText implements Function {
                         String tmp = key.substring(2, key.length() - 1);
                         text = text.replaceAll("\\$\\{" + tmp + "\\}", replaces.get(key)[i]);
                     }
-                    sb.append(text).append("\n");
+                    sb.append(text).append("\n\n");
                 }
                 // 去掉末尾的\n
                 sb.substring(0, sb.length() - 1);
