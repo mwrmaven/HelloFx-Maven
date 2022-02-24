@@ -1,4 +1,4 @@
-##javafx编写的电脑客户端的软件，协助日常的上班工作
+##javafx编写的电脑客户端的软件，协助日常的上班工作  
 ***[项目的GitHub路径](https://github.com/mwrmaven/HelloFx-Maven)***  
 ***[项目的Gitee路径](https://gitee.com/mwrmaven/HelloFx-Maven)***  
 ***github中的图片可能无法显示，可下载代码或跳转到Gitee路径查看README.md***
