@@ -117,7 +117,15 @@ public class DownLoadMediaFromArticle implements Function {
                 try {
                     // 获取文章中的音视频链接
                     Document document = Jsoup.connect(url).get();
+                    // 用来获取video地址的请求
+                    Elements mpvid = document.getElementsByAttribute("data-mpvid");
                     Elements mpvoiceList = document.getElementsByTag("mpvoice");
+                    StringBuilder sb = new StringBuilder();
+                    List<String> videoUrls = new ArrayList<>();
+
+                    if (CollectionUtils.isEmpty(mpvoiceList) && CollectionUtils.isEmpty(mpvid)) {
+                        area.setText("未获取到音视频！");
+                    }
                     if (CollectionUtils.isNotEmpty(mpvoiceList)) {
                         voiceIds = mpvoiceList.stream().map(item -> item.attr("voice_encode_fileid")).collect(Collectors.toList());
                     }
@@ -133,40 +141,42 @@ public class DownLoadMediaFromArticle implements Function {
                             String[] split = content.split("&");
                             for (String param : split) {
                                 if (param.contains("__biz")
-                                        || param.contains("mid") || param.contains("idx"))
+                                        || param.contains("mid") || param.contains("idx")) {
                                     getVideoUrl = getVideoUrl + "&" + param;
+                                }
                             }
                         }
                     }
 
-                    // 用来获取video地址的请求
-                    Elements mpvid = document.getElementsByAttribute("data-mpvid");
-                    getVideoUrl = getVideoUrl + "&vid=" + mpvid.get(0).attr("data-mpvid");
-                    getVideoUrl = getVideoUrl + "&uin=";
-                    getVideoUrl = getVideoUrl + "&key=";
-                    getVideoUrl = getVideoUrl + "&pass_ticket=";
-                    getVideoUrl = getVideoUrl + "&wxtoken=777";
-                    getVideoUrl = getVideoUrl + "&devicetype=";
-                    getVideoUrl = getVideoUrl + "&clientversion=";
-                    getVideoUrl = getVideoUrl + "&appmsg_token=";
-                    getVideoUrl = getVideoUrl + "&x5=0";
-                    getVideoUrl = getVideoUrl + "&f=json";
+                    if (CollectionUtils.isEmpty(mpvid)) {
+                        area.setText("未获取到视频！");
+                    } else {
+                        getVideoUrl = getVideoUrl + "&vid=" + mpvid.get(0).attr("data-mpvid");
+                        getVideoUrl = getVideoUrl + "&uin=";
+                        getVideoUrl = getVideoUrl + "&key=";
+                        getVideoUrl = getVideoUrl + "&pass_ticket=";
+                        getVideoUrl = getVideoUrl + "&wxtoken=777";
+                        getVideoUrl = getVideoUrl + "&devicetype=";
+                        getVideoUrl = getVideoUrl + "&clientversion=";
+                        getVideoUrl = getVideoUrl + "&appmsg_token=";
+                        getVideoUrl = getVideoUrl + "&x5=0";
+                        getVideoUrl = getVideoUrl + "&f=json";
 
-                    // 请求获取video url
-                    Connection.Response response = Jsoup.connect(getVideoUrl)
-                            .ignoreContentType(true)
-                            .execute();
-                    String videoUrlBody = response.body();
-                    JSONObject urlJson = JSONObject.parseObject(videoUrlBody);
-                    JSONArray url_info = urlJson.getJSONArray("url_info");
-                    String videoUrl;
-                    JSONObject jsonObject = url_info.getJSONObject(0);
-                    videoUrl = jsonObject.getString("url");
-                    List<String> videoUrls = new ArrayList<>();
-                    videoUrls.add(videoUrl);
-                    System.out.println("视频地址：" + videoUrl);
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("视频地址：" + videoUrl).append("\n");
+                        // 请求获取video url
+                        Connection.Response response = Jsoup.connect(getVideoUrl)
+                                .ignoreContentType(true)
+                                .execute();
+                        String videoUrlBody = response.body();
+                        JSONObject urlJson = JSONObject.parseObject(videoUrlBody);
+                        JSONArray url_info = urlJson.getJSONArray("url_info");
+                        String videoUrl;
+                        JSONObject jsonObject = url_info.getJSONObject(0);
+                        videoUrl = jsonObject.getString("url");
+                        videoUrls.add(videoUrl);
+                        System.out.println("视频地址：" + videoUrl);
+                        sb.append("视频地址：" + videoUrl).append("\n");
+                    }
+
                     for (String id : voiceIds) {
                         String vr = voiceBaseUrl + id;
                         voiceUrls.add(vr);
@@ -201,6 +211,7 @@ public class DownLoadMediaFromArticle implements Function {
                     }
 
                     sb.append("下载完成");
+                    area.setText(sb.toString());
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

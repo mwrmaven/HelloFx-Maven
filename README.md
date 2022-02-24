@@ -69,10 +69,42 @@
 > 注意：
 > * 模板文件中的 ${原URL} 和 ${处理后的URL} 为固定的源数据和转换后的数据；  
 > * 其余的变量名称需要和'请选择需要拷贝出来的列（可多选）'中选择的列名对应；
-> 
 
+***三、批量修改文件名***
+![](images/markdown/batchEditFileName.png)  
+> 该功能可以批量修改指定文件夹下匹配到的文件的名称；  
+> * 选择指定的文件夹（即要修改的文件的所属文件夹）；
+> * 输入文件名称中的旧字符，以及要替换旧字符的新字符；  
+> ![](images/markdown/batchEditFileName_pre.png)
+> * 点击'批量修改后'，效果为：  
+> 原文件夹下的源文件如图：  
+> ![](images/markdown/batchEditFileName_resource.png)  
+> 执行批量修改操作后如图：
+> ![](images/markdown/batchEditFileName_result.png)  
+> **注意：这里只会修改可以匹配到旧字符的文件名称，而未匹配到的文件名称不会被修改。**
 
+***四、批量递增标识修改文件名***
+![](images/markdown/batchIncrementEdit.png)  
+> 该功能是在'批量修改文件名'功能上的更新，可以指定一定的规律来修改文件名称；
+> * '文件名中插入或替换'可以选择后置插入（在文件名末尾添加信息）、
+> 前置插入（在文件名开头添加信息）、替换字符（替换文件名中的字符）；
+> * 该功能中可以选择'根据模板文件创建新文件'或'只替换文件名'；  
+> 如果选择根据模板文件创建文件，则需要选择模板文件，而对文件名的操作则是根据模板文件名为基础进行操作的；  
+> 如果选择只替换文件名，则只会操作指定文件夹下现有的文件的文件名，不会创建新文件；  
+> * 初始标识符的类型指的在文件名中替换或插入的基准标识符，当前只有数字和时间两种类型；
+> * 递增标识的配置是在初始标识符的基础上做的扩展以及按规律的变更，如图：  
+> ![](images/markdown/batchIncrementEdit_string.png)  
+> 图中配置的：后置插入、只替换文件名、初始标识符为数字类型、初始字符3，
+> 初始字符的前置字符pre，初始字符的后置字符after，初始字符的步长 1；  
+> 修改前的源文件图：  
+> ![](images/markdown/batchIncrementEdit_resource.png)  
+> 修改后的效果图：  
+> ![](images/markdown/batchIncrementEdit_result.png)  
 
-
-
-
+***五、下载公众号文章中的音视频***
+![](images/markdown/downloadVideoFromArticle.png)  
+> 该功能可以从公众号文章中自动或者音频、视频，并下载（当前功能只能下载简单路径的音视频，复杂路径的音视频暂时无法处理）；  
+> * 将公众号的链接添加到'请输入公众号文章的url'输入框中；
+> * 选择保存音视频的文件夹路径；  
+> 如图所示：  
+> ![](images/markdown/downloadVideoFromArticle_result.png)  
