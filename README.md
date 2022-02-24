@@ -1,4 +1,4 @@
-##javafx编写的电脑客户端的软件，协助日常的上班工作  
+## javafx编写的电脑客户端的软件，协助日常的上班工作  
 ***[项目的GitHub路径](https://github.com/mwrmaven/HelloFx-Maven)***  
 ***[项目的Gitee路径](https://gitee.com/mwrmaven/HelloFx-Maven)***  
 ***github中的图片可能无法显示，可下载代码或跳转到Gitee路径查看README.md***
@@ -11,7 +11,7 @@
 >  * 比较两个文件内容
 >  * 文本批量生成
 
-###功能介绍
+### 功能介绍  
 ***一、文件中的文本行排序***  
 ![](images/markdown/linesort.png)
 > 该功能可以为单个文件或文件夹下所有的文件的内容按行进行排序。
