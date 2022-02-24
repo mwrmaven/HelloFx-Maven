@@ -1,4 +1,7 @@
 ##javafx编写的电脑客户端的软件，协助日常的上班工作
+***[项目的GitHub路径](https://github.com/mwrmaven/HelloFx-Maven)***  
+***[项目的Gitee路径](https://gitee.com/mwrmaven/HelloFx-Maven)***  
+***github中的图片可能无法显示，可下载代码或跳转到Gitee路径查看README.md***
 > ***软件中包含的功能***
 >  * 文件中的文本行排序
 >  * URL编码批量转换
