@@ -74,5 +74,9 @@ public class Common {
     public static final String ONEFILE = "单个文件中url批量转换";
     public static final String ONEFOLDER = "文件夹下所有文件中url批量转换";
 
+    // 指定url列，或根据某列先生成url
+    public static final String FIXCOL = "指定URL列";
+    public static final String FROMCOL = "根据某列生成URL";
+
 
 }

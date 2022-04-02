@@ -145,16 +145,39 @@ public class UrlConvert implements Function {
         ToggleGroup fileType = new ToggleGroup();
         txtRadio.setToggleGroup(fileType);
         excelRadio.setToggleGroup(fileType);
-        TextField tf = new TextField();
-        tf.setPrefWidth(300);
-        tf.setVisible(true);
-        tf.setPromptText("请输入url在excel文件中的第几列");
         // 设置样式为下划线
 
         HBox line3 = new HBox();
         line3.setSpacing(10);
-        line3.getChildren().addAll(txtRadio, excelRadio, tf);
+        line3.getChildren().addAll(txtRadio, excelRadio);
         line3.setAlignment(Pos.CENTER_LEFT);
+
+        RadioButton fixCol = new RadioButton(Common.FIXCOL);
+        RadioButton fromCol = new RadioButton(Common.FROMCOL);
+        fromCol.setSelected(true);
+        ToggleGroup colType = new ToggleGroup();
+        fixCol.setToggleGroup(colType);
+        fromCol.setToggleGroup(colType);
+
+        TextField tf = new TextField();
+        tf.setPrefWidth(300);
+        tf.setVisible(true);
+        tf.setPromptText("请输入url或指定列在excel文件中的第几列");
+
+        HBox line3_1 = new HBox();
+        line3_1.setSpacing(10);
+        line3_1.setAlignment(Pos.CENTER_LEFT);
+        line3_1.getChildren().addAll(fixCol, fromCol, tf);
+
+        Label baseWordLabel = new Label("生成URL的基础URL模板：");
+        TextField baseWordText = new TextField();
+        baseWordText.setPromptText("指定列的参数所在位置使用【para】代替，例如 http://www.【para】.com");
+        baseWordText.setPrefWidth(width / 2 - 200);
+
+        HBox line3_2 = new HBox();
+        line3_2.setSpacing(10);
+        line3_2.setAlignment(Pos.CENTER_LEFT);
+        line3_2.getChildren().addAll(baseWordLabel, baseWordText);
 
         // 创建源文件中标题列的下拉列表
         MultiComboBox<Col> mcb = new MultiComboBox<>();
@@ -373,8 +396,18 @@ public class UrlConvert implements Function {
 
                 String text = ((RadioButton) newValue).getText();
                 if (text.equals(excelRadio.getText())) {
-                    // 显示输入框
-                    tf.setVisible(true);
+
+                    if (((RadioButton)colType.getSelectedToggle()).getText().equalsIgnoreCase(fromCol.getText())) {
+                        // 需要拷贝出来的列 和 是否指定url列
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3) + 1, line3_1);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_1) + 1, line3_2);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_2) + 1, line3After);
+
+                    } else {
+                        // 需要拷贝出来的列 和 是否指定url列
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3) + 1, line3_1);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_1) + 1, line3After);
+                    }
 
                     File file = null;
                     // 判断源文件格式
@@ -439,8 +472,23 @@ public class UrlConvert implements Function {
 
                 } else {
                     // 不显示输入框
-                    tf.setVisible(false);
+                    // 需要拷贝出来的列 和 是否指定url列
                     tf.setText("");
+                    baseWordText.setText("");
+                    vBox.getChildren().remove(line3_1);
+                    vBox.getChildren().remove(line3_2);
+                    vBox.getChildren().remove(line3After);
+                }
+            }
+        });
+
+        colType.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+            @Override
+            public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
+                if (fromCol.getText().equals(((RadioButton) newValue).getText())) {
+                    vBox.getChildren().add(vBox.getChildren().indexOf(line3After), line3_2);
+                } else {
+                    vBox.getChildren().remove(line3_2);
                 }
             }
         });
@@ -653,7 +701,7 @@ public class UrlConvert implements Function {
                     File[] files = folder.listFiles();
                     batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
                             afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
-                            selected, fixedAfterPre, templateFilePath);
+                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordText.getText());
                 } else {
                     // 如果为文件中url批量转换
                     String filePath = ((TextField) bList.get(1)).getText();
@@ -661,12 +709,12 @@ public class UrlConvert implements Function {
                     File[] files = new File[]{file};
                     batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
                             afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
-                            selected, fixedAfterPre, templateFilePath);
+                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordText.getText());
                 }
             }
         });
 
-        vBox.getChildren().addAll(line1, line2, line3, line3After, line4Pre, line4, line5Pre, line5, line6, template, execute, ta);
+        vBox.getChildren().addAll(line1, line2, line3, line3_1, line3_2, line3After, line4Pre, line4, line5Pre, line5, line6, template, execute, ta);
         anchorPane.getChildren().add(vBox);
         return anchorPane;
     }
@@ -686,7 +734,7 @@ public class UrlConvert implements Function {
     private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, List<Col> cols,
                                             String startPre, String startEnd, String afterPre, String afterEnd,
                                             String encodeType, TextArea ta, boolean preEncodeFlag, String preEncodeFixed,
-                                            boolean fixedFlag, String fixed, String templateFilePath) {
+                                            boolean fixedFlag, String fixed, String templateFilePath, String colType, String baseWordText) {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date now = new Date();
@@ -740,49 +788,51 @@ public class UrlConvert implements Function {
             return;
         }
 
-        // 获取模板文件中的段落
-        File file = new File(templateFilePath);
         List<XWPFParagraph> docxParagraphs = new ArrayList<>();
-        List<Paragraph> docParagraphs = new ArrayList<>();
-        FileInputStream fis = null;
-        try {
-            fis = new FileInputStream(file);
-            if (StringUtils.isNotEmpty(templateFilePath) && templateFilePath.endsWith(".doc")) {
-                try {
-                    HWPFDocument doc = new HWPFDocument(fis);
-                    Range range = doc.getRange();
-                    for (int i = 0; i < range.numParagraphs(); i++) {
-                        docParagraphs.add(range.getParagraph(i));
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
+        if (StringUtils.isNotBlank(templateFilePath)) {
+            // 获取模板文件中的段落
+            File file = new File(templateFilePath);
+            List<Paragraph> docParagraphs = new ArrayList<>();
+            FileInputStream fis = null;
+            try {
+                fis = new FileInputStream(file);
+                if (StringUtils.isNotEmpty(templateFilePath) && templateFilePath.endsWith(".doc")) {
                     try {
-                        if (fis != null) {
-                            fis.close();
+                        HWPFDocument doc = new HWPFDocument(fis);
+                        Range range = doc.getRange();
+                        for (int i = 0; i < range.numParagraphs(); i++) {
+                            docParagraphs.add(range.getParagraph(i));
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
+                    } finally {
+                        try {
+                            if (fis != null) {
+                                fis.close();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
+                } else if (StringUtils.isNotEmpty(templateFilePath) && templateFilePath.endsWith(".docx")) {
+                    try {
+                        XWPFDocument docx = new XWPFDocument(fis);
+                        docxParagraphs = docx.getParagraphs();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else if (StringUtils.isNotEmpty(templateFilePath)){
+                    ta.setText("当前模板文件只支持doc、docx格式");
                 }
-            } else if (StringUtils.isNotEmpty(templateFilePath) && templateFilePath.endsWith(".docx")) {
-                try {
-                    XWPFDocument docx = new XWPFDocument(fis);
-                    docxParagraphs = docx.getParagraphs();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } else if (StringUtils.isNotEmpty(templateFilePath)){
-                ta.setText("当前模板文件只支持doc、docx格式");
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } finally {
-            if (fis != null) {
-                try {
-                    fis.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } finally {
+                if (fis != null) {
+                    try {
+                        fis.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
@@ -920,6 +970,7 @@ public class UrlConvert implements Function {
                                 continue;
                             }
                             num++;
+
                             String sourceU = startPre + sourceUrl;
                             if (preEncodeFlag) {
                                 sourceU += preEncodeFixed;
@@ -956,7 +1007,6 @@ public class UrlConvert implements Function {
                             targetCell.setCellValue(result);
 
                             // 替换文本模板中的参数
-
                             for (XWPFParagraph x : docxParagraphs) {
                                 String text = x.getText();
                                 if (x.getText().matches("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}")) {
@@ -994,11 +1044,20 @@ public class UrlConvert implements Function {
                             if (cell == null) {
                                 continue;
                             }
-                            String sourceUrl = cell.getStringCellValue();
+                            String sourceUrl = getCellValue(rowi, colIndex);
                             if (StringUtils.isEmpty(sourceUrl)) {
                                 continue;
                             }
                             num++;
+
+                            if (colType.equalsIgnoreCase(Common.FROMCOL)) {
+                                if (StringUtils.isBlank(baseWordText) || !baseWordText.contains("【para】")) {
+                                    ta.setText("请正确填写生成URL的基础URL模板");
+                                    return;
+                                }
+                                sourceUrl = baseWordText.replaceAll("【para】", sourceUrl);
+                            }
+
                             String sourceU = startPre + sourceUrl;
                             if (preEncodeFlag) {
                                 sourceU += preEncodeFixed;
