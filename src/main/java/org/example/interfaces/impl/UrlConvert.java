@@ -176,27 +176,61 @@ public class UrlConvert implements Function {
         line3_1.getChildren().addAll(fixCol, fromCol, tf);
 
         Label baseWordLabel = new Label("生成URL的基础URL模板：");
-        TextField baseWordText = new TextField();
-        baseWordText.setPromptText("指定列的参数所在位置使用【para】代替，时间使用【date】代替，例如 http://www.【para】.com？date=【date】");
-        baseWordText.setPrefWidth(width / 2 - 200);
-        // 查询配置文件中是否存在生成URL的基础URL模板
-        String urlTemplate = properties.getProperty(URLTEMPLATE);
-        // 加载配置文件中的参数
-        if (StringUtils.isNotEmpty(urlTemplate)) {
-            baseWordText.setText(urlTemplate);
-        }
 
-        String ut = baseWordText.getText();
-        // 失去焦点的监听
+        String urlTemplateList = properties.getProperty(URLTEMPLATE);
+        ComboBox<String> baseWordText = new ComboBox<>();
+        // 设置格式
+        baseWordText.setEditable(true);
+        baseWordText.setPrefWidth(width / 2 - 200);
+        baseWordText.setPromptText("指定列的参数所在位置使用【para】代替，时间使用【date】代替，例如 http://www.【para】.com？date=【date】");
+        String[] splitBaseWordTextParams = urlTemplateList.split(";");
+        for (String p : splitBaseWordTextParams) {
+            if (StringUtils.isNotEmpty(p)) {
+                baseWordText.getItems().add(p);
+            }
+        }
         baseWordText.focusedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                // 判断内容改变，则保存内容
-                if (!ut.equals(baseWordText.getText())) {
-                    // 设置配置文件
-                    properties.setProperty(URLTEMPLATE, baseWordText.getText());
+                // combobox输入的值
+                String newItem = baseWordText.getEditor().getText();
+                if (StringUtils.isNotEmpty(newItem) && !baseWordText.getItems().contains(newItem)) {
+                    baseWordText.getItems().add(newItem);
+                }
+
+                // 将选项写入到配置文件
+                String collect = baseWordText.getItems().stream().filter(StringUtils::isNotEmpty).collect(Collectors.joining(";"));
+                if (!collect.equals(urlTemplateList)) {
+                    // 将参数写入到配置文件
                     try {
-                        // 将参数写入到配置文件
+                        // 设置配置文件
+                        properties.setProperty(URLTEMPLATE, collect);
+                        properties.store(new FileOutputStream(configFile), "重写"+URLTEMPLATE+"参数");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        // 删除按钮
+        Button deleteURLTemplateButton = new Button("删除选中项");
+        deleteURLTemplateButton.setStyle("-fx-background-radius: 4; -fx-background-color: #878787; -fx-text-fill: white;");
+        deleteURLTemplateButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                // 移除选中的项
+                String selected = baseWordText.getEditor().getText();
+                baseWordText.getItems().remove(selected);
+                // 将编辑中设置为空
+                baseWordText.getEditor().setText("");
+                // 保存combobox中的选项写入到配置文件
+                String collect = baseWordText.getItems().stream().filter(StringUtils::isNotEmpty).collect(Collectors.joining(";"));
+                if (!collect.equals(urlTemplateList)) {
+                    // 将参数写入到配置文件
+                    try {
+                        // 设置配置文件
+                        properties.setProperty(URLTEMPLATE, collect);
                         properties.store(new FileOutputStream(configFile), "重写"+URLTEMPLATE+"参数");
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -208,7 +242,7 @@ public class UrlConvert implements Function {
         HBox line3_2 = new HBox();
         line3_2.setSpacing(10);
         line3_2.setAlignment(Pos.CENTER_LEFT);
-        line3_2.getChildren().addAll(baseWordLabel, baseWordText);
+        line3_2.getChildren().addAll(baseWordLabel, baseWordText, deleteURLTemplateButton);
 
         Label dateLabel = new Label("选择URL中的日期：");
         DatePicker dp = new DatePicker();
@@ -407,19 +441,37 @@ public class UrlConvert implements Function {
                         line2.getChildren().add(node);
                     }
                     vBox.getChildren().remove(line3);
+                    vBox.getChildren().remove(line3_1);
+                    vBox.getChildren().remove(line3_2);
+                    vBox.getChildren().remove(line3_3);
+                    vBox.getChildren().remove(line3After);
                 } else if (radioText.equals(folderRadio.getText())) {
+                    // 清空“请输入单个url”
+                    TextField tf = (TextField) aList.get(1);
+                    tf.clear();
                     for (Node node : cList) {
                         line2.getChildren().add(node);
                     }
                     if (((RadioButton) oldValue).getText().equals(onlyTextLineRadio.getText())) {
                         vBox.getChildren().add(2, line3);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3) + 1, line3_1);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_1) + 1, line3_2);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_2) + 1, line3_3);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_3) + 1, line3After);
                     }
                 } else {
+                    // 清空“请输入单个url”
+                    TextField tf = (TextField) aList.get(1);
+                    tf.clear();
                     for (Node node : bList) {
                         line2.getChildren().add(node);
                     }
                     if (((RadioButton) oldValue).getText().equals(onlyTextLineRadio.getText())) {
                         vBox.getChildren().add(2, line3);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3) + 1, line3_1);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_1) + 1, line3_2);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_2) + 1, line3_3);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_3) + 1, line3After);
                     }
                 }
 
@@ -514,7 +566,6 @@ public class UrlConvert implements Function {
                     // 不显示输入框
                     // 需要拷贝出来的列 和 是否指定url列
                     tf.setText("");
-                    baseWordText.setText("");
                     vBox.getChildren().remove(line3_1);
                     vBox.getChildren().remove(line3_2);
                     vBox.getChildren().remove(line3_3);
@@ -709,6 +760,9 @@ public class UrlConvert implements Function {
                 // 获取选中的日期
                 LocalDate pointDate = dp.getValue();
 
+                // 获取生成URL的基础URL模板的下拉框中的选项
+                String baseWordValue = baseWordText.getEditor().getText();
+
                 if (toggleText.equals(onlyTextLineRadio.getText())) {
                     // 如果为单个url转换
                     // 获取单个url
@@ -747,7 +801,7 @@ public class UrlConvert implements Function {
                     File[] files = folder.listFiles();
                     batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
                             afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
-                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordText.getText(), pointDate);
+                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordValue, pointDate);
                 } else {
                     // 如果为文件中url批量转换
                     String filePath = ((TextField) bList.get(1)).getText();
@@ -755,7 +809,7 @@ public class UrlConvert implements Function {
                     File[] files = new File[]{file};
                     batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
                             afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
-                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordText.getText(), pointDate);
+                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordValue, pointDate);
                 }
             }
         });
@@ -780,7 +834,7 @@ public class UrlConvert implements Function {
     private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, List<Col> cols,
                                             String startPre, String startEnd, String afterPre, String afterEnd,
                                             String encodeType, TextArea ta, boolean preEncodeFlag, String preEncodeFixed,
-                                            boolean fixedFlag, String fixed, String templateFilePath, String colType, String baseWordText, LocalDate pointDate) {
+                                            boolean fixedFlag, String fixed, String templateFilePath, String colType, String baseWordValue, LocalDate pointDate) {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date now = new Date();
@@ -1084,18 +1138,18 @@ public class UrlConvert implements Function {
                             num++;
 
                             if (colType.equalsIgnoreCase(Common.FROMCOL)) {
-                                if (StringUtils.isBlank(baseWordText) || !baseWordText.contains("【para】")) {
+                                if (StringUtils.isBlank(baseWordValue) || !baseWordValue.contains("【para】")) {
                                     ta.setText("请正确填写生成URL的基础URL模板");
                                     return;
                                 }
-                                if (baseWordText.contains("【date】") && pointDate == null) {
+                                if (baseWordValue.contains("【date】") && pointDate == null) {
                                     ta.setText("请选择URL中的日期！");
                                     return;
                                 }
 
                                 String pd = pointDate.format(dtf);
                                 System.out.println("选中的日期为：" + pd);
-                                sourceUrl = baseWordText.replaceAll("【para】", sourceUrl);
+                                sourceUrl = baseWordValue.replaceAll("【para】", sourceUrl);
                                 sourceUrl = sourceUrl.replaceAll("【date】", pd);
                             }
 
