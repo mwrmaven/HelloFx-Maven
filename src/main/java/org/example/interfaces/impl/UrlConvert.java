@@ -50,6 +50,8 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -69,11 +71,15 @@ public class UrlConvert implements Function {
     private static final String FIXEDAFTERFIRST = "fixedAfterFirst";
     // 编译后在url前面追加的固定字符(在前置字符前)
     private static final String AFTERFIXEDPRE = "afterFixedPre";
+    // 生成URL的基础URL模板
+    private static final String URLTEMPLATE = "urlTemplate";
 
     private static final Pattern pattern = Pattern.compile("\\$\\{[\\u4e00-\\u9fa5_a-zA-Z0-9]*\\}");
 
     private static final String OR = "或";
     private static final String AND = "并且";
+
+    private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     @Override
     public String tabName() {
@@ -171,13 +177,46 @@ public class UrlConvert implements Function {
 
         Label baseWordLabel = new Label("生成URL的基础URL模板：");
         TextField baseWordText = new TextField();
-        baseWordText.setPromptText("指定列的参数所在位置使用【para】代替，例如 http://www.【para】.com");
+        baseWordText.setPromptText("指定列的参数所在位置使用【para】代替，时间使用【date】代替，例如 http://www.【para】.com？date=【date】");
         baseWordText.setPrefWidth(width / 2 - 200);
+        // 查询配置文件中是否存在生成URL的基础URL模板
+        String urlTemplate = properties.getProperty(URLTEMPLATE);
+        // 加载配置文件中的参数
+        if (StringUtils.isNotEmpty(urlTemplate)) {
+            baseWordText.setText(urlTemplate);
+        }
+
+        String ut = baseWordText.getText();
+        // 失去焦点的监听
+        baseWordText.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                // 判断内容改变，则保存内容
+                if (!ut.equals(baseWordText.getText())) {
+                    // 设置配置文件
+                    properties.setProperty(URLTEMPLATE, baseWordText.getText());
+                    try {
+                        // 将参数写入到配置文件
+                        properties.store(new FileOutputStream(configFile), "重写"+URLTEMPLATE+"参数");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
 
         HBox line3_2 = new HBox();
         line3_2.setSpacing(10);
         line3_2.setAlignment(Pos.CENTER_LEFT);
         line3_2.getChildren().addAll(baseWordLabel, baseWordText);
+
+        Label dateLabel = new Label("选择URL中的日期：");
+        DatePicker dp = new DatePicker();
+        HBox line3_3 = new HBox();
+        line3_3.setSpacing(10);
+        line3_3.setAlignment(Pos.CENTER_LEFT);
+        line3_3.getChildren().addAll(dateLabel, dp);
+
 
         // 创建源文件中标题列的下拉列表
         MultiComboBox<Col> mcb = new MultiComboBox<>();
@@ -401,7 +440,8 @@ public class UrlConvert implements Function {
                         // 需要拷贝出来的列 和 是否指定url列
                         vBox.getChildren().add(vBox.getChildren().indexOf(line3) + 1, line3_1);
                         vBox.getChildren().add(vBox.getChildren().indexOf(line3_1) + 1, line3_2);
-                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_2) + 1, line3After);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_2) + 1, line3_3);
+                        vBox.getChildren().add(vBox.getChildren().indexOf(line3_3) + 1, line3After);
 
                     } else {
                         // 需要拷贝出来的列 和 是否指定url列
@@ -477,6 +517,7 @@ public class UrlConvert implements Function {
                     baseWordText.setText("");
                     vBox.getChildren().remove(line3_1);
                     vBox.getChildren().remove(line3_2);
+                    vBox.getChildren().remove(line3_3);
                     vBox.getChildren().remove(line3After);
                 }
             }
@@ -487,8 +528,10 @@ public class UrlConvert implements Function {
             public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
                 if (fromCol.getText().equals(((RadioButton) newValue).getText())) {
                     vBox.getChildren().add(vBox.getChildren().indexOf(line3After), line3_2);
+                    vBox.getChildren().add(vBox.getChildren().indexOf(line3After), line3_3);
                 } else {
                     vBox.getChildren().remove(line3_2);
+                    vBox.getChildren().remove(line3_3);
                 }
             }
         });
@@ -663,6 +706,9 @@ public class UrlConvert implements Function {
 
                 String templateFilePath = ((TextField) nodes.get(1)).getText();
 
+                // 获取选中的日期
+                LocalDate pointDate = dp.getValue();
+
                 if (toggleText.equals(onlyTextLineRadio.getText())) {
                     // 如果为单个url转换
                     // 获取单个url
@@ -701,7 +747,7 @@ public class UrlConvert implements Function {
                     File[] files = folder.listFiles();
                     batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
                             afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
-                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordText.getText());
+                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordText.getText(), pointDate);
                 } else {
                     // 如果为文件中url批量转换
                     String filePath = ((TextField) bList.get(1)).getText();
@@ -709,12 +755,12 @@ public class UrlConvert implements Function {
                     File[] files = new File[]{file};
                     batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
                             afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
-                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordText.getText());
+                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordText.getText(), pointDate);
                 }
             }
         });
 
-        vBox.getChildren().addAll(line1, line2, line3, line3_1, line3_2, line3After, line4Pre, line4, line5Pre, line5, line6, template, execute, ta);
+        vBox.getChildren().addAll(line1, line2, line3, line3_1, line3_2, line3_3, line3After, line4Pre, line4, line5Pre, line5, line6, template, execute, ta);
         anchorPane.getChildren().add(vBox);
         return anchorPane;
     }
@@ -734,7 +780,7 @@ public class UrlConvert implements Function {
     private void batchFilesAndExportToExcel(File[] files, String fileType, int colIndex, List<Col> cols,
                                             String startPre, String startEnd, String afterPre, String afterEnd,
                                             String encodeType, TextArea ta, boolean preEncodeFlag, String preEncodeFixed,
-                                            boolean fixedFlag, String fixed, String templateFilePath, String colType, String baseWordText) {
+                                            boolean fixedFlag, String fixed, String templateFilePath, String colType, String baseWordText, LocalDate pointDate) {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date now = new Date();
@@ -777,16 +823,6 @@ public class UrlConvert implements Function {
         cell2.setCellStyle(cs);
 
         int num = 0;
-        FileOutputStream outputStream = null;
-        try {
-            outputStream = new FileOutputStream(newPath);
-        } catch (FileNotFoundException e) {
-            System.out.println(e.getMessage().contains("另一个程序正在使用此文件，进程无法访问"));
-            if (e.getMessage().contains("另一个程序正在使用此文件，进程无法访问")) {
-                ta.setText(e.getMessage());
-            }
-            return;
-        }
 
         List<XWPFParagraph> docxParagraphs = new ArrayList<>();
         if (StringUtils.isNotBlank(templateFilePath)) {
@@ -926,9 +962,6 @@ public class UrlConvert implements Function {
                         if (workbook != null) {
                             workbook.close();
                         }
-                        if (outputStream != null) {
-                            outputStream.close();
-                        }
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
@@ -1055,7 +1088,15 @@ public class UrlConvert implements Function {
                                     ta.setText("请正确填写生成URL的基础URL模板");
                                     return;
                                 }
+                                if (baseWordText.contains("【date】") && pointDate == null) {
+                                    ta.setText("请选择URL中的日期！");
+                                    return;
+                                }
+
+                                String pd = pointDate.format(dtf);
+                                System.out.println("选中的日期为：" + pd);
                                 sourceUrl = baseWordText.replaceAll("【para】", sourceUrl);
+                                sourceUrl = sourceUrl.replaceAll("【date】", pd);
                             }
 
                             String sourceU = startPre + sourceUrl;
@@ -1147,9 +1188,6 @@ public class UrlConvert implements Function {
                         if (workbook != null) {
                             workbook.close();
                         }
-                        if (outputStream != null) {
-                            outputStream.close();
-                        }
                     } catch (IOException ex) {
                         ex.printStackTrace();
                     }
@@ -1181,12 +1219,31 @@ public class UrlConvert implements Function {
             ta.setText("批处理完成，Word结果文件：" + resultWordPath);
         }
 
+        FileOutputStream outputStream = null;
         try {
+            try {
+                outputStream = new FileOutputStream(newPath);
+            } catch (FileNotFoundException e) {
+                System.out.println(e.getMessage().contains("另一个程序正在使用此文件，进程无法访问"));
+                if (e.getMessage().contains("另一个程序正在使用此文件，进程无法访问")) {
+                    ta.setText(e.getMessage());
+                }
+                return;
+            }
             workbook.write(outputStream);
-            workbook.close();
-            outputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            try {
+                if (workbook != null) {
+                    workbook.close();
+                }
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         ta.setText(ta.getText() + "\n" + "批处理完成，Excel结果文件：" + newPath);
     }
