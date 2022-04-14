@@ -68,7 +68,6 @@ public class Common {
     public static final String DECODE = "URL解码";
     public static final String ENCODE = "URL编码";
 
-
     // url编码转换功能中的常量
     public static final String ONEURL = "单个url转换";
     public static final String ONEFILE = "单个文件中url批量转换";

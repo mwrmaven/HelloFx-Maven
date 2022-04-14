@@ -11,6 +11,7 @@ import javafx.scene.image.Image;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.example.common.Common;
+import org.example.init.Config;
 import org.example.interfaces.Function;
 
 import java.util.Iterator;
@@ -29,6 +30,9 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        // 读取配置文件
+        Config.createProperties();
+
         // 获取屏幕的宽、高
         Screen screen = Screen.getPrimary();
         Rectangle2D bounds = screen.getVisualBounds();
@@ -55,7 +59,7 @@ public class App extends Application {
 
             // 设置默认的标签页
             if (Common.TOP_BUTTON_5.equals(ite.tabName())) {
-               tp.getSelectionModel().select(tab);
+                tp.getSelectionModel().select(tab);
             }
         }
 
