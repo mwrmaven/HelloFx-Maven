@@ -46,7 +46,7 @@ public class Config {
      * @return
      */
     public static String get(String key) {
-        return properties.getProperty("key");
+        return properties.getProperty(key);
     }
 
     /**
