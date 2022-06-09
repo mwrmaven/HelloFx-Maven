@@ -1,5 +1,7 @@
 package org.example.interfaces.impl;
 
+import com.alibaba.fastjson.JSONException;
+import com.alibaba.fastjson.JSONObject;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -18,7 +20,16 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.cookie.Cookie;
+import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.usermodel.Paragraph;
 import org.apache.poi.hwpf.usermodel.Range;
@@ -636,6 +647,7 @@ public class UrlConvert implements Function {
         execute.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
+                long start = System.currentTimeMillis();
                 // 获取下拉框中的选项
                 String fixedPreAfterFirst = preFixes.getEditor().getText();
                 System.out.println("下拉框中输入的值: " + fixedPreAfterFirst);
@@ -759,6 +771,7 @@ public class UrlConvert implements Function {
                             afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
                             selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordValue, pointDate);
                 }
+                System.out.println("处理耗时：" + (System.currentTimeMillis() - start) / 1000 + " 秒");
             }
         });
 
@@ -816,11 +829,14 @@ public class UrlConvert implements Function {
             cell.setCellValue(c.getName());
             cell.setCellStyle(cs);
         }
-        XSSFCell cell1 = row.createCell(count + 1);
+        XSSFCell cellPre1 = row.createCell(count + 1);
+        cellPre1.setCellValue("网页中显示价格");
+        XSSFCell cell1 = row.createCell(count + 2);
         cell1.setCellValue("原URL");
-        XSSFCell cell2 = row.createCell(count + 2);
+        XSSFCell cell2 = row.createCell(count + 3);
         cell2.setCellValue("处理后的URL");
 
+        cellPre1.setCellStyle(cs);
         cell1.setCellStyle(cs);
         cell2.setCellStyle(cs);
 
@@ -973,6 +989,17 @@ public class UrlConvert implements Function {
                 num++;
             }
         } else if (Common.EXCEL.equals(fileType)){
+            // 请求商品网页信息的准备
+            CookieStore cookieStore = new BasicCookieStore();
+            HttpClientBuilder builder = HttpClientBuilder.create().setDefaultCookieStore(cookieStore);
+            HttpClient client = builder.build();
+            String sid = "";
+            try {
+                sid = getSID(client, cookieStore);
+            } catch (IOException e) {
+                System.out.println("未查询到请求网址所需的SID");
+            }
+
             // 读取文件，遍历单元格
             for (File f : files) {
                 if (f.getPath().equals(newPath)) {
@@ -1036,9 +1063,13 @@ public class UrlConvert implements Function {
                                 num--;
                                 continue;
                             }
-                            XSSFCell sourceCell = rowNew.createCell(max + 1);
+                            client = HttpClients.createDefault();
+                            String price = getHtmlPrice(sourceUrl, sid, client);
+                            XSSFCell priceCell = rowNew.createCell(max + 1);
+                            priceCell.setCellValue(price);
+                            XSSFCell sourceCell = rowNew.createCell(max + 2);
                             sourceCell.setCellValue(sourceUrl);
-                            XSSFCell targetCell = rowNew.createCell(max + 2);
+                            XSSFCell targetCell = rowNew.createCell(max + 3);
                             targetCell.setCellValue(result);
 
                             // 替换文本模板中的参数
@@ -1132,9 +1163,13 @@ public class UrlConvert implements Function {
                                 num--;
                                 continue;
                             }
-                            XSSFCell sourceCell = rowNew.createCell(max + 1);
+                            client = HttpClients.createDefault();
+                            String price = getHtmlPrice(sourceUrl, sid, client);
+                            XSSFCell priceCell = rowNew.createCell(max + 1);
+                            priceCell.setCellValue(price);
+                            XSSFCell sourceCell = rowNew.createCell(max + 2);
                             sourceCell.setCellValue(sourceUrl);
-                            XSSFCell targetCell = rowNew.createCell(max + 2);
+                            XSSFCell targetCell = rowNew.createCell(max + 3);
                             targetCell.setCellValue(result);
 
                             // 替换文本模板中的参数
@@ -1322,6 +1357,86 @@ public class UrlConvert implements Function {
             }
         }
         ta.setText(ta.getText() + "\n" + "批处理完成，Excel结果文件：" + excelFilePath);
+    }
+
+    /**
+     * 获取网页请求中的sid
+     * @param client 客户端
+     * @param cookieStore cookie存储集
+     * @return sid
+     * @throws IOException
+     */
+    private String getSID(HttpClient client, CookieStore cookieStore) throws IOException {
+        String jsUrl = "https://track.sanfu.com/track/page/loginApi.js";
+        HttpGet get = new HttpGet(jsUrl);
+        client.execute(get);
+        List<Cookie> cookies = cookieStore.getCookies();
+        System.out.println("--------------------------------------------------------------------");
+        String sid = "";
+        for (Cookie item : cookies) {
+            System.out.println("name=" + item.getName() + "; value=" + item.getValue());
+            if ("SFSID".equals(item.getName())) {
+                sid = item.getValue();
+            }
+        }
+        return sid;
+    }
+
+    /**
+     * 获取网页中商品的价格
+     * @param goodsUrl 商品的网页路径
+     * @param sid 请求网页时使用的参数
+     * @param client 客户端
+     * @return 商品的显示价格
+     * @throws IOException
+     */
+    private String getHtmlPrice(String goodsUrl, String sid, HttpClient client) throws Exception {
+        System.out.println("--------------------------------------------------------------------");
+        System.out.println("sid = " + sid);
+        System.out.println("--------------------------------------------------------------------");
+
+        String goodsSn = "";
+        String shopId = "";
+        goodsUrl = goodsUrl.substring(goodsUrl.indexOf("?") + 1);
+        String[] split = goodsUrl.split("&");
+        for (String s : split) {
+            String[] kv = s.split("=");
+            if ("goods_sn".equals(kv[0])) {
+                goodsSn = kv[1];
+            }
+            if ("shopId".equals(kv[0])) {
+                shopId = kv[1];
+            }
+        }
+        String realUrl = "https://m.sanfu.com/ms-sanfu-wap-goods-item/itemNew?goodsSn=" + goodsSn + "&sid=" + sid + "&shoId=" + shopId + "&localShoId=" + shopId;
+        System.out.println("realUrl = " + realUrl);
+        System.out.println("--------------------------------------------------------------------");
+        HttpGet get  = new HttpGet(realUrl);
+        HttpResponse execute = client.execute(get);
+        String goodsInfo = IOUtils.toString(execute.getEntity().getContent(), "UTF-8");
+//        System.out.println(goodsInfo);
+        JSONObject object = JSONObject.parseObject(goodsInfo);
+
+        JSONObject msg;
+        try {
+            msg = object.getJSONObject("msg");
+        } catch (JSONException e) {
+            return object.getString("msg");
+        }
+        double mbPrice = msg.getJSONObject("goodsStock").getDoubleValue("salePrice");
+        double scPrice = msg.getJSONObject("goods").getDoubleValue("scPrice");
+        // 会员价格
+        double memberPrice = msg.getJSONObject("goodsStock").getDoubleValue("memberPrice");
+
+        System.out.println("mbPrice=" + mbPrice);
+        System.out.println("scPrice=" + scPrice);
+        System.out.println("memberPrice=" + memberPrice);
+
+        StringBuilder result = new StringBuilder("页面显示价格：").append(Math.max(mbPrice, scPrice));
+        if (memberPrice != 0) {
+            result.append("; 会员价格：").append(memberPrice);
+        }
+        return result.toString();
     }
 
 }
