@@ -1426,16 +1426,16 @@ public class UrlConvert implements Function {
 //        double mbPrice = msg.getJSONObject("goodsStock").getDoubleValue("salePrice");
         double scPrice = msg.getJSONObject("goods").getDoubleValue("scPrice");
         // 会员价格
-//        double memberPrice = msg.getJSONObject("goodsStock").getDoubleValue("memberPrice");
+        double memberPrice = msg.getJSONObject("goodsStock").getDoubleValue("memberPrice");
 
 //        System.out.println("mbPrice=" + mbPrice);
         System.out.println("scPrice=" + scPrice);
-//        System.out.println("memberPrice=" + memberPrice);
+        System.out.println("memberPrice=" + memberPrice);
 
         StringBuilder result = new StringBuilder("页面显示价格：").append(scPrice);
-//        if (memberPrice != 0) {
-//            result.append("; 会员价格：").append(memberPrice);
-//        }
+        if (memberPrice != 0) {
+            result.append("; 会员价格：").append(memberPrice);
+        }
         return result.toString();
     }
 
