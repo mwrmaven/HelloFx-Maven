@@ -1423,16 +1423,18 @@ public class UrlConvert implements Function {
         } catch (JSONException e) {
             return object.getString("msg");
         }
-//        double mbPrice = msg.getJSONObject("goodsStock").getDoubleValue("salePrice");
+        // 网页价格
+        double mbPrice = msg.getJSONObject("goodsStock").getDoubleValue("salePrice");
+        // 小程序价格
         double scPrice = msg.getJSONObject("goods").getDoubleValue("scPrice");
         // 会员价格
         double memberPrice = msg.getJSONObject("goodsStock").getDoubleValue("memberPrice");
 
-//        System.out.println("mbPrice=" + mbPrice);
+        System.out.println("mbPrice=" + mbPrice);
         System.out.println("scPrice=" + scPrice);
         System.out.println("memberPrice=" + memberPrice);
 
-        StringBuilder result = new StringBuilder("页面显示价格：").append(scPrice);
+        StringBuilder result = new StringBuilder("网页显示价格：").append(mbPrice).append("; 小程序价格：").append(scPrice);
         if (memberPrice != 0) {
             result.append("; 会员价格：").append(memberPrice);
         }
