@@ -831,12 +831,19 @@ public class UrlConvert implements Function {
         }
         XSSFCell cellPre1 = row.createCell(count + 1);
         cellPre1.setCellValue("网页中显示价格");
-        XSSFCell cell1 = row.createCell(count + 2);
+        XSSFCell cellPre2 = row.createCell(count + 2);
+        cellPre2.setCellValue("小程序中显示价格");
+        XSSFCell cellPre3 = row.createCell(count + 3);
+        cellPre3.setCellValue("会员价格");
+
+        XSSFCell cell1 = row.createCell(count + 4);
         cell1.setCellValue("原URL");
-        XSSFCell cell2 = row.createCell(count + 3);
+        XSSFCell cell2 = row.createCell(count + 5);
         cell2.setCellValue("处理后的URL");
 
         cellPre1.setCellStyle(cs);
+        cellPre2.setCellStyle(cs);
+        cellPre3.setCellStyle(cs);
         cell1.setCellStyle(cs);
         cell2.setCellStyle(cs);
 
@@ -1064,12 +1071,16 @@ public class UrlConvert implements Function {
                                 continue;
                             }
                             client = HttpClients.createDefault();
-                            String price = getHtmlPrice(sourceUrl, sid, client);
-                            XSSFCell priceCell = rowNew.createCell(max + 1);
-                            priceCell.setCellValue(price);
-                            XSSFCell sourceCell = rowNew.createCell(max + 2);
+                            String[] priceArray = getHtmlPrice(sourceUrl, sid, client);
+                            XSSFCell priceCell1 = rowNew.createCell(max + 1);
+                            priceCell1.setCellValue(priceArray[0]);
+                            XSSFCell priceCell2 = rowNew.createCell(max + 2);
+                            priceCell2.setCellValue(priceArray[1]);
+                            XSSFCell priceCell3 = rowNew.createCell(max + 3);
+                            priceCell3.setCellValue(priceArray[2]);
+                            XSSFCell sourceCell = rowNew.createCell(max + 4);
                             sourceCell.setCellValue(sourceUrl);
-                            XSSFCell targetCell = rowNew.createCell(max + 3);
+                            XSSFCell targetCell = rowNew.createCell(max + 5);
                             targetCell.setCellValue(result);
 
                             // 替换文本模板中的参数
@@ -1164,12 +1175,16 @@ public class UrlConvert implements Function {
                                 continue;
                             }
                             client = HttpClients.createDefault();
-                            String price = getHtmlPrice(sourceUrl, sid, client);
-                            XSSFCell priceCell = rowNew.createCell(max + 1);
-                            priceCell.setCellValue(price);
-                            XSSFCell sourceCell = rowNew.createCell(max + 2);
+                            String[] priceArray = getHtmlPrice(sourceUrl, sid, client);
+                            XSSFCell priceCell1 = rowNew.createCell(max + 1);
+                            priceCell1.setCellValue(priceArray[0]);
+                            XSSFCell priceCell2 = rowNew.createCell(max + 2);
+                            priceCell2.setCellValue(priceArray[1]);
+                            XSSFCell priceCell3 = rowNew.createCell(max + 3);
+                            priceCell3.setCellValue(priceArray[2]);
+                            XSSFCell sourceCell = rowNew.createCell(max + 4);
                             sourceCell.setCellValue(sourceUrl);
-                            XSSFCell targetCell = rowNew.createCell(max + 3);
+                            XSSFCell targetCell = rowNew.createCell(max + 5);
                             targetCell.setCellValue(result);
 
                             // 替换文本模板中的参数
@@ -1390,7 +1405,7 @@ public class UrlConvert implements Function {
      * @return 商品的显示价格
      * @throws IOException
      */
-    private String getHtmlPrice(String goodsUrl, String sid, HttpClient client) throws Exception {
+    private String[] getHtmlPrice(String goodsUrl, String sid, HttpClient client) throws Exception {
         System.out.println("--------------------------------------------------------------------");
         System.out.println("sid = " + sid);
         System.out.println("--------------------------------------------------------------------");
@@ -1417,11 +1432,14 @@ public class UrlConvert implements Function {
 //        System.out.println(goodsInfo);
         JSONObject object = JSONObject.parseObject(goodsInfo);
 
+        String[] priceArray = new String[3];
         JSONObject msg;
         try {
             msg = object.getJSONObject("msg");
         } catch (JSONException e) {
-            return object.getString("msg");
+            System.out.println(object.getString("msg"));
+            priceArray[0] = priceArray[1] = priceArray[2] = object.getString("msg");
+            return priceArray;
         }
         // 网页价格
         double mbPrice = msg.getJSONObject("goodsStock").getDoubleValue("salePrice");
@@ -1434,11 +1452,11 @@ public class UrlConvert implements Function {
         System.out.println("scPrice=" + scPrice);
         System.out.println("memberPrice=" + memberPrice);
 
-        StringBuilder result = new StringBuilder("网页显示价格：").append(mbPrice).append("; 小程序价格：").append(scPrice);
-        if (memberPrice != 0) {
-            result.append("; 会员价格：").append(memberPrice);
-        }
-        return result.toString();
+        priceArray[0] = String.valueOf(mbPrice);
+        priceArray[1] = String.valueOf(scPrice);
+        priceArray[2] = String.valueOf(memberPrice);
+
+        return priceArray;
     }
 
 }
