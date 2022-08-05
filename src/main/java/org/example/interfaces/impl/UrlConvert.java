@@ -821,6 +821,19 @@ public class UrlConvert implements Function {
         // 设置居中方式
         cs.setAlignment(HorizontalAlignment.CENTER);
 
+        // 设置报错的格式
+        XSSFCellStyle errorStyle = workbook.createCellStyle();
+        // 设置填充方式和北京颜色
+        errorStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        errorStyle.setFillForegroundColor(new XSSFColor(new byte[]{(byte) 255, (byte) 0, (byte) 0}, new DefaultIndexedColorMap()));
+
+        // 设置间隔的浅灰色背景
+        XSSFCellStyle splitStyle = workbook.createCellStyle();
+        // 设置填充方式和北京颜色
+        splitStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        splitStyle.setFillForegroundColor(new XSSFColor(new byte[]{(byte) 211, (byte) 211, (byte) 211}, new DefaultIndexedColorMap()));
+
+
         // 遍历选中的行
         int count = -1;
         for (Col c : cols) {
@@ -828,18 +841,24 @@ public class UrlConvert implements Function {
             XSSFCell cell = row.createCell(count);
             cell.setCellValue(c.getName());
             cell.setCellStyle(cs);
+            sheet.setColumnWidth(count, 10 * 256);
         }
         XSSFCell cellPre1 = row.createCell(count + 1);
-        cellPre1.setCellValue("网页中显示价格");
+        cellPre1.setCellValue("网页价格");
+        sheet.setColumnWidth(count + 1, 10 * 256);
         XSSFCell cellPre2 = row.createCell(count + 2);
-        cellPre2.setCellValue("小程序中显示价格");
+        cellPre2.setCellValue("小程序价格");
+        sheet.setColumnWidth(count + 2, 10 * 256);
         XSSFCell cellPre3 = row.createCell(count + 3);
         cellPre3.setCellValue("会员价格");
+        sheet.setColumnWidth(count + 3, 10 * 256);
 
         XSSFCell cell1 = row.createCell(count + 4);
         cell1.setCellValue("原URL");
+        sheet.setColumnWidth(count + 4, 60 * 256);
         XSSFCell cell2 = row.createCell(count + 5);
         cell2.setCellValue("处理后的URL");
+        sheet.setColumnWidth(count + 5, 60 * 256);
 
         cellPre1.setCellStyle(cs);
         cellPre2.setCellStyle(cs);
@@ -1083,6 +1102,19 @@ public class UrlConvert implements Function {
                             XSSFCell targetCell = rowNew.createCell(max + 5);
                             targetCell.setCellValue(result);
 
+                            if (rowNew.getRowNum() % 2 == 0) {
+                                priceCell1.setCellStyle(splitStyle);
+                                priceCell2.setCellStyle(splitStyle);
+                                priceCell3.setCellStyle(splitStyle);
+                                sourceCell.setCellStyle(splitStyle);
+                                targetCell.setCellStyle(splitStyle);
+                            }
+                            if (!priceArray[0].equals(priceArray[1])) {
+                                priceCell1.setCellStyle(errorStyle);
+                                priceCell2.setCellStyle(errorStyle);
+                                priceCell3.setCellStyle(errorStyle);
+                            }
+
                             // 替换文本模板中的参数
                             for (XWPFParagraph x : docxParagraphs) {
                                 String text = x.getText();
@@ -1168,6 +1200,10 @@ public class UrlConvert implements Function {
                                 if (StringUtils.isNotEmpty(gn) && StringUtils.isNotBlank(gn)) {
                                     flag = false;
                                 }
+
+                                if (rowNew.getRowNum() % 2 == 0) {
+                                    gnCell.setCellStyle(splitStyle);
+                                }
                             }
                             if (flag) {
                                 sheet.removeRow(rowNew);
@@ -1186,6 +1222,20 @@ public class UrlConvert implements Function {
                             sourceCell.setCellValue(sourceUrl);
                             XSSFCell targetCell = rowNew.createCell(max + 5);
                             targetCell.setCellValue(result);
+
+                            if (rowNew.getRowNum() % 2 == 0) {
+                                priceCell1.setCellStyle(splitStyle);
+                                priceCell2.setCellStyle(splitStyle);
+                                priceCell3.setCellStyle(splitStyle);
+                                sourceCell.setCellStyle(splitStyle);
+                                targetCell.setCellStyle(splitStyle);
+                            }
+
+                            if (!priceArray[0].equals(priceArray[1])) {
+                                priceCell1.setCellStyle(errorStyle);
+                                priceCell2.setCellStyle(errorStyle);
+                                priceCell3.setCellStyle(errorStyle);
+                            }
 
                             // 替换文本模板中的参数
                             for (int k = 0; k < docxParagraphs.size(); k++) {
