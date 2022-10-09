@@ -39,7 +39,7 @@ public class App extends Application {
         double width = bounds.getWidth();
         double height = bounds.getHeight();
         double w = width / 2 + 200;
-        double h = height / 2 + 300;
+        double h = height / 2 + 360;
 
         // 使用TabPane，页面切换
         TabPane tp = new TabPane();
@@ -85,8 +85,8 @@ public class App extends Application {
         primaryStage.setHeight(h);
         primaryStage.setMinWidth(w);
         primaryStage.setMinHeight(h);
-        primaryStage.setMaxWidth(width);
-        primaryStage.setMaxHeight(height);
+        primaryStage.setMaxWidth(w);
+        primaryStage.setMaxHeight(h);
         primaryStage.show();
 
     }
