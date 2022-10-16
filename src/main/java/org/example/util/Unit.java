@@ -115,10 +115,38 @@ public class Unit {
      * @param buttonText
      * @return
      */
+    @Deprecated
     public List<Node> inputText(Stage primaryStage, double width, String buttonText) {
         Label label = new Label();
         if (StringUtils.isNotEmpty(buttonText)) {
             label.setText(buttonText);
+        } else {
+            label.setText("请输入文本");
+        }
+
+        // 输入文本
+        TextField text = new TextField();
+        text.setPrefWidth(width / 2 - 200);
+
+        ArrayList<Node> nodes = new ArrayList<>();
+        nodes.add(label);
+        nodes.add(text);
+
+        return nodes;
+    }
+
+    /**
+     * 输入文本的组件的集合
+     * @param width 框体的宽度
+     * @param lText label的文本
+     * @param labelWidth label的宽度
+     * @return
+     */
+    public List<Node> newInputText(double width, String lText, double labelWidth) {
+        Label label = new Label();
+        label.setPrefWidth(labelWidth);
+        if (StringUtils.isNotEmpty(lText)) {
+            label.setText(lText);
         } else {
             label.setText("请输入文本");
         }
