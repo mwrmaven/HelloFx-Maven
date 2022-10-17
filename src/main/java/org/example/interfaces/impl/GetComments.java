@@ -53,7 +53,7 @@ public class GetComments implements Function {
 
 	private static final String TOKEN = "WECHAT_TOKEN";
 
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss");
 
 	@Override
 	public String tabName() {
