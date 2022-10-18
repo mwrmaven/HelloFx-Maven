@@ -377,6 +377,7 @@ public class GetComments implements Function {
 						Cell cell4 = resultRow.createCell(4);
 						cell4.setCellValue(key);
 
+						int excelRowNum = rowNum + 1;
 						// 获取map中的评论信息
 						CommentInfo commentInfo = commentInfoMap.get(key).get(tTitle);
 						Cell cell5 = resultRow.createCell(5);
@@ -384,9 +385,11 @@ public class GetComments implements Function {
 						Cell cell6 = resultRow.createCell(6);
 						cell6.setCellValue(commentInfo.getAllSharePeople());
 						Cell cell7 = resultRow.createCell(7);
-						cell7.setCellValue(commentInfo.getTitle());
+						String cell7Formula = "=F" + excelRowNum + "/E" + excelRowNum;
+						cell7.setCellFormula(cell7Formula);
 						Cell cell8 = resultRow.createCell(8);
-						cell8.setCellValue(commentInfo.getTitle());
+						String cell8Formula = "=G" + excelRowNum + "/F" + excelRowNum;
+						cell8.setCellFormula(cell8Formula);
 						Cell cell9 = resultRow.createCell(9);
 						cell9.setCellValue(commentInfo.getCompleteReadRate());
 						Cell cell10 = resultRow.createCell(10);
