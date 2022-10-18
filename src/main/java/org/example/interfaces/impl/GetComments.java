@@ -2,7 +2,6 @@ package org.example.interfaces.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.sun.xml.internal.ws.api.model.wsdl.WSDLOutput;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -27,17 +26,16 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.example.button.BatchButton;
+import org.example.entity.CommentInfo;
+import org.example.entity.TemplateInfo;
 import org.example.init.Config;
 import org.example.interfaces.Function;
 import org.example.util.Unit;
-import sun.tools.jstat.Token;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @Classname GetComments
@@ -178,15 +176,15 @@ public class GetComments implements Function {
 
 					// 获取第一个sheet页的文章条数
 					Sheet sheet = dataWb.getSheetAt(0);
-					int ariticleNum = sheet.getLastRowNum();
-					System.out.println("ariticleNum = " + ariticleNum);
+					int articleNum = sheet.getLastRowNum();
+					System.out.println("articleNum = " + articleNum);
 					// 获取cookie
 					String realCookie = cookieTextField.getText();
 					// 获取token
 					String realToken = tokenTextField.getText();
 
 					// 请求评论数信息，这里的评论总数按数据文件excel中的文章条数计算
-					int count = ariticleNum;
+					int count = articleNum;
 					int divisor = 30;
 
 					int num = count / divisor;
@@ -203,6 +201,12 @@ public class GetComments implements Function {
 						JSONObject jsonObject = JSONObject.parseObject(content);
 						// 获取评论数组
 						JSONArray item = jsonObject.getJSONArray("item");
+						if (item == null) {
+							// 弹窗提示cookie和token过期
+
+							return;
+						}
+
 						// 遍历评论，并将文章id和评论数放到map中
 						for (int j = 0; j < item.size(); j++) {
 							JSONObject commentInfo = item.getJSONObject(j);
@@ -232,10 +236,13 @@ public class GetComments implements Function {
 							break;
 						}
 					}
+
+					// 存储数据文件中每行的数据的map，先以送达人数为key，再以文章标题为key
+					Map<Integer, Map<String, CommentInfo>> commentInfoMap = new HashMap<>();
 					for (int i = 0; i <= sheet.getLastRowNum(); i++) {
-						System.out.println("查询下标 " + i + "行");
+//						System.out.println("查询下标 " + i + "行");
 						Row row = sheet.getRow(i);
-						System.out.println("最后一列：" + lastNum);
+//						System.out.println("最后一列：" + lastNum);
 						int newLastNum = lastNum + 1;
 						Cell cell = row.createCell(newLastNum);
 						if (i == 0) {
@@ -244,17 +251,18 @@ public class GetComments implements Function {
 							continue;
 						}
 						// 获取前一个单元格的内容
-						System.out.println("查询下标 " + lastNum + "列");
+//						System.out.println("查询下标 " + lastNum + "列");
 						String contentUrl = row.getCell(lastNum).getStringCellValue();
 						CellStyle preCellStyle = row.getCell(lastNum).getCellStyle();
 						cell.setCellStyle(preCellStyle);
-						System.out.println("请求url为" + contentUrl);
+//						System.out.println("请求url为" + contentUrl);
 						HttpGet httpGet = new HttpGet(contentUrl);
 						HttpResponse response = client.execute(httpGet);
-						System.out.println("请求微信公众号文章");
+//						System.out.println("请求微信公众号文章");
 						BufferedReader br = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
 						// 遍历每一行
 						String line;
+						int commentNum = 0;
 						while ((line = br.readLine()) != null) {
 							if (line.contains("comment_id")) {
 								// 解析到 comment_id
@@ -262,11 +270,127 @@ public class GetComments implements Function {
 								commentId = commentId.substring(0, commentId.indexOf("\""));
 								// 获取评论数map中的值
 								Integer integer = commentsMap.get(commentId);
+								commentNum = integer;
 								cell.setCellValue(integer);
 								break;
 							}
 						}
 						httpGet.releaseConnection();
+						// 将行数据放入到map中
+						String articleTitle = row.getCell(0).getStringCellValue();
+						int pushPeople = Integer.parseInt(row.getCell(7).getStringCellValue());
+						CommentInfo info = CommentInfo.builder()
+								.title(articleTitle.trim())
+								.pushDate(row.getCell(1).getStringCellValue())
+								.allReadPeople(Integer.valueOf(row.getCell(2).getStringCellValue()))
+								.allSharePeople(Integer.valueOf(row.getCell(4).getStringCellValue()))
+								.pushPeople(pushPeople)
+								.completeReadRate(row.getCell(14).getStringCellValue())
+								.commentNum(commentNum)
+								.build();
+						Map<String, CommentInfo> temp = commentInfoMap.get(pushPeople);
+						if (temp == null) {
+							Map<String, CommentInfo> init = new HashMap<>();
+							init.put(articleTitle, info);
+							commentInfoMap.put(pushPeople, init);
+						} else {
+							temp.put(articleTitle, info);
+						}
+					}
+//					System.out.println("评论信息为：" + commentInfoMap);
+
+					// 获取模板文件
+					String templateFilePath = ((TextField) getDetailsTemplate.get(1)).getText();
+					if (templateFilePath.endsWith(".xlsx")) {
+						dataWb = new XSSFWorkbook(templateFilePath);
+					} else {
+						dataWb = new HSSFWorkbook(new FileInputStream(templateFilePath));
+					}
+					// 遍历行
+					Sheet templateSheet = dataWb.getSheetAt(0);
+					List<TemplateInfo> baseList = new ArrayList<>();
+					String group = "";
+					String pushDate = "";
+					int pushPeople = -1;
+					boolean flag = false;
+					for (int i = 2; i <= templateSheet.getLastRowNum(); i++) {
+						Row row = templateSheet.getRow(i);
+						if (row == null || row.getCell(0) == null
+								|| StringUtils.isBlank(row.getCell(0).getStringCellValue())) {
+							continue;
+						} else {
+							TemplateInfo info = TemplateInfo.builder()
+									.title(row.getCell(0).getStringCellValue().trim())
+									.titleType(row.getCell(1).getStringCellValue())
+									.position(BigDecimal.valueOf(row.getCell(2).getNumericCellValue()).intValue())
+									.build();
+							String cell3Value = row.getCell(3).getStringCellValue();
+							if (StringUtils.isNotBlank(cell3Value)) {
+								group = cell3Value;
+								flag = true;
+							}
+							String cell4Value = row.getCell(4).getStringCellValue();
+							if (StringUtils.isNotBlank(cell4Value)) {
+								pushDate = cell4Value;
+							}
+							if (flag) {
+								int cell5Value = BigDecimal.valueOf(row.getCell(5).getNumericCellValue()).intValue();
+								pushPeople = cell5Value;
+								flag = false;
+							}
+							info.setGroup(group);
+							info.setPushDate(pushDate);
+							info.setPushPeople(pushPeople);
+							baseList.add(info);
+						}
+					}
+
+					// 获取结果模板文件
+					dataWb = new XSSFWorkbook(ClassLoader.getSystemResourceAsStream("template/dataResultTemplate.xlsx"));
+					Sheet resultSheet = dataWb.getSheetAt(0);
+					Set<Integer> pushPeopleKeys = commentInfoMap.keySet();
+					for (int i = 0; i < baseList.size(); i++) {
+						int rowNum = i + 1;
+						Row resultRow = resultSheet.createRow(rowNum);
+						TemplateInfo templateInfo = baseList.get(i);
+						Cell cell0 = resultRow.createCell(0);
+						String tTitle = templateInfo.getTitle();
+						cell0.setCellValue(tTitle);
+						Cell cell1 = resultRow.createCell(1);
+						cell1.setCellValue(templateInfo.getTitleType());
+						Cell cell2 = resultRow.createCell(2);
+						cell2.setCellValue(templateInfo.getPushDate());
+						Cell cell3 = resultRow.createCell(3);
+						cell3.setCellValue(templateInfo.getGroup());
+						Cell cell11 = resultRow.createCell(11);
+						cell11.setCellValue(templateInfo.getPosition());
+
+						int tpush = templateInfo.getPushPeople();
+						int key = -1;
+						int min = 1000000000;
+						for (Integer k : pushPeopleKeys) {
+							if (Math.abs(tpush - k) < min) {
+								key = k;
+								min = Math.abs(tpush - k);
+							}
+						}
+						Cell cell4 = resultRow.createCell(4);
+						cell4.setCellValue(key);
+
+						// 获取map中的评论信息
+						CommentInfo commentInfo = commentInfoMap.get(key).get(tTitle);
+						Cell cell5 = resultRow.createCell(5);
+						cell5.setCellValue(commentInfo.getAllReadPeople());
+						Cell cell6 = resultRow.createCell(6);
+						cell6.setCellValue(commentInfo.getAllSharePeople());
+						Cell cell7 = resultRow.createCell(7);
+						cell7.setCellValue(commentInfo.getTitle());
+						Cell cell8 = resultRow.createCell(8);
+						cell8.setCellValue(commentInfo.getTitle());
+						Cell cell9 = resultRow.createCell(9);
+						cell9.setCellValue(commentInfo.getCompleteReadRate());
+						Cell cell10 = resultRow.createCell(10);
+						cell10.setCellValue(commentInfo.getCommentNum());
 					}
 
 					// 将信息写入到文件
