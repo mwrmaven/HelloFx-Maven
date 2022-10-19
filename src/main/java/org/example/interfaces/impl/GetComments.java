@@ -2,6 +2,7 @@ package org.example.interfaces.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -22,12 +23,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.example.button.BatchButton;
 import org.example.entity.CommentInfo;
@@ -163,18 +161,30 @@ public class GetComments implements Function {
 		line6.setSpacing(10);
 		TextArea ta = new TextArea();
 		ta.setPrefWidth(width / 2 - 90);
-		ta.setPrefHeight(200);
+		ta.setPrefHeight(stage.getHeight() - 400);
 		ta.setEditable(false);
 		line6.getChildren().add(ta);
 
-		// 获取cookie中的参数名
-		String url = "https://mp.weixin.qq.com/misc/appmsgcomment?action=get_unread_appmsg_comment&has_comment=0&sendtype=MASSSEND&lang=zh_CN&f=json&ajax=1&token=";
-		HttpClient client = HttpClients.createDefault();
-		Map<String, Integer> commentsMap = new HashMap<>();
 		// 按钮点击触发事件
 		batchButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
+				executeButton(ta, getDataFile, cookieTextField, tokenTextField, getDetailsTemplate, summaryDataFile);
+			}
+		});
+
+		all.getChildren().addAll(line1, line2, summaryLine, line3, line4, line5, line6);
+		return ap;
+	}
+
+	public void executeButton(TextArea ta, List<Node> getDataFile, TextField cookieTextField, TextField tokenTextField, List<Node> getDetailsTemplate, List<Node> summaryDataFile) {
+		ta.setText("");
+		String url = "https://mp.weixin.qq.com/misc/appmsgcomment?action=get_unread_appmsg_comment&has_comment=0&sendtype=MASSSEND&lang=zh_CN&f=json&ajax=1&token=";
+		HttpClient client = HttpClients.createDefault();
+		Map<String, Integer> commentsMap = new HashMap<>();
+		Runnable task = new Runnable() {
+			@Override
+			public void run() {
 				// 获取数据文件中的有效条数
 				String dataFilePath = ((TextField) getDataFile.get(1)).getText();
 
@@ -186,11 +196,13 @@ public class GetComments implements Function {
 					} else {
 						dataWb = new HSSFWorkbook(new FileInputStream(dataFilePath));
 					}
+					updateTextArea(ta, "开始读取数据文件！");
 
 					// 获取第一个sheet页的文章条数
 					Sheet sheet = dataWb.getSheetAt(0);
 					int articleNum = sheet.getLastRowNum();
 					System.out.println("articleNum = " + articleNum);
+					updateTextArea(ta, "数据文件中的文章条数为：" + articleNum);
 					// 获取cookie
 					String realCookie = cookieTextField.getText();
 					// 获取token
@@ -204,6 +216,7 @@ public class GetComments implements Function {
 					if (count % divisor > 0) {
 						num++;
 					}
+					updateTextArea(ta, "开始请求所有文章的评论数！");
 					for (int i = 0; i < num; i++) {
 						String uri = url + realToken + "&begin=" + i * divisor + "&count=" + divisor;
 						HttpGet httpGet = new HttpGet(uri);
@@ -216,7 +229,8 @@ public class GetComments implements Function {
 						JSONArray item = jsonObject.getJSONArray("item");
 						if (item == null) {
 							// 弹窗提示cookie和token过期
-
+							System.out.println("cookie和token过期，请重新输入！");
+							updateTextArea(ta, "cookie和token过期，请重新输入！");
 							return;
 						}
 
@@ -227,12 +241,11 @@ public class GetComments implements Function {
 						}
 						httpGet.releaseConnection();
 					}
-
-					Font font = dataWb.createFont();
-					// excel字体加粗
-					font.setBold(true);
+					System.out.println("获取到的评论数信息为：" + commentsMap);
+					updateTextArea(ta, "获取到所有文章的评论数！");
 
 					// 在sheet页最后插入一列
+					updateTextArea(ta, "在数据文件的最后插入一列！");
 					Row titleRow = sheet.getRow(0);
 					int lastCellNum = titleRow.getLastCellNum();
 					int lastNum = lastCellNum;
@@ -268,7 +281,8 @@ public class GetComments implements Function {
 						String contentUrl = row.getCell(lastNum).getStringCellValue();
 						CellStyle preCellStyle = row.getCell(lastNum).getCellStyle();
 						cell.setCellStyle(preCellStyle);
-//						System.out.println("请求url为" + contentUrl);
+						System.out.println("请求url为" + contentUrl);
+						updateTextArea(ta, "请求第" + (newLastNum + 1) + "行的url");
 						HttpGet httpGet = new HttpGet(contentUrl);
 						HttpResponse response = client.execute(httpGet);
 //						System.out.println("请求微信公众号文章");
@@ -288,6 +302,7 @@ public class GetComments implements Function {
 								break;
 							}
 						}
+						updateTextArea(ta, "获取到公众号文章ID，并插入对应的评论数");
 						httpGet.releaseConnection();
 						// 将行数据放入到map中
 						String articleTitle = row.getCell(0).getStringCellValue();
@@ -310,9 +325,10 @@ public class GetComments implements Function {
 							temp.put(articleTitle, info);
 						}
 					}
-//					System.out.println("评论信息为：" + commentInfoMap);
+					updateTextArea(ta, "数据文件的最后插入一列插入完成！");
 
 					// 获取模板文件
+					updateTextArea(ta, "开始读取模板文件！");
 					String templateFilePath = ((TextField) getDetailsTemplate.get(1)).getText();
 					if (templateFilePath.endsWith(".xlsx")) {
 						dataWb = new XSSFWorkbook(templateFilePath);
@@ -360,8 +376,10 @@ public class GetComments implements Function {
 							baseList.add(info);
 						}
 					}
+					updateTextArea(ta, "获取到模板文件中所有数据！");
 
 					// 获取结果模板文件
+					updateTextArea(ta, "开始写出到结果数据文件！");
 					dataWb = new XSSFWorkbook(ClassLoader.getSystemResourceAsStream("template/dataResultTemplate.xlsx"));
 					Sheet resultSheet = dataWb.getSheetAt(0);
 					// 自动计算公式
@@ -385,6 +403,7 @@ public class GetComments implements Function {
 					// 存储推送人群需要合并单元格的起始行和结束行
 					List<Integer> beginAndEnd = new ArrayList<>();
 					String groupStandard = "";
+					updateTextArea(ta, "将文章数据写入到结果数据文件！");
 					for (int i = 0; i < baseList.size(); i++) {
 						int rowNum = i + 1;
 						CellStyle cloneCellStyle = dataWb.createCellStyle();
@@ -467,9 +486,12 @@ public class GetComments implements Function {
 						cell10.setCellValue(commentInfo.getCommentNum());
 						cell10.setCellStyle(cloneCellStyle);
 					}
+					updateTextArea(ta, "写入结果数据文件完成！");
+					updateTextArea(ta, "开始合并数据文件中的单元格！");
 					// 合并单元格
 					// 推送时间合并
 					CellRangeAddress dateCra = new CellRangeAddress(1, baseList.size(), 2, 2);
+					System.out.println("合并推送时间列的行为 " + 2 + " : " + (baseList.size() + 1));
 					resultSheet.addMergedRegion(dateCra);
 					// 推送人群合并
 					for (int i = 0; i < beginAndEnd.size(); i++) {
@@ -482,9 +504,10 @@ public class GetComments implements Function {
 							end = beginAndEnd.get(i + 1) - 1;
 						}
 						CellRangeAddress groupCra = new CellRangeAddress(begin, end, 3, 3);
-						System.out.println("合并行为 " + begin + " : " + end);
+						System.out.println("合并推送人群列的行为 " + (begin + 1) + " : " + (end + 1));
 						resultSheet.addMergedRegion(groupCra);
 					}
+					updateTextArea(ta, "合并数据文件中的单元格完成！");
 
 					// 将信息写入到文件
 					String appendTimeTag = sdf.format(new Date());
@@ -495,11 +518,12 @@ public class GetComments implements Function {
 					dataWb.write(fos);
 					fos.close();
 					fos = null;
-					ta.setText("结果文件路径：" + newDataFilePath);
+					updateTextArea(ta, "结果数据文件导出完成！结果数据文件路径：" + newDataFilePath);
 
 					// 获取汇总文件
 					String summaryFilePath = ((TextField) summaryDataFile.get(1)).getText();
 					if (StringUtils.isNotBlank(summaryFilePath)) {
+						updateTextArea(ta, "开始读取汇总文件！");
 						Workbook summaryWb;
 						if (summaryFilePath.endsWith(".xlsx")) {
 							summaryWb = new XSSFWorkbook(summaryFilePath);
@@ -523,7 +547,8 @@ public class GetComments implements Function {
 						}
 						// 在汇总文件中插入行(将结束的空行下移)
 						summarySheet.shiftRows(startLine, summarySheet.getLastRowNum(), resultSheet.getLastRowNum() + 1, true, false);
-
+						updateTextArea(ta, "在汇总文件中插入空行（" + (startLine + 1) +"行~" + (startLine + resultSheet.getLastRowNum() + 2) + "行）！");
+						updateTextArea(ta, "开始将结果数据插入到汇总文件！");
 						for (int i = 0; i <= resultSheet.getLastRowNum(); i++) {
 							// 开始插入单元格
 							// 获取数据文件的行
@@ -536,7 +561,6 @@ public class GetComments implements Function {
 								if (dataCell == null) {
 									continue;
 								}
-								System.out.println("获取行：" + i + "；列：" + j + " 单元格数据");
 								CellStyle newCellStyle = summaryWb.createCellStyle();
 								newCellStyle.cloneStyleFrom(dataCell.getCellStyle());
 								newCell.setCellStyle(newCellStyle);
@@ -558,24 +582,100 @@ public class GetComments implements Function {
 								}
 							}
 						}
+						updateTextArea(ta, "结果数据插入到汇总文件完成！");
 						// 拷贝合并区域
 						List<CellRangeAddress> mergedRegions = resultSheet.getMergedRegions();
+						// 存储合并区域的开始行和结束行，不包括推送时间合并语句
+						List<int[]> rangeBeginAndEnd = new ArrayList<>();
 						for (CellRangeAddress cra : mergedRegions) {
-							cra.setFirstRow(cra.getFirstRow() + startLine);
-							cra.setLastRow(cra.getLastRow() + startLine);
+							int oldFirstRow = cra.getFirstRow();
+							int oldLastRow = cra.getLastRow();
+							int newFirstRow = oldFirstRow + startLine;
+							int newLastRow = oldLastRow + startLine;
+							cra.setFirstRow(newFirstRow);
+							cra.setLastRow(newLastRow);
 							summarySheet.addMergedRegion(cra);
+							if (!pushDate.equals(resultSheet.getRow(oldFirstRow).getCell(cra.getFirstColumn()).getStringCellValue())) {
+								int[] be = new int[]{newFirstRow + 1, newLastRow + 1};
+								rangeBeginAndEnd.add(be);
+							}
 						}
+						updateTextArea(ta, "合并汇总文件中单元格完成！");
+
+						// 汇总文件下面的汇总区域
+						updateTextArea(ta, "开始处理汇总文件下面的汇总区域！");
+						int start = startLine + resultSheet.getLastRowNum() + 1;
+						boolean countFlag = false;
+						for (int i = start; i < summarySheet.getLastRowNum(); i++) {
+							Row row = summarySheet.getRow(i);
+							// 获取第四个单元格
+							Cell cell3 = row.getCell(3);
+							if (!countFlag && (cell3 == null || !cell3.getCellType().equals(CellType.STRING))) {
+								continue;
+							}
+							if (cell3.getCellType().equals(CellType.STRING) && "推送时间".equals(cell3.getStringCellValue().trim())) {
+								countFlag = true;
+								continue;
+							}
+
+							boolean blankFlag = cell3.getCellType().equals(CellType.BLANK);
+							if (blankFlag && countFlag) {
+								cell3.setCellValue(pushDate);
+								Cell cell4 = row.getCell(4);
+								Cell cell5 = row.getCell(5);
+								Cell cell6 = row.getCell(6);
+								Cell cell7 = row.getCell(7);
+								Cell cell8 = row.getCell(8);
+								Cell cell9 = row.getCell(9);
+
+								StringBuilder cell4Formula = new StringBuilder("SUM(");
+								StringBuilder cell5Formula = new StringBuilder("SUM(");
+								StringBuilder cell6Formula = new StringBuilder("SUM(");
+								StringBuilder cell7Formula = new StringBuilder("SUM(");
+								StringBuilder cell8Formula = new StringBuilder("SUM(");
+								StringBuilder cell9Formula = new StringBuilder("SUM(");
+
+								int divisor456 = 0;
+								int divisor789 = 0;
+								for (int k = 0; k < rangeBeginAndEnd.size(); k++) {
+									int[] be = rangeBeginAndEnd.get(k);
+									divisor456++;
+									// 下标第4列的求和处理
+									cell4Formula.append("H").append(be[0]).append(",");
+									// 下标第5列
+									cell5Formula.append("I").append(be[0]).append(",");
+									// 下标第6列
+									cell6Formula.append("J").append(be[0]).append(",");
+
+									for (int m = be[0] + 1; m <= be[1]; m++) {
+										divisor789++;
+									}
+									// 下标第7列
+									cell7Formula.append("H").append(be[0] + 1).append(":").append("H").append(be[1]).append(",");
+									// 下标第8列
+									cell8Formula.append("I").append(be[0] + 1).append(":").append("I").append(be[1]).append(",");
+									// 下标第9列
+									cell9Formula.append("J").append(be[0] + 1).append(":").append("J").append(be[1]).append(",");
+								}
+								cell4.setCellFormula(cell4Formula.substring(0, cell4Formula.length() - 1) + ")/" + divisor456);
+								cell5.setCellFormula(cell5Formula.substring(0, cell5Formula.length() - 1) + ")/" + divisor456);
+								cell6.setCellFormula(cell6Formula.substring(0, cell6Formula.length() - 1) + ")/" + divisor456);
+								cell7.setCellFormula(cell7Formula.substring(0, cell7Formula.length() - 1) + ")/" + divisor789);
+								cell8.setCellFormula(cell8Formula.substring(0, cell8Formula.length() - 1) + ")/" + divisor789);
+								cell9.setCellFormula(cell9Formula.substring(0, cell9Formula.length() - 1) + ")/" + divisor789);
+								break;
+							}
+						}
+						updateTextArea(ta, "汇总文件下面的汇总区域处理完成！");
 
 						String newSummaryFilePath = summaryFilePath.substring(0, summaryFilePath.lastIndexOf("."))
 								+ "_" + appendTimeTag + summaryFilePath.substring(summaryFilePath.lastIndexOf("."));
-						String text = ta.getText();
 						File summaryFile = new File(newSummaryFilePath);
 						fos = new FileOutputStream(summaryFile);
 						summaryWb.write(fos);
 						fos.close();
 						fos = null;
-						text = text + "\n新汇总文件路径：" + newSummaryFilePath;
-						ta.setText(text);
+						updateTextArea(ta, "结果汇总文件导出完成！结果汇总文件路径：" + newDataFilePath);
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -595,11 +695,18 @@ public class GetComments implements Function {
 						}
 					}
 				}
-				System.out.println("数据处理完成");
 			}
-		});
+		};
+		Thread thread = new Thread(task);
+		thread.start();
+	}
 
-		all.getChildren().addAll(line1, line2, summaryLine, line3, line4, line5, line6);
-		return ap;
+	public void updateTextArea(TextArea ta, String message) {
+		ta.appendText("\n" + message);
+//		if (Platform.isFxApplicationThread()) {
+//			ta.appendText("\n" + message);
+//		} else {
+//			Platform.runLater(() -> ta.appendText("\n" + message));
+//		}
 	}
 }

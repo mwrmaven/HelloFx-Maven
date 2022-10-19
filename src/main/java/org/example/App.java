@@ -46,6 +46,19 @@ public class App extends Application {
         tp.setStyle("-fx-font-size: 14;");
         tp.setTabMinHeight(50);
 
+        // 场景配置
+        Scene scene = new Scene(tp);
+        primaryStage.setScene(scene);
+        primaryStage.setTitle(Common.STAGE_TITLE);
+        primaryStage.getIcons().add(new Image("image/folder.png"));
+        primaryStage.setWidth(w);
+        primaryStage.setHeight(h);
+        primaryStage.setMinWidth(w);
+        primaryStage.setMinHeight(h);
+        primaryStage.setMaxWidth(w);
+        primaryStage.setMaxHeight(h);
+        primaryStage.show();
+
         ServiceLoader<Function> allTabs = ServiceLoader.load(Function.class);
         Iterator<Function> iterator = allTabs.iterator();
         while (iterator.hasNext()) {
@@ -75,19 +88,5 @@ public class App extends Application {
                 oldValue.setStyle(oldStyle.replace(" -fx-pref-height: 40; ", " -fx-pref-height: 30; "));
             }
         });
-
-        // 场景配置
-        Scene scene = new Scene(tp);
-        primaryStage.setScene(scene);
-        primaryStage.setTitle(Common.STAGE_TITLE);
-        primaryStage.getIcons().add(new Image("image/folder.png"));
-        primaryStage.setWidth(w);
-        primaryStage.setHeight(h);
-        primaryStage.setMinWidth(w);
-        primaryStage.setMinHeight(h);
-        primaryStage.setMaxWidth(w);
-        primaryStage.setMaxHeight(h);
-        primaryStage.show();
-
     }
 }
