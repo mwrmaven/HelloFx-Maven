@@ -282,7 +282,7 @@ public class GetComments implements Function {
 						CellStyle preCellStyle = row.getCell(lastNum).getCellStyle();
 						cell.setCellStyle(preCellStyle);
 						System.out.println("请求url为" + contentUrl);
-						updateTextArea(ta, "请求第" + (newLastNum + 1) + "行的url");
+						updateTextArea(ta, "请求第" + (i + 1) + "行的url");
 						HttpGet httpGet = new HttpGet(contentUrl);
 						HttpResponse response = client.execute(httpGet);
 //						System.out.println("请求微信公众号文章");
@@ -304,7 +304,7 @@ public class GetComments implements Function {
 						}
 						updateTextArea(ta, "获取到公众号文章ID，并插入对应的评论数");
 						httpGet.releaseConnection();
-						// 将行数据放入到map中
+						// 将行数据放入到map中rigin
 						String articleTitle = row.getCell(0).getStringCellValue();
 						int pushPeople = Integer.parseInt(row.getCell(7).getStringCellValue());
 						CommentInfo info = CommentInfo.builder()
