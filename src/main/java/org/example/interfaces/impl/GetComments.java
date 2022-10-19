@@ -22,8 +22,12 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.example.button.BatchButton;
 import org.example.entity.CommentInfo;
@@ -90,6 +94,14 @@ public class GetComments implements Function {
 		line2.setSpacing(10);
 		List<Node> getDataFile = unit.chooseFile(stage, width, "数据文件");
 		line2.getChildren().addAll(getDataFile.get(0), getDataFile.get(1));
+
+		// 汇总表行，汇总结果的文件
+		HBox summaryLine = new HBox();
+		summaryLine.setAlignment(Pos.CENTER_LEFT);
+		summaryLine.setSpacing(10);
+		List<Node> summaryDataFile = unit.chooseFile(stage, width, "汇总文件");
+		((TextField) summaryDataFile.get(1)).setPromptText("此项非必填");
+		summaryLine.getChildren().addAll(summaryDataFile.get(0), summaryDataFile.get(1));
 
 		// 第三行 输入 cookie
 		HBox line3 = new HBox();
@@ -167,6 +179,7 @@ public class GetComments implements Function {
 				String dataFilePath = ((TextField) getDataFile.get(1)).getText();
 
 				Workbook dataWb = null;
+				FileOutputStream fos = null;
 				try {
 					if (dataFilePath.endsWith(".xlsx")) {
 						dataWb = new XSSFWorkbook(dataFilePath);
@@ -331,7 +344,10 @@ public class GetComments implements Function {
 							}
 							String cell4Value = row.getCell(4).getStringCellValue();
 							if (StringUtils.isNotBlank(cell4Value)) {
-								pushDate = cell4Value;
+								pushDate = cell4Value.trim();
+								if (pushDate.contains(".")) {
+									pushDate = pushDate.substring(0, pushDate.indexOf(".")) + "月" + pushDate.substring(pushDate.indexOf(".") + 1) + "日";
+								}
 							}
 							if (flag) {
 								int cell5Value = BigDecimal.valueOf(row.getCell(5).getNumericCellValue()).intValue();
@@ -348,22 +364,65 @@ public class GetComments implements Function {
 					// 获取结果模板文件
 					dataWb = new XSSFWorkbook(ClassLoader.getSystemResourceAsStream("template/dataResultTemplate.xlsx"));
 					Sheet resultSheet = dataWb.getSheetAt(0);
+					// 自动计算公式
+					resultSheet.setForceFormulaRecalculation(true);
+					// 单元格的默认样式
+					CellStyle defaultCellStyle = dataWb.createCellStyle();
+					// 字体
+					Font defaultFont = dataWb.createFont();
+					defaultFont.setFontName("冬青黑体简体中文 W3");
+					defaultFont.setFontHeightInPoints((short) 11);
+					defaultCellStyle.setFont(defaultFont);
+					// 内容水平、垂直居中
+					defaultCellStyle.setAlignment(HorizontalAlignment.CENTER);
+					defaultCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+					// 设置边框实线
+					defaultCellStyle.setBorderLeft(BorderStyle.THIN);
+					defaultCellStyle.setBorderBottom(BorderStyle.THIN);
+					defaultCellStyle.setBorderRight(BorderStyle.THIN);
+
 					Set<Integer> pushPeopleKeys = commentInfoMap.keySet();
+					// 存储推送人群需要合并单元格的起始行和结束行
+					List<Integer> beginAndEnd = new ArrayList<>();
+					String groupStandard = "";
 					for (int i = 0; i < baseList.size(); i++) {
 						int rowNum = i + 1;
+						CellStyle cloneCellStyle = dataWb.createCellStyle();
+						cloneCellStyle.cloneStyleFrom(defaultCellStyle);
+						if (rowNum == baseList.size()) {
+							cloneCellStyle.setBorderBottom(BorderStyle.MEDIUM);
+						}
 						Row resultRow = resultSheet.createRow(rowNum);
+						// 设置行高 22
+						resultRow.setHeightInPoints(22);
 						TemplateInfo templateInfo = baseList.get(i);
 						Cell cell0 = resultRow.createCell(0);
+						CellStyle leftCellStyle = dataWb.createCellStyle();
+						leftCellStyle.cloneStyleFrom(cloneCellStyle);
+						leftCellStyle.setBorderLeft(BorderStyle.MEDIUM);
 						String tTitle = templateInfo.getTitle();
 						cell0.setCellValue(tTitle);
+						cell0.setCellStyle(leftCellStyle);
 						Cell cell1 = resultRow.createCell(1);
 						cell1.setCellValue(templateInfo.getTitleType());
+						cell1.setCellStyle(cloneCellStyle);
 						Cell cell2 = resultRow.createCell(2);
 						cell2.setCellValue(templateInfo.getPushDate());
+						cell2.setCellStyle(cloneCellStyle);
 						Cell cell3 = resultRow.createCell(3);
+						String groupValue = templateInfo.getGroup();
+						if (!groupStandard.equals(groupValue)) {
+							beginAndEnd.add(rowNum);
+							groupStandard = groupValue;
+						}
 						cell3.setCellValue(templateInfo.getGroup());
+						cell3.setCellStyle(cloneCellStyle);
 						Cell cell11 = resultRow.createCell(11);
 						cell11.setCellValue(templateInfo.getPosition());
+						CellStyle rightCellStyle = dataWb.createCellStyle();
+						rightCellStyle.cloneStyleFrom(cloneCellStyle);
+						rightCellStyle.setBorderRight(BorderStyle.MEDIUM);
+						cell11.setCellStyle(rightCellStyle);
 
 						int tpush = templateInfo.getPushPeople();
 						int key = -1;
@@ -376,34 +435,148 @@ public class GetComments implements Function {
 						}
 						Cell cell4 = resultRow.createCell(4);
 						cell4.setCellValue(key);
+						cell4.setCellStyle(cloneCellStyle);
 
 						int excelRowNum = rowNum + 1;
 						// 获取map中的评论信息
 						CommentInfo commentInfo = commentInfoMap.get(key).get(tTitle);
 						Cell cell5 = resultRow.createCell(5);
 						cell5.setCellValue(commentInfo.getAllReadPeople());
+						cell5.setCellStyle(cloneCellStyle);
 						Cell cell6 = resultRow.createCell(6);
 						cell6.setCellValue(commentInfo.getAllSharePeople());
+						cell6.setCellStyle(cloneCellStyle);
+						// 设置百分比格式
+						CellStyle rateCellStyle = dataWb.createCellStyle();
+						rateCellStyle.cloneStyleFrom(cloneCellStyle);
+						DataFormat xdf = dataWb.createDataFormat();
+						rateCellStyle.setDataFormat(xdf.getFormat("0.00%"));
+
 						Cell cell7 = resultRow.createCell(7);
-						String cell7Formula = "=F" + excelRowNum + "/E" + excelRowNum;
+						String cell7Formula = "F" + excelRowNum + "/E" + excelRowNum;
 						cell7.setCellFormula(cell7Formula);
+						cell7.setCellStyle(rateCellStyle);
 						Cell cell8 = resultRow.createCell(8);
-						String cell8Formula = "=G" + excelRowNum + "/F" + excelRowNum;
+						String cell8Formula = "G" + excelRowNum + "/F" + excelRowNum;
 						cell8.setCellFormula(cell8Formula);
+						cell8.setCellStyle(rateCellStyle);
 						Cell cell9 = resultRow.createCell(9);
-						cell9.setCellValue(commentInfo.getCompleteReadRate());
+						cell9.setCellValue(Double.valueOf(commentInfo.getCompleteReadRate()));
+						cell9.setCellStyle(rateCellStyle);
 						Cell cell10 = resultRow.createCell(10);
 						cell10.setCellValue(commentInfo.getCommentNum());
+						cell10.setCellStyle(cloneCellStyle);
+					}
+					// 合并单元格
+					// 推送时间合并
+					CellRangeAddress dateCra = new CellRangeAddress(1, baseList.size(), 2, 2);
+					resultSheet.addMergedRegion(dateCra);
+					// 推送人群合并
+					for (int i = 0; i < beginAndEnd.size(); i++) {
+						int begin = beginAndEnd.get(i);
+						int end;
+						if (i == beginAndEnd.size() - 1) {
+							// 最后一个特殊处理
+							end = baseList.size();
+						} else {
+							end = beginAndEnd.get(i + 1) - 1;
+						}
+						CellRangeAddress groupCra = new CellRangeAddress(begin, end, 3, 3);
+						System.out.println("合并行为 " + begin + " : " + end);
+						resultSheet.addMergedRegion(groupCra);
 					}
 
 					// 将信息写入到文件
+					String appendTimeTag = sdf.format(new Date());
 					String extend = dataFilePath.substring(dataFilePath.lastIndexOf("."));
-					String newDataFilePath = dataFilePath.substring(0, dataFilePath.lastIndexOf(".")) + "_" + sdf.format(new Date()) + extend;
+					String newDataFilePath = dataFilePath.substring(0, dataFilePath.lastIndexOf(".")) + "_" + appendTimeTag + extend;
 					File file = new File(newDataFilePath);
-					FileOutputStream fos = new FileOutputStream(file);
+					fos = new FileOutputStream(file);
 					dataWb.write(fos);
 					fos.close();
+					fos = null;
 					ta.setText("结果文件路径：" + newDataFilePath);
+
+					// 获取汇总文件
+					String summaryFilePath = ((TextField) summaryDataFile.get(1)).getText();
+					if (StringUtils.isNotBlank(summaryFilePath)) {
+						Workbook summaryWb;
+						if (summaryFilePath.endsWith(".xlsx")) {
+							summaryWb = new XSSFWorkbook(summaryFilePath);
+						} else {
+							summaryWb = new HSSFWorkbook(new FileInputStream(summaryFilePath));
+						}
+						// 获取文件的起始行(行为空或单元格为空或单元格数据为空字符串)
+						String sheetName = pushDate.substring(0, pushDate.indexOf("月") + 1).trim();
+						Sheet summarySheet = summaryWb.getSheet(sheetName);
+						// 设置公式自动计算
+						summarySheet.setForceFormulaRecalculation(true);
+						int startLine = 0;
+						for (int i = 0; i < summarySheet.getLastRowNum(); i++) {
+							Row summaryRow = summarySheet.getRow(i);
+							if (summaryRow != null && summaryRow.getCell(0) != null
+									&& StringUtils.isNotBlank(summaryRow.getCell(0).getStringCellValue())) {
+								continue;
+							}
+							startLine = i;
+							break;
+						}
+						// 在汇总文件中插入行(将结束的空行下移)
+						summarySheet.shiftRows(startLine, summarySheet.getLastRowNum(), resultSheet.getLastRowNum() + 1, true, false);
+
+						for (int i = 0; i <= resultSheet.getLastRowNum(); i++) {
+							// 开始插入单元格
+							// 获取数据文件的行
+							Row newRow = summarySheet.createRow(startLine + i);
+							Row dataRow = resultSheet.getRow(i);
+							newRow.setHeightInPoints(dataRow.getHeightInPoints());
+							for (int j = 0; j <= 11; j++) {
+								Cell newCell = newRow.createCell(j);
+								Cell dataCell = dataRow.getCell(j);
+								if (dataCell == null) {
+									continue;
+								}
+								System.out.println("获取行：" + i + "；列：" + j + " 单元格数据");
+								CellStyle newCellStyle = summaryWb.createCellStyle();
+								newCellStyle.cloneStyleFrom(dataCell.getCellStyle());
+								newCell.setCellStyle(newCellStyle);
+								if (i != 0) {
+									int excelRowNum = startLine + i + 1;
+									if (j == 7) {
+										String cell7Formula = "F" + excelRowNum + "/E" + excelRowNum;
+										newCell.setCellFormula(cell7Formula);
+									} else if (j == 8) {
+										String cell8Formula = "G" + excelRowNum + "/F" + excelRowNum;
+										newCell.setCellFormula(cell8Formula);
+									} else if (j == 0 || j == 1 || j == 2 || j == 3) {
+										newCell.setCellValue(dataCell.getStringCellValue());
+									} else if (j == 4 || j == 5 || j == 6 || j == 9 || j == 10 || j == 11) {
+										newCell.setCellValue(dataCell.getNumericCellValue());
+									}
+								} else {
+									newCell.setCellValue(dataCell.getStringCellValue());
+								}
+							}
+						}
+						// 拷贝合并区域
+						List<CellRangeAddress> mergedRegions = resultSheet.getMergedRegions();
+						for (CellRangeAddress cra : mergedRegions) {
+							cra.setFirstRow(cra.getFirstRow() + startLine);
+							cra.setLastRow(cra.getLastRow() + startLine);
+							summarySheet.addMergedRegion(cra);
+						}
+
+						String newSummaryFilePath = summaryFilePath.substring(0, summaryFilePath.lastIndexOf("."))
+								+ "_" + appendTimeTag + summaryFilePath.substring(summaryFilePath.lastIndexOf("."));
+						String text = ta.getText();
+						File summaryFile = new File(newSummaryFilePath);
+						fos = new FileOutputStream(summaryFile);
+						summaryWb.write(fos);
+						fos.close();
+						fos = null;
+						text = text + "\n新汇总文件路径：" + newSummaryFilePath;
+						ta.setText(text);
+					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				} finally {
@@ -414,12 +587,19 @@ public class GetComments implements Function {
 							e.printStackTrace();
 						}
 					}
+					if (fos != null) {
+						try {
+							fos.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
 				}
 				System.out.println("数据处理完成");
 			}
 		});
 
-		all.getChildren().addAll(line1, line2, line3, line4, line5, line6);
+		all.getChildren().addAll(line1, line2, summaryLine, line3, line4, line5, line6);
 		return ap;
 	}
 }
