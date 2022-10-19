@@ -169,6 +169,9 @@ public class GetComments implements Function {
 		batchButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
+				ta.setPrefHeight(stage.getHeight() - 400);
+				ta.setPrefWidth(width / 2 - 90);
+				ta.setText("");
 				executeButton(ta, getDataFile, cookieTextField, tokenTextField, getDetailsTemplate, summaryDataFile);
 			}
 		});
@@ -178,7 +181,6 @@ public class GetComments implements Function {
 	}
 
 	public void executeButton(TextArea ta, List<Node> getDataFile, TextField cookieTextField, TextField tokenTextField, List<Node> getDetailsTemplate, List<Node> summaryDataFile) {
-		ta.setText("");
 		String url = "https://mp.weixin.qq.com/misc/appmsgcomment?action=get_unread_appmsg_comment&has_comment=0&sendtype=MASSSEND&lang=zh_CN&f=json&ajax=1&token=";
 		HttpClient client = HttpClients.createDefault();
 		Map<String, Integer> commentsMap = new HashMap<>();
