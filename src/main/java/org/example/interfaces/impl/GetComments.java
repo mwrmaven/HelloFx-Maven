@@ -316,6 +316,7 @@ public class GetComments implements Function {
 								.pushPeople(pushPeople)
 								.completeReadRate(row.getCell(14).getStringCellValue())
 								.commentNum(commentNum)
+								.url(contentUrl)
 								.build();
 						Map<String, CommentInfo> temp = commentInfoMap.get(pushPeople);
 						if (temp == null) {
@@ -412,6 +413,9 @@ public class GetComments implements Function {
 						if (rowNum == baseList.size()) {
 							cloneCellStyle.setBorderBottom(BorderStyle.MEDIUM);
 						}
+						if (rowNum == 1) {
+							cloneCellStyle.setBorderTop(BorderStyle.MEDIUM);
+						}
 						Row resultRow = resultSheet.createRow(rowNum);
 						// 设置行高 22
 						resultRow.setHeightInPoints(22);
@@ -430,19 +434,11 @@ public class GetComments implements Function {
 						cell2.setCellValue(templateInfo.getPushDate());
 						cell2.setCellStyle(cloneCellStyle);
 						Cell cell3 = resultRow.createCell(3);
-						String groupValue = templateInfo.getGroup();
-						if (!groupStandard.equals(groupValue)) {
-							beginAndEnd.add(rowNum);
-							groupStandard = groupValue;
-						}
 						cell3.setCellValue(templateInfo.getGroup());
 						cell3.setCellStyle(cloneCellStyle);
 						Cell cell11 = resultRow.createCell(11);
 						cell11.setCellValue(templateInfo.getPosition());
-						CellStyle rightCellStyle = dataWb.createCellStyle();
-						rightCellStyle.cloneStyleFrom(cloneCellStyle);
-						rightCellStyle.setBorderRight(BorderStyle.MEDIUM);
-						cell11.setCellStyle(rightCellStyle);
+						cell11.setCellStyle(cloneCellStyle);
 
 						int tpush = templateInfo.getPushPeople();
 						int key = -1;
@@ -486,6 +482,20 @@ public class GetComments implements Function {
 						Cell cell10 = resultRow.createCell(10);
 						cell10.setCellValue(commentInfo.getCommentNum());
 						cell10.setCellStyle(cloneCellStyle);
+
+						String groupValue = templateInfo.getGroup();
+						String cell12Value = "";
+						if (!groupStandard.equals(groupValue)) {
+							beginAndEnd.add(rowNum);
+							groupStandard = groupValue;
+							cell12Value = commentInfo.getUrl();
+						}
+						Cell cell12 = resultRow.createCell(12);
+						cell12.setCellValue(cell12Value);
+						CellStyle rightCellStyle = dataWb.createCellStyle();
+						rightCellStyle.cloneStyleFrom(cloneCellStyle);
+						rightCellStyle.setBorderRight(BorderStyle.MEDIUM);
+						cell12.setCellStyle(rightCellStyle);
 					}
 					updateTextArea(ta, "写入结果数据文件完成！");
 					updateTextArea(ta, "开始合并数据文件中的单元格！");
@@ -556,7 +566,7 @@ public class GetComments implements Function {
 							Row newRow = summarySheet.createRow(startLine + i);
 							Row dataRow = resultSheet.getRow(i);
 							newRow.setHeightInPoints(dataRow.getHeightInPoints());
-							for (int j = 0; j <= 11; j++) {
+							for (int j = 0; j <= 12; j++) {
 								Cell newCell = newRow.createCell(j);
 								Cell dataCell = dataRow.getCell(j);
 								if (dataCell == null) {
@@ -573,10 +583,12 @@ public class GetComments implements Function {
 									} else if (j == 8) {
 										String cell8Formula = "G" + excelRowNum + "/F" + excelRowNum;
 										newCell.setCellFormula(cell8Formula);
-									} else if (j == 0 || j == 1 || j == 2 || j == 3) {
+									} else if (j == 0 || j == 1 || j == 2 || j == 3 || j == 12) {
 										newCell.setCellValue(dataCell.getStringCellValue());
 									} else if (j == 4 || j == 5 || j == 6 || j == 9 || j == 10 || j == 11) {
 										newCell.setCellValue(dataCell.getNumericCellValue());
+									} else {
+										newCell.setCellValue(dataCell.getStringCellValue());
 									}
 								} else {
 									newCell.setCellValue(dataCell.getStringCellValue());

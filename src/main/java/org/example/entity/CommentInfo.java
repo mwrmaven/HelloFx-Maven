@@ -50,4 +50,9 @@ public class CommentInfo {
      */
     private Integer commentNum;
 
+    /**
+     * 网页链接
+     */
+    private String url;
+
 }
