@@ -329,6 +329,7 @@ public class GetComments implements Function {
 					}
 					updateTextArea(ta, "数据文件的最后插入一列插入完成！");
 
+					dataWb.close();
 					// 获取模板文件
 					updateTextArea(ta, "开始读取模板文件！");
 					String templateFilePath = ((TextField) getDetailsTemplate.get(1)).getText();
@@ -344,23 +345,58 @@ public class GetComments implements Function {
 					String pushDate = "";
 					int pushPeople = -1;
 					boolean flag = false;
+					// 根据标题行（第二行）获取到单元格的坐标
+					Row row1 = templateSheet.getRow(1);
+					int titleIndex = 0;
+					int titleTypeIndex = 1;
+					int positionIndex = 2;
+					int groupIndex = 3;
+					int pushDateIndex = 4;
+					int peopleNumIndex = 5;
+
+					for (int i = 0; i <= row1.getLastCellNum(); i++) {
+						Cell cell = row1.getCell(i);
+						if (cell == null || cell.getCellType().equals(CellType.BLANK)) {
+							continue;
+						}
+						String cellV = cell.getStringCellValue();
+						if ("文章标题".equals(cellV)) {
+							titleIndex = i;
+						} else if ("标题类型".equals(cellV)) {
+							titleTypeIndex = i;
+						} else if ("位置".equals(cellV)) {
+							positionIndex = i;
+						} else if ("组别".equals(cellV)) {
+							groupIndex = i;
+						} else if ("推送日期".equals(cellV)) {
+							pushDateIndex = i;
+						} else if ("新系统分组人数".equals(cellV)) {
+							peopleNumIndex = i;
+						}
+					}
+
 					for (int i = 2; i <= templateSheet.getLastRowNum(); i++) {
 						Row row = templateSheet.getRow(i);
-						if (row == null || row.getCell(0) == null
-								|| StringUtils.isBlank(row.getCell(0).getStringCellValue())) {
+						if (row == null || row.getCell(titleIndex) == null
+								|| StringUtils.isBlank(row.getCell(titleIndex).getStringCellValue())) {
 							continue;
 						} else {
 							TemplateInfo info = TemplateInfo.builder()
-									.title(row.getCell(0).getStringCellValue().trim())
-									.titleType(row.getCell(1).getStringCellValue())
-									.position(BigDecimal.valueOf(row.getCell(2).getNumericCellValue()).intValue())
+									.title(row.getCell(titleIndex).getStringCellValue().trim())
+									.titleType(row.getCell(titleTypeIndex).getStringCellValue())
+									.position(BigDecimal.valueOf(row.getCell(positionIndex).getNumericCellValue()).intValue())
 									.build();
-							String cell3Value = row.getCell(3).getStringCellValue();
+							String cell3Value = row.getCell(groupIndex).getStringCellValue();
 							if (StringUtils.isNotBlank(cell3Value)) {
 								group = cell3Value;
 								flag = true;
 							}
-							String cell4Value = row.getCell(4).getStringCellValue();
+							String cell4Value = "";
+							if (row.getCell(pushDateIndex).getCellType().equals(CellType.STRING)) {
+								cell4Value = row.getCell(pushDateIndex).getStringCellValue();
+							} else if (row.getCell(pushDateIndex).getCellType().equals(CellType.NUMERIC)) {
+								cell4Value = String.valueOf(row.getCell(pushDateIndex).getNumericCellValue());
+							}
 							if (StringUtils.isNotBlank(cell4Value)) {
 								pushDate = cell4Value.trim();
 								if (pushDate.contains(".")) {
@@ -368,7 +404,7 @@ public class GetComments implements Function {
 								}
 							}
 							if (flag) {
-								int cell5Value = BigDecimal.valueOf(row.getCell(5).getNumericCellValue()).intValue();
+								int cell5Value = BigDecimal.valueOf(row.getCell(peopleNumIndex).getNumericCellValue()).intValue();
 								pushPeople = cell5Value;
 								flag = false;
 							}
@@ -380,6 +416,7 @@ public class GetComments implements Function {
 					}
 					updateTextArea(ta, "获取到模板文件中所有数据！");
 
+					dataWb.close();
 					// 获取结果模板文件
 					updateTextArea(ta, "开始写出到结果数据文件！");
 					dataWb = new XSSFWorkbook(ClassLoader.getSystemResourceAsStream("template/dataResultTemplate.xlsx"));
@@ -622,6 +659,9 @@ public class GetComments implements Function {
 						for (int i = start; i < summarySheet.getLastRowNum(); i++) {
 							Row row = summarySheet.getRow(i);
 							// 获取第四个单元格
+							if (row == null) {
+								continue;
+							}
 							Cell cell3 = row.getCell(3);
 							if (!countFlag && (cell3 == null || !cell3.getCellType().equals(CellType.STRING))) {
 								continue;
