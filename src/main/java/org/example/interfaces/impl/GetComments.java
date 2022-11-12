@@ -37,6 +37,8 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @Classname GetComments
@@ -343,6 +345,14 @@ public class GetComments implements Function {
 					List<TemplateInfo> baseList = new ArrayList<>();
 					String group = "";
 					String pushDate = "";
+					// 从文件名获取推送日期
+					Pattern compile = Pattern.compile("\\d+月\\d+日");
+					Matcher matcher = compile.matcher(templateFilePath.substring(templateFilePath.lastIndexOf(File.separator)));
+					if (matcher.find()) {
+						String group0 = matcher.group(0);
+						pushDate = group0;
+					}
+
 					int pushPeople = -1;
 					boolean flag = false;
 					// 根据标题行（第二行）获取到单元格的坐标
@@ -351,7 +361,6 @@ public class GetComments implements Function {
 					int titleTypeIndex = 1;
 					int positionIndex = 2;
 					int groupIndex = 3;
-					int pushDateIndex = 4;
 					int peopleNumIndex = 5;
 
 					for (int i = 0; i <= row1.getLastCellNum(); i++) {
@@ -368,8 +377,6 @@ public class GetComments implements Function {
 							positionIndex = i;
 						} else if ("组别".equals(cellV)) {
 							groupIndex = i;
-						} else if ("推送日期".equals(cellV)) {
-							pushDateIndex = i;
 						} else if ("新系统分组人数".equals(cellV)) {
 							peopleNumIndex = i;
 						}
@@ -390,18 +397,6 @@ public class GetComments implements Function {
 							if (StringUtils.isNotBlank(cell3Value)) {
 								group = cell3Value;
 								flag = true;
-							}
-							String cell4Value = "";
-							if (row.getCell(pushDateIndex).getCellType().equals(CellType.STRING)) {
-								cell4Value = row.getCell(pushDateIndex).getStringCellValue();
-							} else if (row.getCell(pushDateIndex).getCellType().equals(CellType.NUMERIC)) {
-								cell4Value = String.valueOf(row.getCell(pushDateIndex).getNumericCellValue());
-							}
-							if (StringUtils.isNotBlank(cell4Value)) {
-								pushDate = cell4Value.trim();
-								if (pushDate.contains(".")) {
-									pushDate = pushDate.substring(0, pushDate.indexOf(".")) + "月" + pushDate.substring(pushDate.indexOf(".") + 1) + "日";
-								}
 							}
 							if (flag) {
 								int cell5Value = BigDecimal.valueOf(row.getCell(peopleNumIndex).getNumericCellValue()).intValue();
@@ -474,7 +469,12 @@ public class GetComments implements Function {
 						cell3.setCellValue(templateInfo.getGroup());
 						cell3.setCellStyle(cloneCellStyle);
 						Cell cell11 = resultRow.createCell(11);
-						cell11.setCellValue(templateInfo.getPosition());
+						if (templateInfo.getPosition() != 1) {
+							cell11.setCellValue("");
+						} else {
+							cell11.setCellValue(String.valueOf(templateInfo.getPosition()));
+						}
+
 						cell11.setCellStyle(cloneCellStyle);
 
 						int tpush = templateInfo.getPushPeople();
@@ -493,6 +493,9 @@ public class GetComments implements Function {
 						int excelRowNum = rowNum + 1;
 						// 获取map中的评论信息
 						CommentInfo commentInfo = commentInfoMap.get(key).get(tTitle);
+						if (commentInfo == null) {
+							updateTextArea(ta, "为匹配到送达人数：" + key + "，文章标题：" + tTitle + " 的评论信息！");
+						}
 						Cell cell5 = resultRow.createCell(5);
 						cell5.setCellValue(commentInfo.getAllReadPeople());
 						cell5.setCellStyle(cloneCellStyle);
@@ -620,12 +623,10 @@ public class GetComments implements Function {
 									} else if (j == 8) {
 										String cell8Formula = "G" + excelRowNum + "/F" + excelRowNum;
 										newCell.setCellFormula(cell8Formula);
-									} else if (j == 0 || j == 1 || j == 2 || j == 3 || j == 12) {
+									} else if (j == 0 || j == 1 || j == 2 || j == 3 || j == 12 || j == 11) {
 										newCell.setCellValue(dataCell.getStringCellValue());
-									} else if (j == 4 || j == 5 || j == 6 || j == 9 || j == 10 || j == 11) {
-										newCell.setCellValue(dataCell.getNumericCellValue());
 									} else {
-										newCell.setCellValue(dataCell.getStringCellValue());
+										newCell.setCellValue(dataCell.getNumericCellValue());
 									}
 								} else {
 									newCell.setCellValue(dataCell.getStringCellValue());
