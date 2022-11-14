@@ -494,7 +494,7 @@ public class GetComments implements Function {
 						// 获取map中的评论信息
 						CommentInfo commentInfo = commentInfoMap.get(key).get(tTitle);
 						if (commentInfo == null) {
-							updateTextArea(ta, "为匹配到送达人数：" + key + "，文章标题：" + tTitle + " 的评论信息！");
+							updateTextArea(ta, "未匹配到送达人数：" + key + "，文章标题：" + tTitle + " 的评论信息！");
 						}
 						Cell cell5 = resultRow.createCell(5);
 						cell5.setCellValue(commentInfo.getAllReadPeople());
