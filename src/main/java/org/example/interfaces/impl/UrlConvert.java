@@ -1547,7 +1547,7 @@ public class UrlConvert implements Function {
                         if (titleCell == null || titleCell.getCellType().equals(CellType.BLANK)) {
                             continue;
                         }
-                        if ("链接转换明细".equals(titleCell.getStringCellValue())) {
+                        if ("链接转换明细".equals(titleCell.getStringCellValue().trim())) {
                             index = i;
                         }
                     }
@@ -1587,10 +1587,12 @@ public class UrlConvert implements Function {
                             end = detail.indexOf("¥");
                         }
                         String num = "";
-                        if (detail.contains("货号：") || detail.contains("货号:")) {
-                            num = detail.substring(3, end).trim();
-                        } else {
-                            num = detail.substring(2, end).trim();
+                        if (detail.contains("货号：")) {
+                            num = detail.substring(detail.indexOf("货号：") + 3, end).trim();
+                        } else if (detail.contains("货号:")) {
+                            num = detail.substring(detail.indexOf("货号:") + 3, end).trim();
+                        } else if (detail.contains("货号")) {
+                            num = detail.substring(detail.indexOf("货号") + 2, end).trim();
                         }
                         // 在其后插入货号单元格
                         // 单元格右移
