@@ -54,6 +54,7 @@ import java.math.BigDecimal;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -566,8 +567,8 @@ public class UrlConvert implements Function {
                         && Common.EXCEL.equals(((RadioButton)fileType.getSelectedToggle()).getText())) {
                     if (!newValue.endsWith(".xls") && !newValue.endsWith(".xlsx")) {
                         ta.setText("请选择xls或xlsx后缀格式的文件");
-                        return;
                     } else {
+                        System.out.println("获取到文件路径：" + newValue);
                         File file = new File(newValue);
                         try {
                             // 获取excel的第一行表头
@@ -1525,20 +1526,20 @@ public class UrlConvert implements Function {
             @Override
             public void handle(ActionEvent event) {
                 FileChooser fc = new FileChooser();
-                File file = fc.showOpenDialog(primaryStage);
-                if (file == null) {
+                File sourceFile = fc.showOpenDialog(primaryStage);
+                if (sourceFile == null) {
                     return;
                 }
                 label.setText("提取货号中……");
-                String path = file.getPath();
+                String path = sourceFile.getPath();
                 String newPath = path.substring(0, path.lastIndexOf("."))
                         + sdf.format(new Date()) + path.substring(path.lastIndexOf("."));
                 Workbook workbook = null;
                 FileOutputStream fos = null;
                 int index = -1;
                 try {
+                    workbook = new XSSFWorkbook(Files.newInputStream(sourceFile.toPath()));
                     fos = new FileOutputStream(newPath);
-                    workbook = new XSSFWorkbook(path);
                     // 获取链接转换明细列
                     Sheet sheet = workbook.getSheetAt(0);
                     Row titleRow = sheet.getRow(0);
@@ -1585,6 +1586,10 @@ public class UrlConvert implements Function {
                             end = detail.indexOf("价格");
                         } else if (detail.contains("¥")) {
                             end = detail.indexOf("¥");
+                        } else if (detail.contains("定价")) {
+                            end = detail.indexOf("定价");
+                        } else if (detail.contains("￥")) {
+                            end = detail.indexOf("￥");
                         }
                         String num = "";
                         if (detail.contains("货号：")) {
@@ -1603,23 +1608,23 @@ public class UrlConvert implements Function {
                     }
 
                     workbook.write(fos);
-                    ((TextField) bList.get(1)).setText(newPath);
                     label.setText("提取货号成功！");
-                } catch (IOException e) {
+                } catch (Exception e) {
                     label.setText("提取货号失败！");
                     throw new RuntimeException(e);
                 } finally {
                     try {
-                        if (workbook != null) {
-                            workbook.close();
-                        }
                         if (fos != null) {
                             fos.close();
+                        }
+                        if (workbook != null) {
+                            workbook.close();
                         }
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 }
+                ((TextField) bList.get(1)).setText(newPath);
             }
         });
     }

@@ -195,7 +195,7 @@ public class GetComments implements Function {
 				FileOutputStream fos = null;
 				try {
 					if (dataFilePath.endsWith(".xlsx")) {
-						dataWb = new XSSFWorkbook(dataFilePath);
+						dataWb = new XSSFWorkbook(new FileInputStream(dataFilePath));
 					} else {
 						dataWb = new HSSFWorkbook(new FileInputStream(dataFilePath));
 					}
@@ -336,7 +336,7 @@ public class GetComments implements Function {
 					updateTextArea(ta, "开始读取模板文件！");
 					String templateFilePath = ((TextField) getDetailsTemplate.get(1)).getText();
 					if (templateFilePath.endsWith(".xlsx")) {
-						dataWb = new XSSFWorkbook(templateFilePath);
+						dataWb = new XSSFWorkbook(new FileInputStream(templateFilePath));
 					} else {
 						dataWb = new HSSFWorkbook(new FileInputStream(templateFilePath));
 					}
