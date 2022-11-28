@@ -388,6 +388,7 @@ public class GetComments implements Function {
 								|| StringUtils.isBlank(row.getCell(titleIndex).getStringCellValue())) {
 							continue;
 						} else {
+							System.out.println(" i = " + i);
 							TemplateInfo info = TemplateInfo.builder()
 									.title(row.getCell(titleIndex).getStringCellValue().trim())
 									.titleType(row.getCell(titleTypeIndex).getStringCellValue())
@@ -474,8 +475,10 @@ public class GetComments implements Function {
 						} else {
 							cell11.setCellValue(String.valueOf(templateInfo.getPosition()));
 						}
-
-						cell11.setCellStyle(cloneCellStyle);
+						CellStyle rightCellStyle = dataWb.createCellStyle();
+						rightCellStyle.cloneStyleFrom(cloneCellStyle);
+						rightCellStyle.setBorderRight(BorderStyle.MEDIUM);
+						cell11.setCellStyle(rightCellStyle);
 
 						int tpush = templateInfo.getPushPeople();
 						int key = -1;
@@ -532,10 +535,6 @@ public class GetComments implements Function {
 						}
 						Cell cell12 = resultRow.createCell(12);
 						cell12.setCellValue(cell12Value);
-						CellStyle rightCellStyle = dataWb.createCellStyle();
-						rightCellStyle.cloneStyleFrom(cloneCellStyle);
-						rightCellStyle.setBorderRight(BorderStyle.MEDIUM);
-						cell12.setCellStyle(rightCellStyle);
 					}
 					updateTextArea(ta, "写入结果数据文件完成！");
 					updateTextArea(ta, "开始合并数据文件中的单元格！");
