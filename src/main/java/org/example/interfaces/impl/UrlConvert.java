@@ -1153,7 +1153,7 @@ public class UrlConvert implements Function {
                             if (rowi == null) {
                                 continue;
                             }
-                            XSSFCell cell = rowi.getCell(colIndex);
+                            XSSFCell cell = rowi.getCell(1);
                             if (cell == null) {
                                 continue;
                             }
@@ -1553,15 +1553,22 @@ public class UrlConvert implements Function {
                         }
                     }
 
+                    boolean flag = true;
                     if (index == -1) {
                         ((TextField) bList.get(1)).setText(path);
                         return;
                     } else {
-                        // 单元格右移
-                        titleRow.shiftCellsRight(index + 1, titleRow.getLastCellNum(), 1);
-                        // 插入货号单元格
-                        Cell cell = titleRow.createCell(index + 1);
-                        cell.setCellValue("货号");
+                        Cell titleCell = titleRow.getCell(index + 1);
+                        if (titleCell != null && "货号".equals(titleCell.getStringCellValue().trim())) {
+                            // 跳过
+                            flag = false;
+                        } else {
+                            // 单元格右移
+                            titleRow.shiftCellsRight(index + 1, titleRow.getLastCellNum(), 1);
+                            // 插入货号单元格
+                            Cell cell = titleRow.createCell(index + 1);
+                            cell.setCellValue("货号");
+                        }
                     }
 
                     // 遍历行
@@ -1599,12 +1606,29 @@ public class UrlConvert implements Function {
                         } else if (detail.contains("货号")) {
                             num = detail.substring(detail.indexOf("货号") + 2, end).trim();
                         }
-                        // 在其后插入货号单元格
-                        // 单元格右移
-                        row.shiftCellsRight(index + 1, row.getLastCellNum(), 1);
-                        // 插入货号单元格
-                        Cell numCell = row.createCell(index + 1);
-                        numCell.setCellValue(num);
+                        // 正则匹配
+                        Pattern pattern = Pattern.compile("\\d+");
+                        Matcher matcher = pattern.matcher(num);
+                        if (matcher.find()) {
+                            String temp = matcher.group(0);
+                            System.out.println(temp);
+                            num = temp;
+                        }
+                        // 替换数据中的空格
+                        num = num.replaceAll(" ","");
+                        num = num.trim();
+                        if (flag) {
+                            // 在其后插入货号单元格
+                            // 单元格右移
+                            row.shiftCellsRight(index + 1, row.getLastCellNum(), 1);
+                            // 插入货号单元格
+                            Cell numCell = row.createCell(index + 1);
+                            numCell.setCellValue(num);
+                        } else {
+                            // 插入货号单元格
+                            Cell numCell = row.getCell(index + 1);
+                            numCell.setCellValue(num);
+                        }
                     }
 
                     workbook.write(fos);
