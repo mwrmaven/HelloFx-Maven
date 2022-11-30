@@ -129,8 +129,25 @@ public class UrlConvert implements Function {
         List<Node> bList = unit.chooseFile(primaryStage, width, "获取文件");
         List<Node> cList = unit.chooseFolder(primaryStage, width, null);
 
-        // 获取文件后提取货号
-        createFileAndFetchNum(bList, primaryStage);
+        // 在获取文件后添加按钮
+        Button fetchNumButton = new Button("提取货号");
+        fetchNumButton.setPrefWidth(100);
+        fetchNumButton.setAlignment(Pos.CENTER);
+        // 设置button样式
+        String style = "-fx-background-color: #ffcc33; -fx-background-radius: 4";
+        fetchNumButton.setStyle(style);
+        bList.add(fetchNumButton);
+        // 添加label区域
+        Label fetchNumLabel = new Label();
+        bList.add(fetchNumLabel);
+        // 设置点击事件
+        fetchNumButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                // 获取文件后提取货号
+                createFileAndFetchNumByButton(bList, primaryStage);
+            }
+        });
 
         HBox line2 = new HBox();
         line2.setAlignment(Pos.CENTER_LEFT);
@@ -1520,6 +1537,7 @@ public class UrlConvert implements Function {
      * @param primaryStage
      */
     private void createFileAndFetchNum(List<Node> bList, Stage primaryStage) {
+        System.out.println("开始执行提取货号操作");
         Label label = new Label();
         bList.add(label);
         ((Button) bList.get(0)).setOnAction(new EventHandler<ActionEvent>() {
@@ -1651,5 +1669,140 @@ public class UrlConvert implements Function {
                 ((TextField) bList.get(1)).setText(newPath);
             }
         });
+    }
+
+    /**
+     * 点击按钮生成新文件并提取货号
+     *
+     * @param bList
+     * @param primaryStage
+     */
+    private void createFileAndFetchNumByButton(List<Node> bList, Stage primaryStage) {
+        System.out.println("开始执行提取货号操作");
+        Label label = (Label) bList.get(3);
+
+        String path = ((TextField) bList.get(1)).getText();
+        if (StringUtils.isBlank(path)){
+            label.setText("请先获取文件");
+            return;
+        }
+        label.setText("提取货号中……");
+        String newPath = path.substring(0, path.lastIndexOf("."))
+                + sdf.format(new Date()) + path.substring(path.lastIndexOf("."));
+        Workbook workbook = null;
+        FileOutputStream fos = null;
+        int index = -1;
+        try {
+            workbook = new XSSFWorkbook(new FileInputStream(path));
+            fos = new FileOutputStream(newPath);
+            // 获取链接转换明细列
+            Sheet sheet = workbook.getSheetAt(0);
+            Row titleRow = sheet.getRow(0);
+            for (int i = 0; i < titleRow.getLastCellNum(); i++) {
+                Cell titleCell = titleRow.getCell(i);
+                if (titleCell == null || titleCell.getCellType().equals(CellType.BLANK)) {
+                    continue;
+                }
+                if ("链接转换明细".equals(titleCell.getStringCellValue().trim())) {
+                    index = i;
+                }
+            }
+
+            boolean flag = true;
+            if (index == -1) {
+                ((TextField) bList.get(1)).setText(path);
+                return;
+            } else {
+                Cell titleCell = titleRow.getCell(index + 1);
+                if (titleCell != null && "货号".equals(titleCell.getStringCellValue().trim())) {
+                    // 跳过
+                    flag = false;
+                } else {
+                    // 单元格右移
+                    titleRow.shiftCellsRight(index + 1, titleRow.getLastCellNum(), 1);
+                    // 插入货号单元格
+                    Cell cell = titleRow.createCell(index + 1);
+                    cell.setCellValue("货号");
+                }
+            }
+
+            // 遍历行
+            for (int i = 1; i < sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) {
+                    continue;
+                }
+                Cell cell = row.getCell(index);
+                if (cell == null) {
+                    continue;
+                }
+                String sourceUrl = getCellValue(row, index);
+                if (StringUtils.isEmpty(sourceUrl)) {
+                    continue;
+                }
+                // 获取链接转换明细
+                Cell detailCel = row.getCell(index);
+                String detail = detailCel.getStringCellValue();
+                int end = detail.length();
+                if (detail.contains("价格")) {
+                    end = detail.indexOf("价格");
+                } else if (detail.contains("¥")) {
+                    end = detail.indexOf("¥");
+                } else if (detail.contains("定价")) {
+                    end = detail.indexOf("定价");
+                } else if (detail.contains("￥")) {
+                    end = detail.indexOf("￥");
+                }
+                String num = "";
+                if (detail.contains("货号：")) {
+                    num = detail.substring(detail.indexOf("货号：") + 3, end).trim();
+                } else if (detail.contains("货号:")) {
+                    num = detail.substring(detail.indexOf("货号:") + 3, end).trim();
+                } else if (detail.contains("货号")) {
+                    num = detail.substring(detail.indexOf("货号") + 2, end).trim();
+                }
+                // 正则匹配
+                Pattern pattern = Pattern.compile("\\d+");
+                Matcher matcher = pattern.matcher(num);
+                if (matcher.find()) {
+                    String temp = matcher.group(0);
+                    System.out.println(temp);
+                    num = temp;
+                }
+                // 替换数据中的空格
+                num = num.replaceAll(" ","");
+                num = num.trim();
+                if (flag) {
+                    // 在其后插入货号单元格
+                    // 单元格右移
+                    row.shiftCellsRight(index + 1, row.getLastCellNum(), 1);
+                    // 插入货号单元格
+                    Cell numCell = row.createCell(index + 1);
+                    numCell.setCellValue(num);
+                } else {
+                    // 插入货号单元格
+                    Cell numCell = row.getCell(index + 1);
+                    numCell.setCellValue(num);
+                }
+            }
+
+            workbook.write(fos);
+            label.setText("提取货号成功！");
+        } catch (Exception e) {
+            label.setText("提取货号失败！");
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                if (fos != null) {
+                    fos.close();
+                }
+                if (workbook != null) {
+                    workbook.close();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        ((TextField) bList.get(1)).setText(newPath);
     }
 }
