@@ -1,5 +1,6 @@
 org.example.interfaces.impl.UrlConvert
 org.example.interfaces.impl.GetComments
+org.example.interfaces.impl.ArticleLinkInDrafts
 org.example.interfaces.impl.SortTextLine
 org.example.interfaces.impl.ReplacePane
 org.example.interfaces.impl.IncreaseIdentificationPane
