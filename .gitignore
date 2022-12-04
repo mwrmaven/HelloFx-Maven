@@ -6,3 +6,4 @@ lib/
 *.ini
 *.xls
 chromedriver
+chromeTest

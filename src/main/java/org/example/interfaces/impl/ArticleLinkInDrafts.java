@@ -1,12 +1,14 @@
 package org.example.interfaces.impl;
 
-import com.google.common.io.Files;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
@@ -21,7 +23,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.example.button.BatchButton;
 import org.example.common.ExcelContent;
 import org.example.entity.ArticleLink;
+import org.example.init.Config;
 import org.example.interfaces.Function;
+import org.example.util.SocketUtil;
 import org.example.util.Unit;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -50,6 +54,16 @@ public class ArticleLinkInDrafts implements Function {
 
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
+	/**
+	 * chrome浏览器启动器的文件路径
+	 */
+	private static final String CHROMESTARTPATH = "CHROMESTARTPATH";
+
+	/**
+	 * 公众号草稿箱网页地址
+	 */
+	private static final String DRAFTSURL = "DRAFTSURL";
+
 	@Override
 	public String tabName() {
 		return "草稿箱链接";
@@ -72,6 +86,51 @@ public class ArticleLinkInDrafts implements Function {
 		vBox.setSpacing(10);
 		root.getChildren().add(vBox);
 
+		// 一行的前置行，请输入chrome浏览器的启动器类的文件路径
+		HBox line1Pre = new HBox();
+		line1Pre.setAlignment(Pos.CENTER_LEFT);
+		line1Pre.setSpacing(10);
+		List<Node> chrome = unit.newInputText(width - 200, "请输入chrome浏览器的启动器类的文件路径：", 290);
+		for (Node n : chrome) {
+			line1Pre.getChildren().add(n);
+		}
+
+		TextField chromePathTf = (TextField) chrome.get(1);
+		// 设置样式为下划线
+		String param = Config.get(CHROMESTARTPATH);
+		// 加载配置文件中的参数
+		if (StringUtils.isNotEmpty(param)) {
+			chromePathTf.setText(param);
+		}
+		String text = chromePathTf.getText();
+		// 失去焦点触发保存事件
+		chromePathTf.focusedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				// 判断内容改变，则保存内容
+				if (!text.equals(chromePathTf.getText())) {
+					// 设置配置文件
+					Config.set(CHROMESTARTPATH, chromePathTf.getText());
+				}
+			}
+		});
+
+		// 在chrome浏览器winding路径后添加按钮
+		BatchButton startBatchButton = new BatchButton();
+		Button startButton = startBatchButton.createInstance("启动测试浏览器", 15, 150, 10);
+		line1Pre.getChildren().add(startButton);
+
+		// 提示信息
+		HBox tips = new HBox();
+		Label label = new Label("请点击按钮启动测试浏览器，然后在测试浏览器中输入草稿箱地址，如果需要登陆则先扫码登陆");
+		label.setStyle("-fx-text-fill: red; -fx-font-size: 20");
+		tips.getChildren().add(label);
+
+		HBox tips2 = new HBox();
+		Label label2 = new Label("请确认当前路径下的chromedriver驱动版本与浏览器的版本一致");
+		label2.setStyle("-fx-text-fill: red; -fx-font-size: 20");
+		tips2.getChildren().add(label);
+
 		// 第一行，获取模板文件
 		HBox line1 = new HBox();
 		line1.setAlignment(Pos.CENTER_LEFT);
@@ -89,6 +148,26 @@ public class ArticleLinkInDrafts implements Function {
 		for (Node n : drafts) {
 			line2.getChildren().add(n);
 		}
+
+		TextField draftsPathTf = (TextField) drafts.get(1);
+		// 设置样式为下划线
+		String draftsUrl = Config.get(DRAFTSURL);
+		// 加载配置文件中的参数
+		if (StringUtils.isNotEmpty(draftsUrl)) {
+			draftsPathTf.setText(draftsUrl);
+		}
+		String draftsText = draftsPathTf.getText();
+		// 失去焦点触发保存事件
+		draftsPathTf.focusedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				// 判断内容改变，则保存内容
+				if (!draftsText.equals(draftsPathTf.getText())) {
+					// 设置配置文件
+					Config.set(DRAFTSURL, draftsPathTf.getText());
+				}
+			}
+		});
 
 		HBox line3 = new HBox();
 		line3.setAlignment(Pos.CENTER_LEFT);
@@ -108,37 +187,73 @@ public class ArticleLinkInDrafts implements Function {
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
-		vBox.getChildren().addAll(line1, line2, line3, line4);
+		vBox.getChildren().addAll(line1Pre, tips2, tips, line1, line2, line3, line4);
+
+		// 启动测试浏览器按钮事件
+		startButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				// 判断chrome启动器类的路径
+				String chromePath = ((TextField) chrome.get(1)).getText();
+				if (StringUtils.isBlank(chromePath)) {
+					ta.setText("请输入chrome浏览器的启动器类的文件路径！");
+					return;
+				}
+				// 启动chrome调试
+				System.out.println("chromePath = " + chromePath);
+				// 查看端口是否被占用，如果被占用则先停掉端口再启动 区分 windows 和 mac ，命令行也是
+				boolean alive = SocketUtil.isAlive("127.0.0.1", 9527);
+				if (alive) {
+					ta.setText("测试浏览器已启动，请在任务栏中点击浏览器图标创建新窗口！");
+					return;
+				}
+				String[] cmd = new String[3];
+				cmd[0] = chromePath;
+				cmd[1] = "--remote-debugging-port=9527";
+				cmd[2] = "--user-data-dir=chromeTest";
+				try {
+					Runtime.getRuntime().exec(cmd);
+				} catch (IOException e) {
+					System.out.println(e.getMessage());
+					ta.setText("chrome浏览器远程调试模式启动失败，请联系技术人员！");
+				}
+			}
+		});
 
 		// 添加处理事件
 		batchButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				long start = System.currentTimeMillis();
-				System.out.println();
-				// 获取模板文件路径
-				String templatePath = ((TextField) template.get(1)).getText();
-				if (StringUtils.isBlank(templatePath)) {
-					ta.setText("请选择模板文件！");
-					return;
-				}
-				// 获取草稿箱网页地址
-				String draftsUrl = ((TextField) drafts.get(1)).getText();
-				if (StringUtils.isBlank(draftsUrl)) {
-					ta.setText("请输入草稿箱页面的网页地址！");
-					return;
-				}
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						ta.setText("");
+						long start = System.currentTimeMillis();
+						// 获取模板文件路径
+						String templatePath = ((TextField) template.get(1)).getText();
+						if (StringUtils.isBlank(templatePath)) {
+							ta.setText("请选择模板文件！");
+							return;
+						}
+						// 获取草稿箱网页地址
+						String draftsUrl = ((TextField) drafts.get(1)).getText();
+						if (StringUtils.isBlank(draftsUrl)) {
+							ta.setText("请输入草稿箱页面的网页地址！");
+							return;
+						}
 
-				try {
-					debugChrome(templatePath, draftsUrl, ta);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
+						try {
+							debugChrome(templatePath, draftsUrl, ta);
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
 
-				long end = System.currentTimeMillis();
-				System.out.println("程序执行耗时：" + (end - start) + " ms");
-				BigDecimal bd = BigDecimal.valueOf((double) (end - start) / 60000);
-				ta.appendText("\n程序执行耗时约：" + bd.setScale(2, RoundingMode.HALF_UP).doubleValue() + " 分钟");
+						long end = System.currentTimeMillis();
+						System.out.println("程序执行耗时：" + (end - start) + " ms");
+						BigDecimal bd = BigDecimal.valueOf((double) (end - start) / 60000);
+						ta.appendText("\n程序执行耗时约：" + bd.setScale(2, RoundingMode.HALF_UP).doubleValue() + " 分钟");
+					}
+				}).start();
 			}
 		});
 
@@ -256,6 +371,17 @@ public class ArticleLinkInDrafts implements Function {
 		Set<String> groupSet = groupAndPosition.keySet();
 		// 文章链接集合
 		Map<String, List<ArticleLink>> groupAndArticleList = new HashMap<>();
+		driver.get(draftsUrl);
+		// 监控不包含登陆，才执行
+		while (true) {
+			if ((driver.getPageSource().contains("微信扫一扫，选择该微信下的") && driver.getPageSource().contains("公众平台帐号登录"))
+					|| driver.getPageSource().contains("登录超时， 请重新登录")) {
+				// 继续等待
+			} else if (driver.getPageSource().contains("首页") && driver.getPageSource().contains("草稿箱")){
+				break;
+			}
+		}
+
 		for (int i = 0; i < 21; i+=10) {
 			String oldStr = "begin=0";
 			if (draftsUrl.contains("begin=10")) {

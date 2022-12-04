@@ -80,8 +80,12 @@ public class BatchButton {
     }
 
     public Button createInstance() {
+        return createInstance(text, fontSize, wight, height);
+    }
+
+    public Button createInstance(String text, int fontSize, double width, double height) {
         batchButton.setText(text);
-        batchButton.setPrefWidth(wight);
+        batchButton.setPrefWidth(width);
         batchButton.setPrefHeight(height);
 
         String originStyle = "-fx-background-color: " + bottomColorNum + ", " + bottomColorNum + ", " + topColorNum + ";" +
@@ -93,7 +97,7 @@ public class BatchButton {
 
         String pressedStyle = "-fx-padding: 10 15 13 15; -fx-background-radius: 8; " +
                 "-fx-background-insets: 2 0 0 0,2 0 3 0, 2 0 4 0, 2 0 5 0;" +
-                "-fx-font-size: 20; -fx-text-fill: white; -fx-font-family: KaiTi;";
+                "-fx-font-size: " + fontSize + "; -fx-text-fill: white; -fx-font-family: KaiTi;";
 
         batchButton.setStyle(originStyle);
         batchButton.setOnMousePressed(new EventHandler<MouseEvent>() {
