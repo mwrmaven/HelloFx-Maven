@@ -213,6 +213,7 @@ public class ArticleLinkInDrafts implements Function {
 				cmd[2] = "--user-data-dir=chromeTest";
 				try {
 					Runtime.getRuntime().exec(cmd);
+					ta.setText("chrome浏览器远程调试模式启动成功！");
 				} catch (IOException e) {
 					System.out.println(e.getMessage());
 					ta.setText("chrome浏览器远程调试模式启动失败，请联系技术人员！");
@@ -227,6 +228,13 @@ public class ArticleLinkInDrafts implements Function {
 				new Thread(new Runnable() {
 					@Override
 					public void run() {
+						// 查看端口是否被占用，如果被占用则先停掉端口再启动 区分 windows 和 mac ，命令行也是
+						boolean alive = SocketUtil.isAlive("127.0.0.1", 9527);
+						if (!alive) {
+							ta.setText("测试浏览器未启动，请点击上面的\"启动测试浏览器\"按钮，启动测试浏览器！");
+							return;
+						}
+
 						ta.setText("");
 						long start = System.currentTimeMillis();
 						// 获取模板文件路径
