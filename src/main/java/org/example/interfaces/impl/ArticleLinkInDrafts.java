@@ -1,5 +1,6 @@
 package org.example.interfaces.impl;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -199,8 +200,12 @@ public class ArticleLinkInDrafts implements Function {
 					ta.setText("请输入chrome浏览器的启动器类的文件路径！");
 					return;
 				}
+				// 获取文件工具的路径
+				String currentPath = System.getProperty("user.dir");
+				// chrome测试数据存放路径
+				String chromeTestPath= currentPath + File.separator + "chromeTest";
 				// 启动chrome调试
-				System.out.println("chromePath = " + chromePath);
+				updateTextArea(ta, "chromePath = " + chromePath);
 				// 查看端口是否被占用，如果被占用则先停掉端口再启动 区分 windows 和 mac ，命令行也是
 				boolean alive = SocketUtil.isAlive("127.0.0.1", 9527);
 				if (alive) {
@@ -210,7 +215,7 @@ public class ArticleLinkInDrafts implements Function {
 				String[] cmd = new String[3];
 				cmd[0] = chromePath;
 				cmd[1] = "--remote-debugging-port=9527";
-				cmd[2] = "--user-data-dir=chromeTest";
+				cmd[2] = "--user-data-dir=" + chromeTestPath;
 				try {
 					Runtime.getRuntime().exec(cmd);
 					ta.setText("chrome浏览器远程调试模式启动成功！");
@@ -259,7 +264,7 @@ public class ArticleLinkInDrafts implements Function {
 						long end = System.currentTimeMillis();
 						System.out.println("程序执行耗时：" + (end - start) + " ms");
 						BigDecimal bd = BigDecimal.valueOf((double) (end - start) / 60000);
-						ta.appendText("\n程序执行耗时约：" + bd.setScale(2, RoundingMode.HALF_UP).doubleValue() + " 分钟");
+						updateTextArea(ta, "程序执行耗时约：" + bd.setScale(2, RoundingMode.HALF_UP).doubleValue() + " 分钟");
 					}
 				}).start();
 			}
@@ -354,7 +359,16 @@ public class ArticleLinkInDrafts implements Function {
 	 * @throws Exception
 	 */
 	public void debugChrome(String templateFilePath, String draftsUrl, TextArea ta) throws Exception{
-		String driverPath = "./chromedriver";
+		// 获取文件工具的路径
+		String currentPath = System.getProperty("user.dir");
+		String driverPath = currentPath + File.separator + "chromedriver";
+		// 判断系统类型
+		String osName = System.getProperty("os.name");
+		updateTextArea(ta, "系统类型：" + osName);
+		if (osName.startsWith("Windows")) {
+			driverPath = currentPath + File.separator + "chromedriver.exe";
+		}
+		updateTextArea(ta, "驱动器路径：" + driverPath);
 		// 在jvm运行环境中添加驱动配置
 		System.setProperty("webdriver.chrome.driver", driverPath);
 
@@ -364,6 +378,7 @@ public class ArticleLinkInDrafts implements Function {
 		// # driver就是当前浏览器窗口
 		WebDriver driver = new ChromeDriver(chromeOptions);
 
+		updateTextArea(ta, "创建驱动");
 		File file = new File(templateFilePath);
 		FileInputStream fis = new FileInputStream(file);
 		Workbook workbook;
@@ -374,21 +389,17 @@ public class ArticleLinkInDrafts implements Function {
 		} else {
 			workbook = new XSSFWorkbook(fis);
 		}
+		updateTextArea(ta, "访问文件：" + templateFilePath);
 		// 获取组别
 		Map<String, int[]> groupAndPosition = parseExcel(workbook);
 		Set<String> groupSet = groupAndPosition.keySet();
+		for (String g : groupSet) {
+			updateTextArea(ta, "获取到组别：" + g);
+		}
 		// 文章链接集合
 		Map<String, List<ArticleLink>> groupAndArticleList = new HashMap<>();
 		driver.get(draftsUrl);
-		// 监控不包含登陆，才执行
-		while (true) {
-			if ((driver.getPageSource().contains("微信扫一扫，选择该微信下的") && driver.getPageSource().contains("公众平台帐号登录"))
-					|| driver.getPageSource().contains("登录超时， 请重新登录")) {
-				// 继续等待
-			} else if (driver.getPageSource().contains("首页") && driver.getPageSource().contains("草稿箱")){
-				break;
-			}
-		}
+		updateTextArea(ta, "请求草稿箱：" + draftsUrl);
 
 		for (int i = 0; i < 21; i+=10) {
 			String oldStr = "begin=0";
@@ -401,6 +412,7 @@ public class ArticleLinkInDrafts implements Function {
 			}
 			draftsUrl = draftsUrl.replace(oldStr, "begin=" + i);
 			driver.get(draftsUrl);
+			updateTextArea(ta, "请求草稿箱第 " + (i / 10 + 1) + " 页");
 			String currentWindowHandle = driver.getWindowHandle();
 			Thread.sleep(5000);
 			System.out.println("======================");
@@ -408,6 +420,7 @@ public class ArticleLinkInDrafts implements Function {
 			// 以组为单位获取元素
 			List<WebElement> parentElements = driver.findElements(By.className("weui-desktop-card__bd"));
 			Map<String, WebElement> groupAndParentElement = new HashMap<>();
+			updateTextArea(ta, "开始获取草稿箱中文章组信息");
 			for (WebElement we : parentElements) {
 				// 获取主条
 				List<WebElement> elements = we.findElements(By.className("weui-desktop-publish__cover__title"));
@@ -422,10 +435,12 @@ public class ArticleLinkInDrafts implements Function {
 					}
 				}
 			}
+			updateTextArea(ta, "草稿箱中文章组信息获取完成");
 
+			updateTextArea(ta, "开始循环点击文章");
 			// 循环组元素
 			for (String key : groupAndParentElement.keySet()) {
-				System.out.println("========" + key + "========");
+				updateTextArea(ta, "========" + key + "========");
 				List<ArticleLink> articleList = groupAndArticleList.computeIfAbsent(key, k -> new ArrayList<>());
 				WebElement parent = groupAndParentElement.get(key);
 				// 获取组中的所有链接
@@ -441,13 +456,14 @@ public class ArticleLinkInDrafts implements Function {
 					Set<String> windowHandles = driver.getWindowHandles();
 					for (String wh : windowHandles) {
 						driver.switchTo().window(wh);
-						if (driver.getTitle().equals(currentWindowHandle) || driver.getTitle().equals("公众号")) {
+						if (driver.getTitle().equals(currentWindowHandle) || driver.getTitle().equals("公众号")
+								|| driver.getTitle().equals("Official Accounts")) {
 							continue;
 						}
 						Thread.sleep(2000);
 						String title = driver.getTitle();
 						String articleUrl = driver.getCurrentUrl();
-						System.out.println(title + " : " + articleUrl);
+						updateTextArea(ta, title + " : " + articleUrl);
 						ArticleLink articleLink = ArticleLink.builder()
 								.title(title)
 								.url(articleUrl)
@@ -459,10 +475,11 @@ public class ArticleLinkInDrafts implements Function {
 					driver.switchTo().window(currentWindowHandle);
 				}
 			}
+			updateTextArea(ta, "循环点击文章结束");
 		}
 
 		if (groupAndArticleList.size() == 0) {
-			ta.setText("未查询到公众号文章的链接地址！");
+			updateTextArea(ta, "未查询到公众号文章的链接地址！");
 			return;
 		}
 
@@ -494,11 +511,11 @@ public class ArticleLinkInDrafts implements Function {
 			}
 		}
 		if (titleIndex == -1) {
-			ta.setText("请确认模板文件中是否包含文章标题列！");
+			updateTextArea(ta, "请确认模板文件中是否包含文章标题列！");
 			return;
 		}
 		if (linkIndex == -1) {
-			ta.setText("请确认模板文件中是否包含文章链接列！");
+			updateTextArea(ta, "请确认模板文件中是否包含文章链接列！");
 			return;
 		}
 
@@ -509,7 +526,7 @@ public class ArticleLinkInDrafts implements Function {
 			// excel组别起始和结束行
 			int[] startAndEnd = groupAndPosition.get(key);
 			if ((startAndEnd[1] - startAndEnd[0] + 1) < articleLinks.size()) {
-				ta.setText(key + " 组别的草稿箱文章个数与Excel模板文件中的个数不同，请确认！");
+				updateTextArea(ta, key + " 组别的草稿箱文章个数与Excel模板文件中的个数不同，请确认！");
 				return;
 			}
 			// 写入到excel中
@@ -525,11 +542,24 @@ public class ArticleLinkInDrafts implements Function {
 		}
 		// 将workbook写入文件
 		workbook.write(fos);
-		ta.setText("程序执行完成，结果文件路径为：" + newPath);
+		updateTextArea(ta, "程序执行完成，结果文件路径为：" + newPath);
 
 		fos.close();
 		workbook.close();
 		fis.close();
+	}
+
+	/**
+	 * TextArea区域填充文本后自动滑动
+	 * @param ta
+	 * @param message
+	 */
+	public void updateTextArea(TextArea ta, String message) {
+		if (Platform.isFxApplicationThread()) {
+			ta.appendText("\n" + message);
+		} else {
+			Platform.runLater(() -> ta.appendText("\n" + message));
+		}
 	}
 
 

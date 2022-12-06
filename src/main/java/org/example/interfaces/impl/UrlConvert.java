@@ -409,6 +409,7 @@ public class UrlConvert implements Function {
 
         // 页面中的文本域
         TextArea ta = new TextArea();
+        // 删除水平滚动条 TODO
         ta.setWrapText(true);
 
         // 配置选择不同数据源时，第二行显示的不同信息
