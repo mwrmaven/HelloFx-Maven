@@ -7,3 +7,4 @@ lib/
 *.xls
 chromedriver
 chromeTest
+chromedriver.exe

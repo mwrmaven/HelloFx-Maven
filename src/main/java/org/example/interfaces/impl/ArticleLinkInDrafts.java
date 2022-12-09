@@ -267,6 +267,9 @@ public class ArticleLinkInDrafts implements Function {
 						System.out.println("程序执行耗时：" + (end - start) + " ms");
 						BigDecimal bd = BigDecimal.valueOf((double) (end - start) / 60000);
 						updateTextArea(ta, "程序执行耗时约：" + bd.setScale(2, RoundingMode.HALF_UP).doubleValue() + " 分钟");
+
+						// 关闭chrome测试浏览器端口
+						SocketUtil.kill(9527);
 					}
 				}).start();
 			}
