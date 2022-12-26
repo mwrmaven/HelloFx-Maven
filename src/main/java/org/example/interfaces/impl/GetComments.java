@@ -268,9 +268,13 @@ public class GetComments implements Function {
 
 					// 存储数据文件中每行的数据的map，先以送达人数为key，再以文章标题为key
 					Map<Integer, Map<String, CommentInfo>> commentInfoMap = new HashMap<>();
+					int urlCount = 0;
 					for (int i = 0; i <= sheet.getLastRowNum(); i++) {
 //						System.out.println("查询下标 " + i + "行");
 						Row row = sheet.getRow(i);
+						if (row == null) {
+							continue;
+						}
 //						System.out.println("最后一列：" + lastNum);
 						int newLastNum = lastNum + 1;
 						Cell cell = row.createCell(newLastNum);
@@ -281,11 +285,16 @@ public class GetComments implements Function {
 						}
 						// 获取前一个单元格的内容
 //						System.out.println("查询下标 " + lastNum + "列");
-						String contentUrl = row.getCell(lastNum).getStringCellValue();
+						Cell lastCellOnRow = row.getCell(lastNum);
+						if (lastCellOnRow == null) {
+							continue;
+						}
+						String contentUrl = lastCellOnRow.getStringCellValue();
 						CellStyle preCellStyle = row.getCell(lastNum).getCellStyle();
 						cell.setCellStyle(preCellStyle);
 						System.out.println("请求url为" + contentUrl);
 						updateTextArea(ta, "请求第" + (i + 1) + "行的url");
+						urlCount++;
 						HttpGet httpGet = new HttpGet(contentUrl);
 						HttpResponse response = client.execute(httpGet);
 //						System.out.println("请求微信公众号文章");
@@ -329,6 +338,7 @@ public class GetComments implements Function {
 							temp.put(articleTitle, info);
 						}
 					}
+					updateTextArea(ta, "实际共获取到公众号文章 " + urlCount + " 条！");
 					updateTextArea(ta, "数据文件的最后插入一列插入完成！");
 
 					dataWb.close();
