@@ -1646,6 +1646,9 @@ public class UrlConvert implements Function {
                         } else {
                             // 插入货号单元格
                             Cell numCell = row.getCell(index + 1);
+                            if (numCell == null) {
+                                numCell = row.createCell(index + 1);
+                            }
                             numCell.setCellValue(num);
                         }
                     }
@@ -1782,7 +1785,11 @@ public class UrlConvert implements Function {
                     numCell.setCellValue(num);
                 } else {
                     // 插入货号单元格
+                    System.out.println(index + ";" + num);
                     Cell numCell = row.getCell(index + 1);
+                    if (numCell == null) {
+                        numCell = row.createCell(index + 1);
+                    }
                     numCell.setCellValue(num);
                 }
             }
