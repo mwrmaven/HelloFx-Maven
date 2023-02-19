@@ -690,6 +690,7 @@ public class GetCommentsNew implements Function {
 	 */
 	public void executeButton(TextArea ta, List<Node> getDataFile, List<Node> getDetailsTemplate, List<Node> summaryDataFile, TextField draftsPathTf) {
 
+		ta.setText("");
 		// 获取文件工具的路径
 		String currentPath = System.getProperty("user.dir");
 		String driverPath = currentPath + File.separator + "chromedriver";
@@ -729,10 +730,13 @@ public class GetCommentsNew implements Function {
 		for (String s : split) {
 			String[] split1 = s.split("=");
 			if (split1.length == 2 && "token".equals(split1[0])) {
-				token = split1[0];
+				token = split1[1];
 			}
 		}
 		String realToken = token;
+
+		System.out.println("cookie = " + realCookie);
+		System.out.println("token = " + realToken);
 
 		String url = "https://mp.weixin.qq.com/misc/appmsgcomment?action=get_unread_appmsg_comment&has_comment=0&sendtype=MASSSEND&lang=zh_CN&f=json&ajax=1&token=";
 		HttpClient client = HttpClients.createDefault();
