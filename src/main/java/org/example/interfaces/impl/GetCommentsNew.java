@@ -185,7 +185,7 @@ public class GetCommentsNew implements Function {
 		HBox line2 = new HBox();
 		line2.setAlignment(Pos.CENTER_LEFT);
 		line2.setSpacing(10);
-		List<Node> drafts = unit.newInputText(width, "请输入草稿箱页面的网页地址：", 200);
+		List<Node> drafts = unit.newInputText(width, "请输入草稿箱页面的网页地址(可不填)：", 250);
 		for (Node n : drafts) {
 			line2.getChildren().add(n);
 		}
@@ -305,11 +305,6 @@ public class GetCommentsNew implements Function {
 							}
 							// 获取草稿箱网页地址
 							String draftsUrl = ((TextField) drafts.get(1)).getText();
-							if (StringUtils.isBlank(draftsUrl)) {
-								ta.setText("请输入草稿箱页面的网页地址！");
-								return;
-							}
-
 							try {
 								debugChrome(templatePath, draftsUrl, ta);
 							} catch (Exception e) {
@@ -329,7 +324,7 @@ public class GetCommentsNew implements Function {
 					new Thread(new Runnable() {
 						@Override
 						public void run() {
-							executeButton(ta, dataFile, template, summary, draftsPathTf);
+							executeButton(ta, dataFile, template, summary);
 						}
 					}).start();
 				} else {
@@ -449,8 +444,42 @@ public class GetCommentsNew implements Function {
 		chromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9527");
 		// # driver就是当前浏览器窗口
 		WebDriver driver = new ChromeDriver(chromeOptions);
-
 		updateTextArea(ta, "创建驱动");
+
+		if (StringUtils.isBlank(draftsUrl)) {
+			List<WebElement> aList = driver.findElements(By.tagName("a"));
+			for (WebElement w : aList) {
+				if ("展开".equals(w.getText())) {
+					updateTextArea(ta, "点击展开目录");
+					w.click();
+					Thread.sleep(500);
+					break;
+				}
+			}
+			boolean flag = true;
+			for (WebElement w : aList) {
+				if ("草稿箱".equals(w.getAttribute("title"))) {
+					flag = false;
+					updateTextArea(ta, "获取到草稿箱链接：" + w.getAttribute("href"));
+					w.click();
+					updateTextArea(ta, "跳转到草稿箱，等待5s");
+					Thread.sleep(5000);
+					break;
+				}
+			}
+
+			if (flag) {
+				updateTextArea(ta, "未查询到草稿箱，请手动补充");
+				return;
+			} else {
+				updateTextArea(ta, "跳转草稿箱成功");
+				draftsUrl = driver.getCurrentUrl();
+			}
+		} else {
+			driver.get(draftsUrl);
+			updateTextArea(ta, "请求草稿箱：" + draftsUrl);
+		}
+
 		File file = new File(templateFilePath);
 		FileInputStream fis = new FileInputStream(file);
 		Workbook workbook;
@@ -470,9 +499,6 @@ public class GetCommentsNew implements Function {
 		}
 		// 文章链接集合
 		Map<String, List<ArticleLink>> groupAndArticleList = new HashMap<>();
-		driver.get(draftsUrl);
-		updateTextArea(ta, "请求草稿箱：" + draftsUrl);
-
 		for (int i = 0; i < 21; i+=10) {
 			String oldStr = "begin=0";
 			if (draftsUrl.contains("begin=10")) {
@@ -686,9 +712,8 @@ public class GetCommentsNew implements Function {
 	 * @param getDataFile 数据文件
 	 * @param getDetailsTemplate 模板文件
 	 * @param summaryDataFile 汇总文件
-	 * @param draftsPathTf 草稿箱页面的网页地址
 	 */
-	public void executeButton(TextArea ta, List<Node> getDataFile, List<Node> getDetailsTemplate, List<Node> summaryDataFile, TextField draftsPathTf) {
+	public void executeButton(TextArea ta, List<Node> getDataFile, List<Node> getDetailsTemplate, List<Node> summaryDataFile) {
 
 		ta.setText("");
 		// 获取文件工具的路径
@@ -709,14 +734,14 @@ public class GetCommentsNew implements Function {
 		chromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9527");
 		// # driver就是当前浏览器窗口
 		WebDriver driver = new ChromeDriver(chromeOptions);
-		// 请求草稿箱地址
-		String draftUrl = draftsPathTf.getText();
-		driver.get(draftUrl);
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+//		// 请求草稿箱地址
+//		String draftUrl = draftsPathTf.getText();
+//		driver.get(draftUrl);
+//		try {
+//			Thread.sleep(2000);
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
 		Set<Cookie> cookies = driver.manage().getCookies();
 		// 拼接cookie
 		StringBuilder ck = new StringBuilder();
@@ -724,8 +749,9 @@ public class GetCommentsNew implements Function {
 			ck.append(cookie.getName() + "=" + cookie.getValue()+"; ");
 		}
 		String realCookie = ck.substring(0, ck.length() - 2);
-		// 获取cookie
-		String[] split = draftUrl.split("&");
+		// 获取token
+		String currentUrl = driver.getCurrentUrl();
+		String[] split = currentUrl.split("&");
 		String token = null;
 		for (String s : split) {
 			String[] split1 = s.split("=");
@@ -735,8 +761,8 @@ public class GetCommentsNew implements Function {
 		}
 		String realToken = token;
 
-		System.out.println("cookie = " + realCookie);
-		System.out.println("token = " + realToken);
+		updateTextArea(ta, "获取到cookie = " + realCookie);
+		updateTextArea(ta, "获取到token = " + realToken);
 
 		String url = "https://mp.weixin.qq.com/misc/appmsgcomment?action=get_unread_appmsg_comment&has_comment=0&sendtype=MASSSEND&lang=zh_CN&f=json&ajax=1&token=";
 		HttpClient client = HttpClients.createDefault();
