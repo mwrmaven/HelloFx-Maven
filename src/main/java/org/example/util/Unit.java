@@ -9,6 +9,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
+import org.example.init.Config;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -87,13 +88,18 @@ public class Unit {
         buttonFileChoose.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
+                String baseDir = Config.get("baseDir");
                 FileChooser fc = new FileChooser();
+                if (StringUtils.isNotBlank(baseDir)) {
+                    fc.setInitialDirectory(new File(baseDir));
+                }
                 File file = fc.showOpenDialog(primaryStage);
                 if (file == null) {
                     return;
                 }
                 String path = file.getPath();
                 text.setText(path);
+                Config.set("baseDir", file.getParent());
             }
         });
 
