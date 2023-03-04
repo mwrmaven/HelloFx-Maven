@@ -792,7 +792,7 @@ public class GetCommentsNew implements Function {
 		updateTextArea(ta, "获取到cookie = " + realCookie);
 		updateTextArea(ta, "获取到token = " + realToken);
 
-		String url = "https://mp.weixin.qq.com/misc/appmsgcomment?action=get_unread_appmsg_comment&has_comment=0&sendtype=MASSSEND&lang=zh_CN&f=json&ajax=1&token=";
+		String url = "https://mp.weixin.qq.com/misc/appmsgcomment?action=get_unread_appmsg_comment&has_comment=0&sort_type=1&sendtype=MASSSEND&lang=zh_CN&f=json&ajax=1&token=";
 		HttpClient client = HttpClients.createDefault();
 		Map<String, Integer> commentsMap = new HashMap<>();
 		Runnable task = new Runnable() {
@@ -818,13 +818,13 @@ public class GetCommentsNew implements Function {
 
 					// 请求评论数信息，这里的评论总数按数据文件excel中的文章条数计算
 					int count = articleNum;
-					int divisor = 30;
+					int divisor = 10;
 
 					int num = count / divisor;
 					if (count % divisor > 0) {
 						num++;
 					}
-					updateTextArea(ta, "开始请求所有文章的评论数！");
+					updateTextArea(ta, "开始请求所有文章的评论数！共 " + num + " 页");
 					for (int i = 0; i < num; i++) {
 						String uri = url + realToken + "&begin=" + i * divisor + "&count=" + divisor;
 						HttpGet httpGet = new HttpGet(uri);
@@ -1343,7 +1343,7 @@ public class GetCommentsNew implements Function {
 						summaryWb.write(fos);
 						fos.close();
 						fos = null;
-						updateTextArea(ta, "结果汇总文件导出完成！结果汇总文件路径：" + newDataFilePath);
+						updateTextArea(ta, "结果汇总文件导出完成！结果汇总文件路径：" + newSummaryFilePath);
 					}
 				} catch (Exception e) {
 					e.printStackTrace();

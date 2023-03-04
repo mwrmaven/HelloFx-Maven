@@ -182,7 +182,7 @@ public class GetComments implements Function {
 	}
 
 	public void executeButton(TextArea ta, List<Node> getDataFile, TextField cookieTextField, TextField tokenTextField, List<Node> getDetailsTemplate, List<Node> summaryDataFile) {
-		String url = "https://mp.weixin.qq.com/misc/appmsgcomment?action=get_unread_appmsg_comment&has_comment=0&sendtype=MASSSEND&lang=zh_CN&f=json&ajax=1&token=";
+		String url = "https://mp.weixin.qq.com/misc/appmsgcomment?action=get_unread_appmsg_comment&has_comment=0&sort_type=1&sendtype=MASSSEND&lang=zh_CN&f=json&ajax=1&token=";
 		HttpClient client = HttpClients.createDefault();
 		Map<String, Integer> commentsMap = new HashMap<>();
 		Runnable task = new Runnable() {
@@ -738,7 +738,7 @@ public class GetComments implements Function {
 						summaryWb.write(fos);
 						fos.close();
 						fos = null;
-						updateTextArea(ta, "结果汇总文件导出完成！结果汇总文件路径：" + newDataFilePath);
+						updateTextArea(ta, "结果汇总文件导出完成！结果汇总文件路径：" + newSummaryFilePath);
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
