@@ -91,7 +91,12 @@ public class Unit {
                 String baseDir = Config.get("baseDir");
                 FileChooser fc = new FileChooser();
                 if (StringUtils.isNotBlank(baseDir)) {
-                    fc.setInitialDirectory(new File(baseDir));
+                    File baseFile = new File(baseDir);
+                    if (baseFile.exists()) {
+                        fc.setInitialDirectory(baseFile);
+                    } else {
+                        fc.setInitialDirectory(new File("./"));
+                    }
                 }
                 File file = fc.showOpenDialog(primaryStage);
                 if (file == null) {
