@@ -224,7 +224,7 @@ public class GetCommentsNew implements Function {
 		line4.setAlignment(Pos.CENTER_LEFT);
 		line4.setSpacing(10);
 		TextArea ta = new TextArea();
-		ta.setPrefWidth(width / 2 - 90);
+		ta.setPrefWidth(width / 2);
 		ta.setPrefHeight(stage.getHeight() - 500);
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
@@ -443,7 +443,21 @@ public class GetCommentsNew implements Function {
 
 		chromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9527");
 		// # driver就是当前浏览器窗口
-		WebDriver driver = new ChromeDriver(chromeOptions);
+		WebDriver driver;
+		try {
+			driver = new ChromeDriver(chromeOptions);
+		} catch (Exception e) {
+			String message = e.getMessage();
+			String[] split = message.split("\n");
+			StringBuilder sb = new StringBuilder("\n浏览器驱动版本错误！").append("\n");
+			String[] first = split[1].split(" ");
+			String[] second = split[2].split(" ");
+			sb.append("当前驱动版本为：").append(first[first.length - 1]).append("\n");
+			sb.append("当前浏览器版本为：").append(second[second.length - 1]).append("\n");
+			sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html");
+			updateTextArea(ta, sb.toString());
+			return;
+		}
 		updateTextArea(ta, "创建驱动");
 
 		if (StringUtils.isBlank(draftsUrl)) {
@@ -733,7 +747,21 @@ public class GetCommentsNew implements Function {
 
 		chromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9527");
 		// # driver就是当前浏览器窗口
-		WebDriver driver = new ChromeDriver(chromeOptions);
+		WebDriver driver;
+		try {
+			driver = new ChromeDriver(chromeOptions);
+		} catch (Exception e) {
+			String message = e.getMessage();
+			String[] split = message.split("\n");
+			StringBuilder sb = new StringBuilder("\n浏览器驱动版本错误！").append("\n");
+			String[] first = split[1].split(" ");
+			String[] second = split[2].split(" ");
+			sb.append("当前驱动版本为：").append(first[first.length - 1]).append("\n");
+			sb.append("当前浏览器版本为：").append(second[second.length - 1]).append("\n");
+			sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html");
+			updateTextArea(ta, sb.toString());
+			return;
+		}
 //		// 请求草稿箱地址
 //		String draftUrl = draftsPathTf.getText();
 //		driver.get(draftUrl);
