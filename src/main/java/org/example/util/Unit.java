@@ -1,5 +1,8 @@
 package org.example.util;
 
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -171,6 +174,38 @@ public class Unit {
         nodes.add(text);
 
         return nodes;
+    }
+
+    /**
+     * TextArea区域填充文本后自动滑动
+     * @param ta
+     * @param message
+     */
+    public void updateTextArea(TextArea ta, String message) {
+        if (Platform.isFxApplicationThread()) {
+            ta.appendText("\n" + message);
+        } else {
+            Platform.runLater(() -> ta.appendText("\n" + message));
+        }
+    }
+
+    /**
+     * 文本框失去焦点的保存操作
+     * @param field
+     * @param configText
+     * @param configKey
+     */
+    public void loseFocuseSave(TextField field, String configText, String configKey) {
+        field.focusedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                // 判断内容改变，则保存内容
+                if (!configText.equals(field.getText())) {
+                    // 设置配置文件
+                    Config.set(configKey, field.getText());
+                }
+            }
+        });
     }
 
 }
