@@ -328,129 +328,133 @@ public class ReplaceArticle implements Function {
 
                                     // 获取原来的图文
                                     List<WebElement> appmsgItemList = driver.findElements(By.cssSelector(".card_appmsg_title.js_appmsg_title"));
-                                    int x = -1;
-                                    for (int i = 0; i < appmsgItemList.size(); i++) {
-                                        WebElement webElement = appmsgItemList.get(i);
-                                        System.out.println("原次条名称：" + webElement.getText());
-                                        if (replaceTitle.equals(webElement.getText())) {
-                                            System.out.println("找到原次条元素，点击");
-                                            webElement.click();
-                                            x = i;
-                                            System.out.println("文章下标：" + i);
-                                            break;
-                                        }
-                                    }
-                                    if (x != -1) {
-                                        // 获取删除元素
-                                        List<WebElement> deleteButtonList = driver.findElements(By.cssSelector(".weui-desktop-icon-btn.weui-desktop-icon-btn__delete_icon"));
-                                        System.out.println("删除元素个数：" + deleteButtonList.size());
-                                        System.out.println("点击删除");
-                                        deleteButtonList.get(0).click();
-                                        // 查询  popover_inner
-                                        List<WebElement> popoverInner = driver.findElements(By.className("popover_inner"));
-                                        // 获取包含"是否确定删除此篇内容"的元素
-                                        for (WebElement w : popoverInner) {
-                                            if (w.getText().contains("是否确定删除此篇内容")) {
-                                                System.out.println("查询到包含是否确定删除此篇内容的元素");
-                                                // 查询确定按钮
-                                                List<WebElement> elements = w.findElements(By.cssSelector(".btn.btn_primary.jsPopoverBt"));
-                                                System.out.println("获取到确认元素个数：" + elements.size());
-                                                System.out.println("点击确认");
-                                                elements.get(0).click();
-                                            }
-                                        }
-                                    }
 
-                                    // 实际的文章处理逻辑
-                                    // 查询新建消息的元素
-                                    List<WebElement> addWordElements = driver.findElements(By.className("preview_media_add_word"));
-                                    System.out.println("新建消息元素个数：" + addWordElements.size());
-                                    // 鼠标移动
-                                    action.moveToElement(addWordElements.get(0)).perform();
-                                    // 点击元素
-                                    List<WebElement> elements = driver.findElements(By.className("icon-svg-editor-insert-appmsg"));
-                                    System.out.println("选择已有图文元素个数：" + elements.size());
-                                    elements.get(0).click();
-                                    // 获取左侧目录列表
-                                    List<WebElement> leftTab = driver.findElements(By.className("left_tab_data"));
-                                    System.out.println("左侧目录列个数：" + leftTab.size());
-                                    List<WebElement> tabList = leftTab.get(0).findElements(By.className("tab"));
-                                    System.out.println("目录列中目录个数：" + tabList.size());
-                                    for (WebElement it : tabList) {
-                                        String menuName = it.getText();
-                                        System.out.println("目录名称：" + menuName);
-                                        if ("草稿".equals(menuName)) {
-                                            System.out.println("查找到草稿目录，点击");
-                                            it.click();
-                                            Thread.sleep(3000);
-                                            break;
-                                        }
-                                    }
-
-                                    // 获取所有分组
-                                    List<WebElement> draftContainerList = driver.findElements(By.className("publish_card_container"));
-                                    // 遍历不包含次条的分组
-                                    for (WebElement w : draftContainerList) {
-                                        List<WebElement> elements1 = w.findElements(By.className("weui-desktop-publish__title"));
-                                        if (elements1.size() > 0) {
-                                            continue;
-                                        }
-                                        List<WebElement> publishList = w.findElements(By.className("weui-desktop-publish__cover__title"));
-                                        System.out.println("获取到主条个数：" + publishList.size());
-                                        if (replaceTitle.equals(publishList.get(0).getText())) {
-                                            System.out.println("查询到匹配【" + replaceTitle + "】的主条");
-                                            System.out.println("点击主条");
-                                            publishList.get(0).click();
-                                            break;
-                                        }
-                                    }
-
-                                    List<WebElement> bottomLineList = driver.findElements(By.className("weui-desktop-dialog__ft"));
-                                    System.out.println("底部行个数：" + bottomLineList.size());
-                                    for (int i = 0; i < bottomLineList.size(); i++) {
-                                        WebElement bl = bottomLineList.get(i);
-                                        System.out.println("循环第" + i + "行");
-                                        List<WebElement> buttonList = bl.findElements(By.tagName("button"));
-                                        System.out.println("底部行中的按钮个数：" + buttonList.size());
-                                        if (CollectionUtils.isNotEmpty(buttonList)) {
-                                            WebElement buttonElement = buttonList.get(0);
-                                            if ("确定".equals(buttonElement.getText())) {
-                                                System.out.println("查询到确定按钮，点击");
-                                                buttonElement.click();
+                                    // 遍历需要替换的文章名
+                                    for (String an : articleNameArray) {
+                                        int x = -1;
+                                        for (int l = 0; l < appmsgItemList.size(); l++) {
+                                            WebElement webElement = appmsgItemList.get(l);
+                                            System.out.println("原次条名称：" + webElement.getText());
+                                            if (an.equals(webElement.getText())) {
+                                                System.out.println("找到原次条元素，点击");
+                                                webElement.click();
+                                                x = l;
+                                                System.out.println("文章下标：" + l);
                                                 break;
                                             }
                                         }
-                                    }
 
-                                    // 等待新导入的文章加载完成
-                                    Thread.sleep(2000);
-
-                                    // 调整位置
-                                    List<WebElement> appmsgItemListName = driver.findElements(By.cssSelector(".card_appmsg_title.js_appmsg_title"));
-                                    int newX = -1;
-
-                                    WebElement newElement = null;
-                                    for (int i = 0; i < appmsgItemListName.size(); i++) {
-                                        WebElement webElement = appmsgItemListName.get(i);
-                                        System.out.println("次条名称：" + webElement.getText());
-                                        if (replaceTitle.equals(webElement.getText())) {
-//                                System.out.println("找到次条元素，点击");
-                                            newElement = webElement;
-//                                webElement.click();
-                                            newX = i;
-                                            System.out.println("文章下标：" + i);
-                                            break;
+                                        // 原次条存在，则先删除
+                                        if (x != -1) {
+                                            // 获取删除元素
+                                            List<WebElement> deleteButtonList = driver.findElements(By.cssSelector(".weui-desktop-icon-btn.weui-desktop-icon-btn__delete_icon"));
+                                            System.out.println("删除元素个数：" + deleteButtonList.size());
+                                            System.out.println("点击删除");
+                                            deleteButtonList.get(0).click();
+                                            // 查询  popover_inner
+                                            List<WebElement> popoverInner = driver.findElements(By.className("popover_inner"));
+                                            // 获取包含"是否确定删除此篇内容"的元素
+                                            for (WebElement w : popoverInner) {
+                                                if (w.getText().contains("是否确定删除此篇内容")) {
+                                                    System.out.println("查询到包含是否确定删除此篇内容的元素");
+                                                    // 查询确定按钮
+                                                    List<WebElement> elements = w.findElements(By.cssSelector(".btn.btn_primary.jsPopoverBt"));
+                                                    System.out.println("获取到确认元素个数：" + elements.size());
+                                                    System.out.println("点击确认");
+                                                    elements.get(0).click();
+                                                }
+                                            }
                                         }
-                                    }
-                                    if (newX != -1 && newX > x) {
-                                        for (int i = newX; i > x; i--) {
-                                            System.out.println("找到次条元素，点击");
-                                            newElement.click();
-                                            // 获取上移元素
-                                            List<WebElement> upButtonList = driver.findElements(By.cssSelector(".weui-desktop-icon-btn.weui-desktop-icon-btn__up_icon"));
-                                            System.out.println("上移元素个数：" + upButtonList.size());
-                                            System.out.println("点击上移");
-                                            upButtonList.get(0).click();
+
+                                        // 实际的文章处理逻辑
+                                        // 查询新建消息的元素
+                                        List<WebElement> addWordElements = driver.findElements(By.className("preview_media_add_word"));
+                                        System.out.println("新建消息元素个数：" + addWordElements.size());
+                                        // 鼠标移动
+                                        action.moveToElement(addWordElements.get(0)).perform();
+                                        // 点击元素
+                                        List<WebElement> elements = driver.findElements(By.className("icon-svg-editor-insert-appmsg"));
+                                        System.out.println("选择已有图文元素个数：" + elements.size());
+                                        elements.get(0).click();
+                                        // 获取左侧目录列表
+                                        List<WebElement> leftTab = driver.findElements(By.className("left_tab_data"));
+                                        System.out.println("左侧目录列个数：" + leftTab.size());
+                                        List<WebElement> tabList = leftTab.get(0).findElements(By.className("tab"));
+                                        System.out.println("目录列中目录个数：" + tabList.size());
+                                        for (WebElement it : tabList) {
+                                            String menuName = it.getText();
+                                            System.out.println("目录名称：" + menuName);
+                                            if ("草稿".equals(menuName)) {
+                                                System.out.println("查找到草稿目录，点击");
+                                                it.click();
+                                                Thread.sleep(3000);
+                                                break;
+                                            }
+                                        }
+
+                                        // 获取所有分组
+                                        List<WebElement> draftContainerList = driver.findElements(By.className("publish_card_container"));
+                                        // 遍历不包含次条的分组
+                                        for (WebElement w : draftContainerList) {
+                                            List<WebElement> elements1 = w.findElements(By.className("weui-desktop-publish__title"));
+                                            if (elements1.size() > 0) {
+                                                continue;
+                                            }
+                                            List<WebElement> publishList = w.findElements(By.className("weui-desktop-publish__cover__title"));
+                                            System.out.println("获取到主条个数：" + publishList.size());
+                                            if (an.equals(publishList.get(0).getText())) {
+                                                System.out.println("查询到匹配【" + an + "】的主条");
+                                                System.out.println("点击主条");
+                                                publishList.get(0).click();
+                                                break;
+                                            }
+                                        }
+
+                                        List<WebElement> bottomLineList = driver.findElements(By.className("weui-desktop-dialog__ft"));
+                                        System.out.println("底部行个数：" + bottomLineList.size());
+                                        for (int m = 0; m < bottomLineList.size(); m++) {
+                                            WebElement bl = bottomLineList.get(m);
+                                            System.out.println("循环第" + m + "行");
+                                            List<WebElement> buttonList = bl.findElements(By.tagName("button"));
+                                            System.out.println("底部行中的按钮个数：" + buttonList.size());
+                                            if (CollectionUtils.isNotEmpty(buttonList)) {
+                                                WebElement buttonElement = buttonList.get(0);
+                                                if ("确定".equals(buttonElement.getText())) {
+                                                    System.out.println("查询到确定按钮，点击");
+                                                    buttonElement.click();
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        // 等待新导入的文章加载完成
+                                        Thread.sleep(2000);
+
+                                        // 调整位置
+                                        List<WebElement> appmsgItemListName = driver.findElements(By.cssSelector(".card_appmsg_title.js_appmsg_title"));
+                                        int newX = -1;
+
+                                        WebElement newElement = null;
+                                        for (int n = 0; n < appmsgItemListName.size(); n++) {
+                                            WebElement webElement = appmsgItemListName.get(n);
+                                            System.out.println("次条名称：" + webElement.getText());
+                                            if (an.equals(webElement.getText())) {
+                                                newElement = webElement;
+                                                newX = n;
+                                                System.out.println("文章下标：" + n);
+                                                break;
+                                            }
+                                        }
+                                        if (newX != -1 && newX > x) {
+                                            for (int k = newX; k > x; k--) {
+                                                System.out.println("找到次条元素，点击");
+                                                newElement.click();
+                                                // 获取上移元素
+                                                List<WebElement> upButtonList = driver.findElements(By.cssSelector(".weui-desktop-icon-btn.weui-desktop-icon-btn__up_icon"));
+                                                System.out.println("上移元素个数：" + upButtonList.size());
+                                                System.out.println("点击上移");
+                                                upButtonList.get(0).click();
+                                            }
                                         }
                                     }
 
@@ -467,10 +471,9 @@ public class ReplaceArticle implements Function {
                                     driver.close();
                                 }
                                 // 切换回总页
-//                    driver.switchTo().window(currentWindowHandle);
+                                driver.switchTo().window(currentWindowHandle);
                             }
                         }
-
                     }
                 }
             }
