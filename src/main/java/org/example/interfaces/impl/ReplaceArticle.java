@@ -108,6 +108,9 @@ public class ReplaceArticle implements Function {
 
         // 获取配置文件中的配置信息
         String draftPageNum = Config.get(DRAFT_PAGE_NUM);
+        if (StringUtils.isBlank(draftPageNum)) {
+            draftPageNum = "2";
+        }
         // 要查询的草稿箱的前几页
         List<Node> nodes1 = unit.newInputText(width, "查询草稿箱的前几页：", 150);
         // 文本框中提示信息
@@ -445,15 +448,17 @@ public class ReplaceArticle implements Function {
                                                 break;
                                             }
                                         }
-                                        if (newX != -1 && newX > x) {
-                                            for (int k = newX; k > x; k--) {
-                                                System.out.println("找到次条元素，点击");
-                                                newElement.click();
-                                                // 获取上移元素
-                                                List<WebElement> upButtonList = driver.findElements(By.cssSelector(".weui-desktop-icon-btn.weui-desktop-icon-btn__up_icon"));
-                                                System.out.println("上移元素个数：" + upButtonList.size());
-                                                System.out.println("点击上移");
-                                                upButtonList.get(0).click();
+                                        if (x != -1) {
+                                            if (newX != -1 && newX > x) {
+                                                for (int k = newX; k > x; k--) {
+                                                    System.out.println("找到次条元素，点击");
+                                                    newElement.click();
+                                                    // 获取上移元素
+                                                    List<WebElement> upButtonList = driver.findElements(By.cssSelector(".weui-desktop-icon-btn.weui-desktop-icon-btn__up_icon"));
+                                                    System.out.println("上移元素个数：" + upButtonList.size());
+                                                    System.out.println("点击上移");
+                                                    upButtonList.get(0).click();
+                                                }
                                             }
                                         }
                                     }
