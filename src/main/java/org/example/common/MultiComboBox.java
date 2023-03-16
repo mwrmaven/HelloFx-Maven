@@ -1,9 +1,11 @@
 package org.example.common;
 
-import com.sun.javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.control.*;
+import javafx.scene.control.skin.ComboBoxListViewSkin;
 import javafx.util.Callback;
 
 import java.util.stream.Collectors;
@@ -21,18 +23,18 @@ public class MultiComboBox<T extends Col> {
         ComboBox<T> comboBox = new ComboBox<T>(items){
             @Override
             protected Skin<?> createDefaultSkin() {
-                return new ComboBoxListViewSkin<T>(this) {
-                    // 设置点击时不隐藏
-                    @Override
-                    protected boolean isHideOnClickEnabled() {
-                        return false;
-                    }
-                };
+                ComboBoxListViewSkin<T> tComboBoxListViewSkin = new ComboBoxListViewSkin<>(this);
+                // 设置点击不隐藏
+                tComboBoxListViewSkin.setHideOnClick(false);
+                return tComboBoxListViewSkin;
             }
         };
 
         comboBox.setPrefWidth(prefWidth);
+        // 设置下拉框的元素
         comboBox.setItems(items);
+        // 设置下拉框的横框
+        comboBox.setButtonCell(new ListCell<>());
 
         // 设置下拉元素的显示内容
         comboBox.setCellFactory(new Callback<ListView<T>, ListCell<T>>() {
@@ -42,7 +44,18 @@ public class MultiComboBox<T extends Col> {
                     private CheckBox cb = new CheckBox();
                     private BooleanProperty booleanProperty;
                     {
-                        cb.setOnAction(e -> getListView().getSelectionModel().select(getItem()));
+                        // 为选择框 CheckBox 设置点击触发事件
+                        cb.setOnAction(new EventHandler<ActionEvent>() {
+                            @Override
+                            public void handle(ActionEvent actionEvent) {
+                                getListView().getSelectionModel().select(getItem());
+                                // 使用过滤，选出被选中的对象
+                                String selected = comboBox.getItems().stream().filter(T::isSelected)
+                                        .map(T::getName)
+                                        .collect(Collectors.joining(","));
+                                comboBox.getButtonCell().setText(selected);
+                            }
+                        });
                     }
 
                     @Override
@@ -65,20 +78,6 @@ public class MultiComboBox<T extends Col> {
                         }
                     }
                 };
-            }
-        });
-
-        // 设置选项按钮上的显示内容
-        comboBox.setButtonCell(new ListCell<T>() {
-            @Override
-            protected void updateItem(T item, boolean empty) {
-                super.updateItem(item, empty);
-                // 使用过滤，选出被选中的对象
-                String selected = comboBox.getItems().stream().filter(T::isSelected)
-                        .map(T::getName)
-                        .collect(Collectors.joining(","));
-                // 设置按钮的文本---------------------------------------------------------
-                setText(selected);
             }
         });
 

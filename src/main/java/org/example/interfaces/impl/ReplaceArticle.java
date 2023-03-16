@@ -225,10 +225,12 @@ public class ReplaceArticle implements Function {
                 unit.updateTextArea(area, "驱动器路径：" + driverPath);
                 // 在jvm运行环境中添加驱动配置
                 System.setProperty("webdriver.chrome.driver", driverPath);
+                System.setProperty("webdriver.http.factory", "jdk-http-client");
 
                 ChromeOptions chromeOptions = new ChromeOptions();
 
                 chromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9527");
+                chromeOptions.addArguments("--remote-allow-origins=*");
                 // # driver就是当前浏览器窗口
                 WebDriver driver;
                 try {
@@ -293,9 +295,12 @@ public class ReplaceArticle implements Function {
                     for (String groupName : groupNameArray) {
                         // 处理草稿箱元素
                         List<WebElement> publishCardContainer = driver.findElements(By.className("publish_card_container"));
-                        System.out.println(publishCardContainer.size());
+                        int containerSize = publishCardContainer.size();
+                        System.out.println("当前页的分组个数为：" + containerSize);
                         Actions action = new Actions(driver);
-                        for (WebElement item : publishCardContainer) {
+                        for (int kk = 0; kk < containerSize; kk++) {
+                            publishCardContainer = driver.findElements(By.className("publish_card_container"));
+                            WebElement item = publishCardContainer.get(kk);
                             WebElement element = item.findElement(By.className("weui-desktop-publish__cover__title"));
                             String title = element.getText();
                             System.out.println("文章头条标题：" + title);
