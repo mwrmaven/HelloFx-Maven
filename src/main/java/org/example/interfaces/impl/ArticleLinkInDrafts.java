@@ -374,10 +374,12 @@ public class ArticleLinkInDrafts implements Function {
 		updateTextArea(ta, "驱动器路径：" + driverPath);
 		// 在jvm运行环境中添加驱动配置
 		System.setProperty("webdriver.chrome.driver", driverPath);
+		System.setProperty("webdriver.http.factory", "jdk-http-client");
 
 		ChromeOptions chromeOptions = new ChromeOptions();
 
 		chromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9527");
+		chromeOptions.addArguments("--remote-allow-origins=*");
 		// # driver就是当前浏览器窗口
 		WebDriver driver = new ChromeDriver(chromeOptions);
 
