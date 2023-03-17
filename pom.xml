@@ -181,8 +181,12 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.example.App</mainClass>
+                            <mainClass>org.example.Start</mainClass>
                         </manifest>
+                        <!-- 解决打包后报错 java.lang.NoClassDefFoundError: org/fxmisc/richtext/TextFlowLayout 的问题-->
+                        <manifestEntries>
+                            <Multi-Release>true</Multi-Release>
+                        </manifestEntries>
                     </archive>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
