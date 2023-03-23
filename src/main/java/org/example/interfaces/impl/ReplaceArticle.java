@@ -14,7 +14,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.example.button.BatchButton;
@@ -183,9 +182,8 @@ public class ReplaceArticle implements Function {
     public void buttonHandler(Button batchButton, TextField draftPageNumTf,
                               TextField groupNameTf, TextField articleNameTf, TextArea area) throws Exception{
         batchButton.setOnAction(new EventHandler<ActionEvent>() {
-            @SneakyThrows
             @Override
-            public void handle(ActionEvent event){
+            public void handle(ActionEvent event) {
                 area.setText("");
                 // 判断分组名称和文章名称
                 String groupNameList = groupNameTf.getText().trim();
@@ -307,7 +305,11 @@ public class ReplaceArticle implements Function {
                             if (groupName.equals(title)) {
                                 // 鼠标移动到分组上，以显示工具行
                                 action.moveToElement(item).perform();
-                                Thread.sleep(3000);
+                                try {
+                                    Thread.sleep(3000);
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
                                 // 获取编辑的元素
                                 List<WebElement> actionList = item.findElements(By.className("weui-desktop-card__action"));
                                 System.out.println("工具行个数：" + actionList.size());
@@ -395,7 +397,11 @@ public class ReplaceArticle implements Function {
                                             if ("草稿".equals(menuName)) {
                                                 System.out.println("查找到草稿目录，点击");
                                                 it.click();
-                                                Thread.sleep(3000);
+                                                try {
+                                                    Thread.sleep(3000);
+                                                } catch (InterruptedException e) {
+                                                    throw new RuntimeException(e);
+                                                }
                                                 break;
                                             }
                                         }
@@ -436,7 +442,11 @@ public class ReplaceArticle implements Function {
                                         }
 
                                         // 等待新导入的文章加载完成
-                                        Thread.sleep(2000);
+                                        try {
+                                            Thread.sleep(2000);
+                                        } catch (InterruptedException e) {
+                                            throw new RuntimeException(e);
+                                        }
 
                                         // 调整位置
                                         List<WebElement> appmsgItemListName = driver.findElements(By.cssSelector(".card_appmsg_title.js_appmsg_title"));
@@ -475,7 +485,11 @@ public class ReplaceArticle implements Function {
                                     jsSubmit.get(0).click();
 
                                     // 等待新导入的文章加载完成
-                                    Thread.sleep(2000);
+                                    try {
+                                        Thread.sleep(2000);
+                                    } catch (InterruptedException e) {
+                                        throw new RuntimeException(e);
+                                    }
 
                                     // 关闭当前标签页
                                     driver.close();
