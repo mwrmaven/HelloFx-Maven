@@ -10,3 +10,4 @@ chromeTest
 chromedriver.exe
 chromedriver1.exe
 chromedriver2.exe
+*.xml

@@ -177,19 +177,6 @@ public class Unit {
     }
 
     /**
-     * TextArea区域填充文本后自动滑动
-     * @param ta
-     * @param message
-     */
-    public void updateTextArea(TextArea ta, String message) {
-        if (Platform.isFxApplicationThread()) {
-            ta.appendText("\n" + message);
-        } else {
-            Platform.runLater(() -> ta.appendText("\n" + message));
-        }
-    }
-
-    /**
      * 文本框失去焦点的保存操作
      * @param field
      * @param configText
