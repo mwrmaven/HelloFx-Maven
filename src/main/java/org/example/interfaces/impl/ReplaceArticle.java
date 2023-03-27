@@ -429,25 +429,52 @@ public class ReplaceArticle implements Function {
                                                 }
                                             }
 
-                                            // 获取所有分组
-                                            List<WebElement> draftContainerList = driver.findElements(By.className("publish_card_container"));
-                                            System.out.println("获取到分组个数：" + draftContainerList.size());
-                                            // 遍历不包含次条的分组
-                                            for (WebElement w : draftContainerList) {
-                                                List<WebElement> elements1 = w.findElements(By.className("weui-desktop-publish__title"));
-//                                                if (elements1.size() > 0) {
-//                                                    continue;
-//                                                }
-                                                List<WebElement> publishList = w.findElements(By.className("weui-desktop-publish__cover__title"));
-                                                System.out.println("获取到主条个数：" + publishList.size());
-                                                System.out.println("主条名称：" + publishList.get(0).getText());
-                                                if (an.equals(publishList.get(0).getText())) {
-                                                    System.out.println("查询到匹配【" + an + "】的主条");
-                                                    System.out.println("点击主条");
-                                                    publishList.get(0).click();
+                                            // 这里翻页
+                                            for (int detailPageNum = 0; detailPageNum < pageNum; detailPageNum++) {
+                                                if (detailPageNum > 0) {
+                                                    int targetNum = detailPageNum + 1;
+                                                    // 点击分页
+                                                    List<WebElement> elements2 = driver.findElements(By.className("weui-desktop-pagination__num"));
+                                                    for (WebElement w : elements2) {
+                                                        // 点击当前循环页码
+                                                        if (String.valueOf(targetNum).equals(w.getText())) {
+                                                            w.click();
+                                                            try {
+                                                                Thread.sleep(2000);
+                                                            } catch (InterruptedException e) {
+                                                                throw new RuntimeException(e);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                // 获取所有分组
+                                                List<WebElement> draftContainerList = driver.findElements(By.className("publish_card_container"));
+                                                System.out.println("获取到分组个数：" + draftContainerList.size());
+
+                                                boolean flag = false;
+                                                for (WebElement w : draftContainerList) {
+                                                    List<WebElement> elements1 = w.findElements(By.className("weui-desktop-publish__title"));
+                                                    // 遍历不包含次条的分组
+//                                                    if (elements1.size() > 0) {
+//                                                        continue;
+//                                                    }
+                                                    List<WebElement> publishList = w.findElements(By.className("weui-desktop-publish__cover__title"));
+                                                    System.out.println("获取到主条个数：" + publishList.size());
+                                                    System.out.println("主条名称：" + publishList.get(0).getText());
+                                                    if (an.equals(publishList.get(0).getText())) {
+                                                        System.out.println("查询到匹配【" + an + "】的主条");
+                                                        System.out.println("点击主条");
+                                                        publishList.get(0).click();
+                                                        flag = true;
+                                                        break;
+                                                    }
+                                                }
+                                                if (flag) {
                                                     break;
                                                 }
                                             }
+
 
                                             List<WebElement> bottomLineList = driver.findElements(By.className("weui-desktop-dialog__ft"));
                                             System.out.println("底部行个数：" + bottomLineList.size());
