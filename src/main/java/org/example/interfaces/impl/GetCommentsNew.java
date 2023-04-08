@@ -59,6 +59,9 @@ import java.util.regex.Pattern;
  */
 public class GetCommentsNew implements Function {
 
+	/**
+	 * 工具类
+	 */
 	private Unit unit = new Unit();
 
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
@@ -73,11 +76,19 @@ public class GetCommentsNew implements Function {
 	 */
 	private static final String DRAFTSURL = "DRAFTSURL";
 
+	/**
+	 * 标签名称
+	 * @return
+	 */
 	@Override
 	public String tabName() {
 		return "自动化处理";
 	}
 
+	/**
+	 * 标签颜色
+	 * @return
+	 */
 	@Override
 	public String tabStyle() {
 		String style = "-fx-font-weight: bold; " +
@@ -237,33 +248,8 @@ public class GetCommentsNew implements Function {
 			public void handle(ActionEvent event) {
 				// 判断chrome启动器类的路径
 				String chromePath = ((TextField) chrome.get(1)).getText();
-				if (StringUtils.isBlank(chromePath)) {
-					ta.setText("请输入chrome浏览器的启动器类的文件路径！");
-					return;
-				}
-				// 获取文件工具的路径
-				String currentPath = System.getProperty("user.dir");
-				// chrome测试数据存放路径
-				String chromeTestPath= currentPath + File.separator + "chromeTest";
-				// 启动chrome调试
-				updateTextArea(ta, "chromePath = " + chromePath);
-				// 查看端口是否被占用，如果被占用则先停掉端口再启动 区分 windows 和 mac ，命令行也是
-				boolean alive = SocketUtil.isAlive("127.0.0.1", 9527);
-				if (alive) {
-					ta.setText("测试浏览器已启动，请在任务栏中点击浏览器图标创建新窗口！");
-					return;
-				}
-				String[] cmd = new String[3];
-				cmd[0] = chromePath;
-				cmd[1] = "--remote-debugging-port=9527";
-				cmd[2] = "--user-data-dir=" + chromeTestPath;
-				try {
-					Runtime.getRuntime().exec(cmd);
-					ta.setText("chrome浏览器远程调试模式启动成功！");
-				} catch (IOException e) {
-					System.out.println(e.getMessage());
-					ta.setText("chrome浏览器远程调试模式启动失败，请联系技术人员！");
-				}
+				// 启动浏览器
+				unit.startChrome(chromePath, ta);
 			}
 		});
 
@@ -398,6 +384,9 @@ public class GetCommentsNew implements Function {
 				}
 
 				Cell cell = row.getCell(groupIndex);
+				if (cell == null) {
+					break;
+				}
 				String cellValue = cell.getStringCellValue().trim();
 				if (StringUtils.isNotBlank(cellValue)) {
 					// 给上一个组别结束行赋值
@@ -555,6 +544,7 @@ public class GetCommentsNew implements Function {
 			// 循环组元素
 			for (String key : groupAndParentElement.keySet()) {
 				updateTextArea(ta, "========" + key + "========");
+				// 如果map中根据key获取的value为空，则创建一个空的集合
 				List<ArticleLink> articleList = groupAndArticleList.computeIfAbsent(key, k -> new ArrayList<>());
 				WebElement parent = groupAndParentElement.get(key);
 				// 获取组中的所有链接
@@ -626,11 +616,9 @@ public class GetCommentsNew implements Function {
 		}
 		if (titleIndex == -1) {
 			updateTextArea(ta, "请确认模板文件中是否包含文章标题列！");
-			return;
 		}
 		if (linkIndex == -1) {
 			updateTextArea(ta, "请确认模板文件中是否包含文章链接列！");
-			return;
 		}
 
 		// 遍历文章链接结果
@@ -641,16 +629,19 @@ public class GetCommentsNew implements Function {
 			int[] startAndEnd = groupAndPosition.get(key);
 			if ((startAndEnd[1] - startAndEnd[0] + 1) < articleLinks.size()) {
 				updateTextArea(ta, key + " 组别的草稿箱文章个数与Excel模板文件中的个数不同，请确认！");
-				return;
 			}
 			// 写入到excel中
 			int start = startAndEnd[0];
 			for (ArticleLink aLink : articleLinks) {
 				Row row = sheet.getRow(start);
-				Cell titleCell = row.getCell(titleIndex);
-				titleCell.setCellValue(aLink.getTitle());
-				Cell linkCell = row.getCell(linkIndex);
-				linkCell.setCellValue(aLink.getUrl());
+				if (titleIndex != -1) {
+					Cell titleCell = row.getCell(titleIndex);
+					titleCell.setCellValue(aLink.getTitle());
+				}
+				if (linkIndex != -1) {
+					Cell linkCell = row.getCell(linkIndex);
+					linkCell.setCellValue(aLink.getUrl());
+				}
 				start += 1;
 			}
 		}

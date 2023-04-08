@@ -1,5 +1,6 @@
 package org.example.interfaces.impl;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -152,21 +153,415 @@ public class ReplaceArticle implements Function {
         buttonLine.getChildren().add(batchButton);
 
         // 多行文本框，打印信息
+        HBox line4 = new HBox();
+        line4.setAlignment(Pos.CENTER_LEFT);
+        line4.setSpacing(10);
         TextArea area = new TextArea();
-        area.setPrefHeight(600);
+        area.setPrefWidth(width / 2);
+        area.setPrefHeight(stage.getHeight() - 500);
+        area.setEditable(false);
+        line4.getChildren().add(area);
 
         // 添加按钮处理事件
-        startHandler(startButton, chromePathTf, area);
+//        startHandler(startButton, chromePathTf, area);
+        startButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                // 判断chrome启动器类的路径
+                String chromePath = chromePathTf.getText();
+                if (StringUtils.isBlank(chromePath)) {
+                    area.setText("请输入chrome浏览器的启动器类的文件路径！");
+                    return;
+                }
+                // 获取文件工具的路径
+                String currentPath = System.getProperty("user.dir");
+                // chrome测试数据存放路径
+                String chromeTestPath= currentPath + File.separator + "chromeTest";
+                // 启动chrome调试
+                updateTextArea(area, "chromePath = " + chromePath);
+                // 查看端口是否被占用，如果被占用则先停掉端口再启动 区分 windows 和 mac ，命令行也是
+                boolean alive = SocketUtil.isAlive("127.0.0.1", 9527);
+                if (alive) {
+                    area.setText("测试浏览器已启动，请在任务栏中点击浏览器图标创建新窗口！");
+                    return;
+                }
+                String[] cmd = new String[3];
+                cmd[0] = chromePath;
+                cmd[1] = "--remote-debugging-port=9527";
+                cmd[2] = "--user-data-dir=" + chromeTestPath;
+                try {
+                    Runtime.getRuntime().exec(cmd);
+                    area.setText("chrome浏览器远程调试模式启动成功！");
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                    area.setText("chrome浏览器远程调试模式启动失败，请联系技术人员！");
+                }
+            }
+        });
         try {
-            buttonHandler(batchButton, (TextField) nodes1.get(1), (TextField) nodes2.get(1), (TextField) nodes3.get(1), area);
+//            buttonHandler(batchButton, (TextField) nodes1.get(1), (TextField) nodes2.get(1), (TextField) nodes3.get(1), area);
+            TextField draftPageNumTf = (TextField) nodes1.get(1);
+            TextField groupNameTf = (TextField) nodes2.get(1);
+            TextField articleNameTf = (TextField) nodes3.get(1);
+            batchButton.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    area.setText("");
+                    // 判断分组名称和文章名称
+                    String groupNameList = groupNameTf.getText().trim();
+                    String articleNameList = articleNameTf.getText().trim();
+                    if (StringUtils.isBlank(groupNameList) || StringUtils.isBlank(articleNameList)) {
+                        area.setText("分组名称或文章名称不可为空");
+                        return;
+                    }
+                    if (groupNameList.contains("；")) {
+                        area.setText("分组名称或文章名称中包含中文格式的“；”，请处理");
+                        return;
+                    }
+
+
+                    // 判断草稿箱前几页，默认为前2页
+                    String pageText = draftPageNumTf.getText().trim();
+                    int pageNum = 2;
+                    if (StringUtils.isNotBlank(pageText)) {
+                        try {
+                            pageNum = Integer.parseInt(pageText);
+                        } catch (Exception e) {
+                            area.setText("请正确填写草稿箱的前几页，只能为空或数字");
+                            return;
+                        }
+                    }
+
+                    // 获取草稿箱链接
+                    // 获取文件工具的路径
+                    String currentPath = System.getProperty("user.dir");
+                    String driverPath = currentPath + File.separator + "chromedriver";
+                    // 判断系统类型
+                    String osName = System.getProperty("os.name");
+                    updateTextArea(area, "系统类型：" + osName);
+                    if (osName.startsWith("Windows")) {
+                        driverPath = currentPath + File.separator + "chromedriver.exe";
+                    }
+                    updateTextArea(area, "驱动器路径：" + driverPath);
+                    // 在jvm运行环境中添加驱动配置
+                    System.setProperty("webdriver.chrome.driver", driverPath);
+                    System.setProperty("webdriver.http.factory", "jdk-http-client");
+
+                    ChromeOptions chromeOptions = new ChromeOptions();
+
+                    chromeOptions.setExperimentalOption("debuggerAddress", "127.0.0.1:9527");
+                    chromeOptions.addArguments("--remote-allow-origins=*");
+                    // # driver就是当前浏览器窗口
+                    WebDriver driver;
+                    try {
+                        driver = new ChromeDriver(chromeOptions);
+                    } catch (Exception e) {
+                        String message = e.getMessage();
+                        String[] split = message.split("\n");
+                        StringBuilder sb = new StringBuilder("\n浏览器驱动版本错误！").append("\n");
+                        String[] first = split[1].split(" ");
+                        String[] second = split[2].split(" ");
+                        sb.append("当前驱动版本为：").append(first[first.length - 1]).append("\n");
+                        sb.append("当前浏览器版本为：").append(second[second.length - 1]).append("\n");
+                        sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html");
+                        updateTextArea(area, sb.toString());
+                        return;
+                    }
+                    updateTextArea(area, "创建驱动");
+
+                    // 获取草稿箱链接
+                    String draftUrl = null;
+                    try {
+                        draftUrl = getDraftHomeUrl(driver, area);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        updateTextArea(area, "获取草稿箱链接失败");
+                        updateTextArea(area, e.getMessage());
+                        return;
+                    }
+                    if (StringUtils.isBlank(draftUrl)) {
+                        updateTextArea(area, "未获取到草稿箱链接");
+                        return;
+                    }
+
+                    // 分组
+                    String[] groupNameArray = groupNameList.split(";");
+                    // 文章
+                    String[] articleNameArray = articleNameList.split(";");
+
+                    // 三层循环，草稿箱分页——分组——文章
+                    for (int i = 0; i < pageNum; i++) {
+                        if (i != 0) {
+                            String oldStr = "begin=0";
+                            if (draftUrl.contains("begin=10")) {
+                                oldStr = "begin=10";
+                            } else if (draftUrl.contains("begin=20")) {
+                                oldStr = "begin=20";
+                            } else if (draftUrl.contains("begin=30")) {
+                                oldStr = "begin=30";
+                            }
+                            draftUrl = draftUrl.replace(oldStr, "begin=" + (i * 10));
+                        }
+
+                        // 如果草稿箱目标页的url与当前页的url不同，则点击
+                        if (!driver.getCurrentUrl().equals(draftUrl)) {
+                            driver.get(draftUrl);
+                        }
+                        updateTextArea(area, "请求草稿箱第 " + (i + 1) + " 页");
+
+                        // 记录草稿箱页面当前的窗口信息
+                        String currentWindowHandle = driver.getWindowHandle();
+                        // 开始循环匹配页面中的分组
+                        for (String groupName : groupNameArray) {
+                            // 处理草稿箱元素
+                            List<WebElement> publishCardContainer = driver.findElements(By.className("publish_card_container"));
+                            int containerSize = publishCardContainer.size();
+                            System.out.println("当前页的分组个数为：" + containerSize);
+                            Actions action = new Actions(driver);
+                            for (int kk = 0; kk < containerSize; kk++) {
+                                publishCardContainer = driver.findElements(By.className("publish_card_container"));
+                                WebElement item = publishCardContainer.get(kk);
+                                WebElement element = item.findElement(By.className("weui-desktop-publish__cover__title"));
+                                String title = element.getText();
+                                System.out.println("文章头条标题：" + title);
+                                if (groupName.equals(title)) {
+                                    // 鼠标移动到分组上，以显示工具行
+                                    action.moveToElement(item).perform();
+                                    try {
+                                        Thread.sleep(3000);
+                                    } catch (InterruptedException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                    // 获取编辑的元素
+                                    List<WebElement> actionList = item.findElements(By.className("weui-desktop-card__action"));
+                                    System.out.println("工具行个数：" + actionList.size());
+                                    List<WebElement> editList = actionList.get(0).findElements(By.cssSelector("[class='weui-desktop-tooltip__wrp weui-desktop-link']"));
+                                    System.out.println("编辑个数：" + editList.size());
+                                    // 鼠标移动到编辑符号上，以可点击元素
+                                    action.moveToElement(editList.get(0)).perform();
+                                    editList.get(0).click();
+
+                                    try {
+                                        Thread.sleep(3000);
+                                    } catch (InterruptedException e) {
+                                        e.printStackTrace();
+                                    }
+                                    Set<String> windowHandles = driver.getWindowHandles();
+                                    System.out.println("current = " + currentWindowHandle);
+                                    windowHandles.forEach(System.out::println);
+                                    for (String wh : windowHandles) {
+                                        // 如果位草稿箱的首页，则跳过
+                                        if (wh.equals(currentWindowHandle)) {
+                                            continue;
+                                        }
+                                        // 切换到新打开的标签页
+                                        driver.switchTo().window(wh);
+                                        System.out.println("开始实际处理文章");
+
+                                        // 获取原来的图文
+                                        List<WebElement> appmsgItemList = driver.findElements(By.cssSelector(".card_appmsg_title.js_appmsg_title"));
+
+                                        // 遍历需要替换的文章名
+                                        for (String an : articleNameArray) {
+                                            System.out.println("开始遍历替换：" + an);
+                                            int x = -1;
+                                            for (int l = 0; l < appmsgItemList.size(); l++) {
+                                                WebElement webElement = appmsgItemList.get(l);
+                                                System.out.println("原次条名称：" + webElement.getText());
+                                                if (an.equals(webElement.getText())) {
+                                                    System.out.println("找到原次条元素，点击");
+                                                    webElement.click();
+                                                    x = l;
+                                                    System.out.println("文章下标：" + l);
+                                                    break;
+                                                }
+                                            }
+
+                                            // 原次条存在，则先删除
+                                            if (x != -1) {
+                                                // 获取删除元素
+                                                List<WebElement> deleteButtonList = driver.findElements(By.cssSelector(".weui-desktop-icon-btn.weui-desktop-icon-btn__delete_icon"));
+                                                System.out.println("删除元素个数：" + deleteButtonList.size());
+                                                System.out.println("点击删除");
+                                                deleteButtonList.get(0).click();
+                                                // 查询  popover_inner
+                                                List<WebElement> popoverInner = driver.findElements(By.className("popover_inner"));
+                                                // 获取包含"是否确定删除此篇内容"的元素
+                                                for (WebElement w : popoverInner) {
+                                                    if (w.getText().contains("是否确定删除此篇内容")) {
+                                                        System.out.println("查询到包含是否确定删除此篇内容的元素");
+                                                        // 查询确定按钮
+                                                        List<WebElement> elements = w.findElements(By.cssSelector(".btn.btn_primary.jsPopoverBt"));
+                                                        System.out.println("获取到确认元素个数：" + elements.size());
+                                                        System.out.println("点击确认");
+                                                        elements.get(0).click();
+                                                    }
+                                                }
+                                            }
+
+                                            // 实际的文章处理逻辑
+                                            // 查询新建消息的元素
+                                            List<WebElement> addWordElements = driver.findElements(By.className("preview_media_add_word"));
+                                            System.out.println("新建消息元素个数：" + addWordElements.size());
+                                            // 鼠标移动
+                                            action.moveToElement(addWordElements.get(0)).perform();
+                                            // 点击元素
+                                            List<WebElement> elements = driver.findElements(By.className("icon-svg-editor-insert-appmsg"));
+                                            System.out.println("选择已有图文元素个数：" + elements.size());
+                                            elements.get(0).click();
+                                            // 获取左侧目录列表
+                                            List<WebElement> leftTab = driver.findElements(By.className("left_tab_data"));
+                                            System.out.println("左侧目录列个数：" + leftTab.size());
+                                            List<WebElement> tabList = leftTab.get(0).findElements(By.className("tab"));
+                                            System.out.println("目录列中目录个数：" + tabList.size());
+                                            for (WebElement it : tabList) {
+                                                String menuName = it.getText();
+                                                System.out.println("目录名称：" + menuName);
+                                                if ("草稿".equals(menuName)) {
+                                                    System.out.println("查找到草稿目录，点击");
+                                                    it.click();
+                                                    try {
+                                                        Thread.sleep(3000);
+                                                    } catch (InterruptedException e) {
+                                                        throw new RuntimeException(e);
+                                                    }
+                                                    break;
+                                                }
+                                            }
+
+                                            // 这里翻页
+                                            for (int detailPageNum = 0; detailPageNum < pageNum; detailPageNum++) {
+                                                if (detailPageNum > 0) {
+                                                    int targetNum = detailPageNum + 1;
+                                                    // 点击分页
+                                                    List<WebElement> elements2 = driver.findElements(By.className("weui-desktop-pagination__num"));
+                                                    for (WebElement w : elements2) {
+                                                        // 点击当前循环页码
+                                                        if (String.valueOf(targetNum).equals(w.getText())) {
+                                                            w.click();
+                                                            try {
+                                                                Thread.sleep(2000);
+                                                            } catch (InterruptedException e) {
+                                                                throw new RuntimeException(e);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                // 获取所有分组
+                                                List<WebElement> draftContainerList = driver.findElements(By.className("publish_card_container"));
+                                                System.out.println("获取到分组个数：" + draftContainerList.size());
+
+                                                boolean flag = false;
+                                                for (WebElement w : draftContainerList) {
+                                                    List<WebElement> elements1 = w.findElements(By.className("weui-desktop-publish__title"));
+                                                    // 遍历不包含次条的分组
+//                                                    if (elements1.size() > 0) {
+//                                                        continue;
+//                                                    }
+                                                    List<WebElement> publishList = w.findElements(By.className("weui-desktop-publish__cover__title"));
+                                                    System.out.println("获取到主条个数：" + publishList.size());
+                                                    System.out.println("主条名称：" + publishList.get(0).getText());
+                                                    if (an.equals(publishList.get(0).getText())) {
+                                                        System.out.println("查询到匹配【" + an + "】的主条");
+                                                        System.out.println("点击主条");
+                                                        publishList.get(0).click();
+                                                        flag = true;
+                                                        break;
+                                                    }
+                                                }
+                                                if (flag) {
+                                                    break;
+                                                }
+                                            }
+
+
+                                            List<WebElement> bottomLineList = driver.findElements(By.className("weui-desktop-dialog__ft"));
+                                            System.out.println("底部行个数：" + bottomLineList.size());
+                                            for (int m = 0; m < bottomLineList.size(); m++) {
+                                                WebElement bl = bottomLineList.get(m);
+                                                System.out.println("循环第" + m + "行");
+                                                List<WebElement> buttonList = bl.findElements(By.tagName("button"));
+                                                System.out.println("底部行中的按钮个数：" + buttonList.size());
+                                                if (CollectionUtils.isNotEmpty(buttonList)) {
+                                                    WebElement buttonElement = buttonList.get(0);
+                                                    if ("确定".equals(buttonElement.getText())) {
+                                                        System.out.println("查询到确定按钮，点击");
+                                                        buttonElement.click();
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
+                                            // 等待新导入的文章加载完成
+                                            try {
+                                                Thread.sleep(2000);
+                                            } catch (InterruptedException e) {
+                                                throw new RuntimeException(e);
+                                            }
+
+                                            // 调整位置
+                                            List<WebElement> appmsgItemListName = driver.findElements(By.cssSelector(".card_appmsg_title.js_appmsg_title"));
+                                            int newX = -1;
+
+                                            WebElement newElement = null;
+                                            for (int n = 0; n < appmsgItemListName.size(); n++) {
+                                                WebElement webElement = appmsgItemListName.get(n);
+                                                System.out.println("次条名称：" + webElement.getText());
+                                                if (an.equals(webElement.getText())) {
+                                                    newElement = webElement;
+                                                    newX = n;
+                                                    System.out.println("文章下标：" + n);
+                                                    break;
+                                                }
+                                            }
+                                            if (x != -1) {
+                                                if (newX != -1 && newX > x) {
+                                                    for (int k = newX; k > x; k--) {
+                                                        System.out.println("找到次条元素，点击");
+                                                        newElement.click();
+                                                        // 获取上移元素
+                                                        List<WebElement> upButtonList = driver.findElements(By.cssSelector(".weui-desktop-icon-btn.weui-desktop-icon-btn__up_icon"));
+                                                        System.out.println("上移元素个数：" + upButtonList.size());
+                                                        System.out.println("点击上移");
+                                                        upButtonList.get(0).click();
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // 获取保存为草稿按钮
+                                        List<WebElement> jsSubmit = driver.findElements(By.id("js_submit"));
+                                        System.out.println("获取到保存草稿按钮个数：" + jsSubmit.size());
+                                        System.out.println("点击保存草稿按钮");
+                                        jsSubmit.get(0).click();
+
+                                        // 等待新导入的文章加载完成
+                                        try {
+                                            Thread.sleep(2000);
+                                        } catch (InterruptedException e) {
+                                            throw new RuntimeException(e);
+                                        }
+
+                                        // 关闭当前标签页
+                                        driver.close();
+                                    }
+                                    // 切换回总页
+                                    driver.switchTo().window(currentWindowHandle);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         } catch (Exception e) {
-            unit.updateTextArea(area, "更新异常：" + e.getMessage());
+            updateTextArea(area, "更新异常：" + e.getMessage());
         }
 
         VBox root = new VBox();
         root.setPadding(new Insets(10));
         root.setSpacing(10);
-        root.getChildren().addAll(line1Pre, line1, line2, line3, buttonLine, area);
+        root.getChildren().addAll(line1Pre, line1, line2, line3, buttonLine, line4);
         ap.getChildren().add(root);
         return ap;
     }
@@ -216,11 +611,11 @@ public class ReplaceArticle implements Function {
                 String driverPath = currentPath + File.separator + "chromedriver";
                 // 判断系统类型
                 String osName = System.getProperty("os.name");
-                unit.updateTextArea(area, "系统类型：" + osName);
+                updateTextArea(area, "系统类型：" + osName);
                 if (osName.startsWith("Windows")) {
                     driverPath = currentPath + File.separator + "chromedriver.exe";
                 }
-                unit.updateTextArea(area, "驱动器路径：" + driverPath);
+                updateTextArea(area, "驱动器路径：" + driverPath);
                 // 在jvm运行环境中添加驱动配置
                 System.setProperty("webdriver.chrome.driver", driverPath);
                 System.setProperty("webdriver.http.factory", "jdk-http-client");
@@ -242,10 +637,10 @@ public class ReplaceArticle implements Function {
                     sb.append("当前驱动版本为：").append(first[first.length - 1]).append("\n");
                     sb.append("当前浏览器版本为：").append(second[second.length - 1]).append("\n");
                     sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html");
-                    unit.updateTextArea(area, sb.toString());
+                    updateTextArea(area, sb.toString());
                     return;
                 }
-                unit.updateTextArea(area, "创建驱动");
+                updateTextArea(area, "创建驱动");
 
                 // 获取草稿箱链接
                 String draftUrl = null;
@@ -253,12 +648,12 @@ public class ReplaceArticle implements Function {
                     draftUrl = getDraftHomeUrl(driver, area);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    unit.updateTextArea(area, "获取草稿箱链接失败");
-                    unit.updateTextArea(area, e.getMessage());
+                    updateTextArea(area, "获取草稿箱链接失败");
+                    updateTextArea(area, e.getMessage());
                     return;
                 }
                 if (StringUtils.isBlank(draftUrl)) {
-                    unit.updateTextArea(area, "未获取到草稿箱链接");
+                    updateTextArea(area, "未获取到草稿箱链接");
                     return;
                 }
 
@@ -285,7 +680,7 @@ public class ReplaceArticle implements Function {
                     if (!driver.getCurrentUrl().equals(draftUrl)) {
                         driver.get(draftUrl);
                     }
-                    unit.updateTextArea(area, "请求草稿箱第 " + (i + 1) + " 页");
+                    updateTextArea(area, "请求草稿箱第 " + (i + 1) + " 页");
 
                     // 记录草稿箱页面当前的窗口信息
                     String currentWindowHandle = driver.getWindowHandle();
@@ -527,7 +922,7 @@ public class ReplaceArticle implements Function {
                 // chrome测试数据存放路径
                 String chromeTestPath= currentPath + File.separator + "chromeTest";
                 // 启动chrome调试
-                unit.updateTextArea(ta, "chromePath = " + chromePath);
+                updateTextArea(ta, "chromePath = " + chromePath);
                 // 查看端口是否被占用，如果被占用则先停掉端口再启动 区分 windows 和 mac ，命令行也是
                 boolean alive = SocketUtil.isAlive("127.0.0.1", 9527);
                 if (alive) {
@@ -560,7 +955,7 @@ public class ReplaceArticle implements Function {
         List<WebElement> aList = driver.findElements(By.tagName("a"));
         for (WebElement w : aList) {
             if ("展开".equals(w.getText())) {
-                unit.updateTextArea(area, "点击展开目录");
+                updateTextArea(area, "点击展开目录");
                 w.click();
                 Thread.sleep(500);
                 break;
@@ -570,9 +965,9 @@ public class ReplaceArticle implements Function {
         for (WebElement w : aList) {
             if ("草稿箱".equals(w.getAttribute("title"))) {
                 flag = false;
-                unit.updateTextArea(area, "获取到草稿箱链接：" + w.getAttribute("href"));
+                updateTextArea(area, "获取到草稿箱链接：" + w.getAttribute("href"));
                 w.click();
-                unit.updateTextArea(area, "跳转到草稿箱，等待5s");
+                updateTextArea(area, "跳转到草稿箱，等待5s");
                 Thread.sleep(5000);
                 break;
             }
@@ -582,6 +977,20 @@ public class ReplaceArticle implements Function {
             return null;
         } else {
             return driver.getCurrentUrl();
+        }
+    }
+
+
+    /**
+     * TextArea区域填充文本后自动滑动
+     * @param ta
+     * @param message
+     */
+    public void updateTextArea(TextArea ta, String message) {
+        if (Platform.isFxApplicationThread()) {
+            ta.appendText("\n" + message);
+        } else {
+            Platform.runLater(() -> ta.appendText("\n" + message));
         }
     }
 }
