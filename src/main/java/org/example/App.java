@@ -48,6 +48,8 @@ public class App extends Application {
 
         // 场景配置
         Scene scene = new Scene(tp);
+        // 解决显示乱码问题
+        scene.getRoot().setStyle("-fx-font-family: 'serif'");
         primaryStage.setScene(scene);
         primaryStage.setTitle(Common.STAGE_TITLE);
         primaryStage.getIcons().add(new Image("image/folder.png"));
