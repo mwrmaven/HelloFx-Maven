@@ -796,6 +796,7 @@ public class GetCommentsNew implements Function {
 				// 获取数据文件中的有效条数
 				String dataFilePath = ((TextField) getDataFile.get(1)).getText();
 				Workbook dataWb = null;
+				Workbook summaryWb = null;
 				FileOutputStream fos = null;
 				try {
 					if (dataFilePath.endsWith(".xlsx")) {
@@ -1184,7 +1185,6 @@ public class GetCommentsNew implements Function {
 					String summaryFilePath = ((TextField) summaryDataFile.get(1)).getText();
 					if (StringUtils.isNotBlank(summaryFilePath)) {
 						updateTextArea(ta, "开始读取汇总文件！");
-						Workbook summaryWb;
 						if (summaryFilePath.endsWith(".xlsx")) {
 							summaryWb = new XSSFWorkbook(summaryFilePath);
 						} else {
@@ -1192,6 +1192,10 @@ public class GetCommentsNew implements Function {
 						}
 						// 获取文件的起始行(行为空或单元格为空或单元格数据为空字符串)
 						String sheetName = pushDate.substring(0, pushDate.indexOf("月") + 1).trim();
+						if (summaryWb.getSheetIndex(sheetName) == -1) {
+							updateTextArea(ta, "未查询到对应" + sheetName + "名称的sheet页！");
+							return;
+						}
 						Sheet summarySheet = summaryWb.getSheet(sheetName);
 						// 设置公式自动计算
 						summarySheet.setForceFormulaRecalculation(true);
@@ -1341,6 +1345,20 @@ public class GetCommentsNew implements Function {
 						updateTextArea(ta, "结果汇总文件导出完成！结果汇总文件路径：" + newSummaryFilePath);
 					}
 				} catch (Exception e) {
+					if (dataWb != null) {
+						try {
+							dataWb.close();
+						} catch (IOException de) {
+							de.printStackTrace();
+						}
+					}
+					if (summaryWb != null) {
+						try {
+							summaryWb.close();
+						} catch (IOException se) {
+							se.printStackTrace();
+						}
+					}
 					e.printStackTrace();
 				} finally {
 					if (dataWb != null) {
