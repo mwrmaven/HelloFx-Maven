@@ -538,7 +538,7 @@ public class ReplaceArticle implements Function {
 
                                         // 等待新导入的文章加载完成
                                         try {
-                                            Thread.sleep(2000);
+                                            Thread.sleep(5000);
                                         } catch (InterruptedException e) {
                                             throw new RuntimeException(e);
                                         }
