@@ -8,6 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.example.common.Common;
@@ -49,7 +50,7 @@ public class App extends Application {
         // 场景配置
         Scene scene = new Scene(tp);
         // 解决jdk11运行javafx显示乱码问题
-        scene.getRoot().setStyle("-fx-font-family: 'serif'");
+        scene.getRoot().setStyle("-fx-font-family: 'Arial'");
         primaryStage.setScene(scene);
         primaryStage.setTitle(Common.STAGE_TITLE);
         primaryStage.getIcons().add(new Image("image/folder.png"));
@@ -69,7 +70,8 @@ public class App extends Application {
             Tab tab = new Tab(ite.tabName());
             tab.setStyle(ite.tabStyle());
             tab.setClosable(false);
-            tab.setContent(ite.tabPane(primaryStage, width, h));
+            AnchorPane anchorPane = ite.tabPane(primaryStage, width, h);
+            tab.setContent(anchorPane);
             tp.getTabs().add(tab);
 
             // 设置默认的标签页
