@@ -1,5 +1,6 @@
 org.example.interfaces.impl.UrlConvert
 org.example.interfaces.impl.GetComments
+org.example.interfaces.impl.GetCommentsInfo
 org.example.interfaces.impl.GetCommentsNew
 org.example.interfaces.impl.ReplaceArticle
 org.example.interfaces.impl.ArticleLinkInDrafts
