@@ -47,6 +47,8 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,9 +74,16 @@ public class GetCommentsNew implements Function {
 	private static final String CHROMESTARTPATH = "CHROMESTARTPATH";
 
 	/**
+	 * 请求评论的页数
+	 */
+	private static final String COMMENTPAGENUM = "COMMENTPAGENUM";
+
+	/**
 	 * 公众号草稿箱网页地址
 	 */
 	private static final String DRAFTSURL = "DRAFTSURL";
+
+	private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd");
 
 	/**
 	 * 标签名称
@@ -154,16 +163,18 @@ public class GetCommentsNew implements Function {
 		// 以下添加单选
 		RadioButton draft = new RadioButton("草稿箱链接");
 		RadioButton comments = new RadioButton("微信文章评论数");
+		RadioButton timeComments = new RadioButton("定时获取微信文章评论数");
 		ToggleGroup conditon = new ToggleGroup();
 		// 单选设为同组
 		draft.setToggleGroup(conditon);
 		draft.setSelected(true);
 		comments.setToggleGroup(conditon);
+		timeComments.setToggleGroup(conditon);
 
 		HBox radio = new HBox();
 		radio.setAlignment(Pos.CENTER_LEFT);
 		radio.setSpacing(10);
-		radio.getChildren().addAll(draft, comments);
+		radio.getChildren().addAll(draft, comments, timeComments);
 
 		// 第一行，获取模板文件
 		HBox line1 = new HBox();
@@ -200,6 +211,43 @@ public class GetCommentsNew implements Function {
 		for (Node n : drafts) {
 			line2.getChildren().add(n);
 		}
+
+		HBox commentPageNumLine = new HBox();
+		commentPageNumLine.setAlignment(Pos.CENTER_LEFT);
+		commentPageNumLine.setSpacing(10);
+		List<Node> commentNodes = unit.newInputText(width, "请输入查询评论的页数(可不填)：", 250);
+		for (Node n : commentNodes) {
+			commentPageNumLine.getChildren().add(n);
+		}
+		TextField commentTf = (TextField) commentNodes.get(1);
+		commentTf.setPromptText("默认请求按文章发表时间排序的前5页！");
+		// 查询配置文件中请求评论页数
+		String configCommentPageNum = Config.get(COMMENTPAGENUM);
+		if (StringUtils.isNotBlank(configCommentPageNum)) {
+			commentTf.setText(configCommentPageNum);
+		}
+		// 失去焦点触发保存事件
+		commentTf.focusedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				// 判断内容改变，则保存内容
+				if (!text.equals(commentTf.getText())) {
+					// 设置配置文件
+					Config.set(COMMENTPAGENUM, commentTf.getText());
+				}
+			}
+		});
+
+		// 下载文件的开始日期和结束日期
+		HBox dataTimeHbox = new HBox();
+		dataTimeHbox.setAlignment(Pos.CENTER_LEFT);
+		dataTimeHbox.setSpacing(10);
+		Label labelDataTime = new Label("请选择下载数据文件的开始和结束时间：");
+		Label labelStartTime = new Label("开始时间：");
+		DatePicker startDatePicker = new DatePicker();
+		Label labelEndTime = new Label("结束时间：");
+		DatePicker endDatePicker = new DatePicker();
+		dataTimeHbox.getChildren().addAll(labelDataTime, labelStartTime, startDatePicker, labelEndTime, endDatePicker);
 
 		// 草稿箱页面的网页路径
 		TextField draftsPathTf = (TextField) drafts.get(1);
@@ -240,7 +288,7 @@ public class GetCommentsNew implements Function {
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
-		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, line3, line4);
+		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, commentPageNumLine, dataTimeHbox, line3, line4);
 
 		// 启动测试浏览器按钮事件
 		startButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -269,6 +317,14 @@ public class GetCommentsNew implements Function {
 				if (ButtonBar.ButtonData.NO.equals(buttonType.get().getButtonData())) {
 					return;
 				}
+
+				// 获取请求评论页数，默认为5页
+				int commentPageNum = 5;
+				String cpnText = commentTf.getText().trim();
+				if (StringUtils.isNotBlank(cpnText) && cpnText.matches("\\d+")) {
+					commentPageNum = Integer.parseInt(cpnText);
+				}
+				int pageNum = commentPageNum;
 
 				if ("草稿箱链接".equals(functionName)) {
 					new Thread(new Runnable() {
@@ -310,9 +366,33 @@ public class GetCommentsNew implements Function {
 					new Thread(new Runnable() {
 						@Override
 						public void run() {
-							executeButton(ta, dataFile, template, summary);
+							executeButton(ta, dataFile, template, summary, pageNum);
 						}
 					}).start();
+				} else if ("定时获取微信文章评论数".equals(functionName)) {
+					// 获取模板文件路径
+					String templatePath = ((TextField) template.get(1)).getText();
+					if (StringUtils.isBlank(templatePath)) {
+						updateTextArea(ta, "请选择模板文件");
+						return;
+					}
+					// 获取汇总文件路径
+					String summaryPath = ((TextField) summary.get(1)).getText();
+					if (StringUtils.isBlank(summaryPath)) {
+						updateTextArea(ta, "请选择汇总文件");
+						return;
+					}
+					// 获取开始时间和结束时间
+					LocalDate startDate = startDatePicker.getValue();
+					LocalDate endDate = endDatePicker.getValue();
+					if (startDate == null || endDate == null) {
+						updateTextArea(ta, "请选择下载数据文件的开始时间和结束时间");
+						return;
+					}
+					String start = startDatePicker.getValue().format(dtf);
+					String end = endDatePicker.getValue().format(dtf);
+					System.out.println("开始时间：" + start + "; 结束时间：" + end);
+
 				} else {
 					Alert alertError = new Alert(Alert.AlertType.ERROR,
 							"当前暂无：" + functionName + " 功能",
@@ -719,8 +799,9 @@ public class GetCommentsNew implements Function {
 	 * @param getDataFile 数据文件
 	 * @param getDetailsTemplate 模板文件
 	 * @param summaryDataFile 汇总文件
+	 * @param commentPageNum 请求评论页数
 	 */
-	public void executeButton(TextArea ta, List<Node> getDataFile, List<Node> getDetailsTemplate, List<Node> summaryDataFile) {
+	public void executeButton(TextArea ta, List<Node> getDataFile, List<Node> getDetailsTemplate, List<Node> summaryDataFile, int commentPageNum) {
 
 		ta.setText("");
 		// 获取文件工具的路径
@@ -816,13 +897,17 @@ public class GetCommentsNew implements Function {
 					int count = articleNum;
 					int divisor = 10;
 
-					int num = count / divisor;
-					if (count % divisor > 0) {
-						num++;
-					}
+//					int num = count / divisor;
+//					if (count % divisor > 0) {
+//						num++;
+//					}
+					int num = commentPageNum;
 					updateTextArea(ta, "开始请求所有文章的评论数！共 " + num + " 页");
+					System.out.println("开始请求所有文章的评论数！共 " + num + " 页");
 					for (int i = 0; i < num; i++) {
 						String uri = url + realToken + "&begin=" + i * divisor + "&count=" + divisor;
+						System.out.println("请求文章的评论数的url: "+ uri);
+						updateTextArea(ta, "请求第" + (i + 1) + "页的文章评论数");
 						HttpGet httpGet = new HttpGet(uri);
 						httpGet.setHeader("cookie", realCookie);
 
@@ -831,6 +916,7 @@ public class GetCommentsNew implements Function {
 						JSONObject jsonObject = JSONObject.parseObject(content);
 						// 获取评论数组
 						JSONArray item = jsonObject.getJSONArray("item");
+						System.out.println("请求到的评论数信息为：" + item.toString());
 						if (item == null) {
 							// 弹窗提示cookie和token过期
 							System.out.println("cookie和token过期，请重新输入！");
@@ -910,6 +996,9 @@ public class GetCommentsNew implements Function {
 								commentId = commentId.substring(0, commentId.indexOf("\""));
 								// 获取评论数map中的值
 								Integer integer = commentsMap.get(commentId);
+								if (integer == null) {
+									updateTextArea(ta, "未查询到对应的微信文章评论信息，请增大”查询评论的页数“");
+								}
 								commentNum = integer;
 								cell.setCellValue(integer);
 								break;

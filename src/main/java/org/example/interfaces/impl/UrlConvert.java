@@ -1744,6 +1744,11 @@ public class UrlConvert implements Function {
                 if (StringUtils.isEmpty(sourceUrl)) {
                     continue;
                 }
+                // 如果存在货号，则不重新获取
+                String code = getCellValue(row, index + 1).trim();
+                if (code.matches("\\d+")) {
+                    continue;
+                }
                 // 获取链接转换明细
                 Cell detailCel = row.getCell(index);
                 String detail = detailCel.getStringCellValue();

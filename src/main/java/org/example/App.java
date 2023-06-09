@@ -9,12 +9,16 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.text.Font;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.example.common.Common;
 import org.example.init.Config;
 import org.example.interfaces.Function;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
@@ -25,12 +29,14 @@ import java.util.ServiceLoader;
  * @Date 2021/12/7 10:27
  */
 public class App extends Application {
+
     public static void main(String[] args) {
         launch(args);
     }
 
     @Override
     public void start(Stage primaryStage) {
+
         // 读取配置文件
         Config.createProperties();
 
@@ -49,8 +55,11 @@ public class App extends Application {
 
         // 场景配置
         Scene scene = new Scene(tp);
-        // 解决jdk11运行javafx显示乱码问题
-        scene.getRoot().setStyle("-fx-font-family: 'Arial'");
+        // 解决mac环境下jdk11运行javafx显示乱码问题
+        String osName = System.getProperty("os.name");
+        if (!osName.contains("Windows")) {
+            scene.getRoot().setStyle("-fx-font-family: 'serif'; -fx-font-size: 14");
+        }
         primaryStage.setScene(scene);
         primaryStage.setTitle(Common.STAGE_TITLE);
         primaryStage.getIcons().add(new Image("image/folder.png"));
