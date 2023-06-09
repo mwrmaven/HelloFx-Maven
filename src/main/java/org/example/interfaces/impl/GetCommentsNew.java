@@ -47,6 +47,8 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -80,6 +82,8 @@ public class GetCommentsNew implements Function {
 	 * 公众号草稿箱网页地址
 	 */
 	private static final String DRAFTSURL = "DRAFTSURL";
+
+	private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd");
 
 	/**
 	 * 标签名称
@@ -159,16 +163,18 @@ public class GetCommentsNew implements Function {
 		// 以下添加单选
 		RadioButton draft = new RadioButton("草稿箱链接");
 		RadioButton comments = new RadioButton("微信文章评论数");
+		RadioButton timeComments = new RadioButton("定时获取微信文章评论数");
 		ToggleGroup conditon = new ToggleGroup();
 		// 单选设为同组
 		draft.setToggleGroup(conditon);
 		draft.setSelected(true);
 		comments.setToggleGroup(conditon);
+		timeComments.setToggleGroup(conditon);
 
 		HBox radio = new HBox();
 		radio.setAlignment(Pos.CENTER_LEFT);
 		radio.setSpacing(10);
-		radio.getChildren().addAll(draft, comments);
+		radio.getChildren().addAll(draft, comments, timeComments);
 
 		// 第一行，获取模板文件
 		HBox line1 = new HBox();
@@ -232,6 +238,17 @@ public class GetCommentsNew implements Function {
 			}
 		});
 
+		// 下载文件的开始日期和结束日期
+		HBox dataTimeHbox = new HBox();
+		dataTimeHbox.setAlignment(Pos.CENTER_LEFT);
+		dataTimeHbox.setSpacing(10);
+		Label labelDataTime = new Label("请选择下载数据文件的开始和结束时间：");
+		Label labelStartTime = new Label("开始时间：");
+		DatePicker startDatePicker = new DatePicker();
+		Label labelEndTime = new Label("结束时间：");
+		DatePicker endDatePicker = new DatePicker();
+		dataTimeHbox.getChildren().addAll(labelDataTime, labelStartTime, startDatePicker, labelEndTime, endDatePicker);
+
 		// 草稿箱页面的网页路径
 		TextField draftsPathTf = (TextField) drafts.get(1);
 		// 设置样式为下划线
@@ -271,7 +288,7 @@ public class GetCommentsNew implements Function {
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
-		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, commentPageNumLine, line3, line4);
+		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, commentPageNumLine, dataTimeHbox, line3, line4);
 
 		// 启动测试浏览器按钮事件
 		startButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -300,6 +317,14 @@ public class GetCommentsNew implements Function {
 				if (ButtonBar.ButtonData.NO.equals(buttonType.get().getButtonData())) {
 					return;
 				}
+
+				// 获取请求评论页数，默认为5页
+				int commentPageNum = 5;
+				String cpnText = commentTf.getText().trim();
+				if (StringUtils.isNotBlank(cpnText) && cpnText.matches("\\d+")) {
+					commentPageNum = Integer.parseInt(cpnText);
+				}
+				int pageNum = commentPageNum;
 
 				if ("草稿箱链接".equals(functionName)) {
 					new Thread(new Runnable() {
@@ -341,15 +366,33 @@ public class GetCommentsNew implements Function {
 					new Thread(new Runnable() {
 						@Override
 						public void run() {
-							// 获取请求评论页数，默认为5页
-							int commentPageNum = 5;
-							String cpnText = commentTf.getText().trim();
-							if (StringUtils.isNotBlank(cpnText) && cpnText.matches("\\d+")) {
-								commentPageNum = Integer.parseInt(cpnText);
-							}
-							executeButton(ta, dataFile, template, summary, commentPageNum);
+							executeButton(ta, dataFile, template, summary, pageNum);
 						}
 					}).start();
+				} else if ("定时获取微信文章评论数".equals(functionName)) {
+					// 获取模板文件路径
+					String templatePath = ((TextField) template.get(1)).getText();
+					if (StringUtils.isBlank(templatePath)) {
+						updateTextArea(ta, "请选择模板文件");
+						return;
+					}
+					// 获取汇总文件路径
+					String summaryPath = ((TextField) summary.get(1)).getText();
+					if (StringUtils.isBlank(summaryPath)) {
+						updateTextArea(ta, "请选择汇总文件");
+						return;
+					}
+					// 获取开始时间和结束时间
+					LocalDate startDate = startDatePicker.getValue();
+					LocalDate endDate = endDatePicker.getValue();
+					if (startDate == null || endDate == null) {
+						updateTextArea(ta, "请选择下载数据文件的开始时间和结束时间");
+						return;
+					}
+					String start = startDatePicker.getValue().format(dtf);
+					String end = endDatePicker.getValue().format(dtf);
+					System.out.println("开始时间：" + start + "; 结束时间：" + end);
+
 				} else {
 					Alert alertError = new Alert(Alert.AlertType.ERROR,
 							"当前暂无：" + functionName + " 功能",
