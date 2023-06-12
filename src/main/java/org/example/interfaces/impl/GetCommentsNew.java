@@ -48,7 +48,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalQueries;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -84,6 +87,7 @@ public class GetCommentsNew implements Function {
 	private static final String DRAFTSURL = "DRAFTSURL";
 
 	private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd");
+	private static final DateTimeFormatter timestampDtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
 	/**
 	 * 标签名称
@@ -249,6 +253,33 @@ public class GetCommentsNew implements Function {
 		DatePicker endDatePicker = new DatePicker();
 		dataTimeHbox.getChildren().addAll(labelDataTime, labelStartTime, startDatePicker, labelEndTime, endDatePicker);
 
+		// 定时时间设置
+		HBox timeHbox = new HBox();
+		timeHbox.setAlignment(Pos.CENTER_LEFT);
+		timeHbox.setSpacing(10);
+		Label labelTime = new Label("请选择定时任务执行时间：日期：");
+		DatePicker timeFirst = new DatePicker();
+		Label labelTimeAppend = new Label("时间：");
+		ComboBox<String> hComb = new ComboBox<>();
+		for (int i = 0; i < 25; i++) {
+			String hTime = String.valueOf(i);
+			if (i < 10) {
+				hTime = "0" + hTime;
+			}
+			hComb.getItems().add(hTime);
+		}
+		hComb.getSelectionModel().select(11);
+		ComboBox<String> mComb = new ComboBox<>();
+		for (int i = 0; i < 61; i++) {
+			String mTime = String.valueOf(i);
+			if (i < 10) {
+				mTime = "0" + mTime;
+			}
+			mComb.getItems().add(mTime);
+		}
+		mComb.getSelectionModel().select(0);
+		timeHbox.getChildren().addAll(labelTime, timeFirst, labelTimeAppend, hComb, mComb);
+
 		// 草稿箱页面的网页路径
 		TextField draftsPathTf = (TextField) drafts.get(1);
 		// 设置样式为下划线
@@ -288,7 +319,7 @@ public class GetCommentsNew implements Function {
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
-		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, commentPageNumLine, dataTimeHbox, line3, line4);
+		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, commentPageNumLine, dataTimeHbox, timeHbox, line3, line4);
 
 		// 启动测试浏览器按钮事件
 		startButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -370,28 +401,57 @@ public class GetCommentsNew implements Function {
 						}
 					}).start();
 				} else if ("定时获取微信文章评论数".equals(functionName)) {
-					// 获取模板文件路径
-					String templatePath = ((TextField) template.get(1)).getText();
-					if (StringUtils.isBlank(templatePath)) {
-						updateTextArea(ta, "请选择模板文件");
-						return;
-					}
-					// 获取汇总文件路径
-					String summaryPath = ((TextField) summary.get(1)).getText();
-					if (StringUtils.isBlank(summaryPath)) {
-						updateTextArea(ta, "请选择汇总文件");
-						return;
-					}
-					// 获取开始时间和结束时间
-					LocalDate startDate = startDatePicker.getValue();
-					LocalDate endDate = endDatePicker.getValue();
-					if (startDate == null || endDate == null) {
-						updateTextArea(ta, "请选择下载数据文件的开始时间和结束时间");
-						return;
-					}
-					String start = startDatePicker.getValue().format(dtf);
-					String end = endDatePicker.getValue().format(dtf);
-					System.out.println("开始时间：" + start + "; 结束时间：" + end);
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							// 获取模板文件路径
+							String templatePath = ((TextField) template.get(1)).getText();
+							if (StringUtils.isBlank(templatePath)) {
+								updateTextArea(ta, "请选择模板文件");
+								return;
+							}
+							// 获取汇总文件路径
+							String summaryPath = ((TextField) summary.get(1)).getText();
+							if (StringUtils.isBlank(summaryPath)) {
+								updateTextArea(ta, "请选择汇总文件");
+								return;
+							}
+							// 获取开始时间和结束时间
+							LocalDate startDate = startDatePicker.getValue();
+							LocalDate endDate = endDatePicker.getValue();
+							if (startDate == null || endDate == null) {
+								updateTextArea(ta, "请选择下载数据文件的开始时间和结束时间");
+								return;
+							}
+							if (startDate.isAfter(endDate)) {
+								updateTextArea(ta, "结束时间需大于等于开始时间");
+								return;
+							}
+							String start = startDate.format(dtf);
+							String end = endDate.format(dtf);
+							System.out.println("开始时间：" + start + "; 结束时间：" + end);
+							updateTextArea(ta, "开始时间：" + start + "; 结束时间：" + end);
+
+							// 定时时间
+							LocalDate timeDate = timeFirst.getValue();
+							String hString = hComb.getSelectionModel().getSelectedItem();
+							String mString = mComb.getSelectionModel().getSelectedItem();
+							String timeStamp = timeDate + " " + hString + ":" + mString + ":00";
+							System.out.println("定时时间：" + timeStamp);
+							updateTextArea(ta, "定时时间：" + timeStamp);
+
+							if (LocalDateTime.parse(timeStamp, timestampDtf).isBefore(LocalDateTime.now())) {
+								System.out.println("定时时间不可早于当前时间，建议至少定时为10分钟后");
+								updateTextArea(ta, "定时时间不可早于当前时间，建议至少定时为10分钟后");
+								return;
+							}
+
+							// 生成定时任务
+
+						}
+					}).start();
+
+
 
 				} else {
 					Alert alertError = new Alert(Alert.AlertType.ERROR,
