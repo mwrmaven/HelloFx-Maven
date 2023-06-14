@@ -231,4 +231,22 @@ public class Unit {
         }
     }
 
+    /**
+     * 对象转list方法
+     * @param obj 对象
+     * @param clazz list集合中的元素的类
+     * @return
+     * @param <T>
+     */
+    public <T> List<T> objToList(Object obj, Class<T> clazz) {
+        List<T> list = new ArrayList<T>();
+        if (obj instanceof List<?>) {
+            for (Object o : (List<?>) obj) {
+                list.add(clazz.cast(o));
+            }
+            return list;
+        }
+        return null;
+    }
+
 }
