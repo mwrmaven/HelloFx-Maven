@@ -57,6 +57,7 @@ public class App extends Application {
         Scene scene = new Scene(tp);
         // 解决mac环境下jdk11运行javafx显示乱码问题
         String osName = System.getProperty("os.name");
+        System.out.println("系统：" + osName);
         if (!osName.contains("Windows")) {
             scene.getRoot().setStyle("-fx-font-family: 'serif'; -fx-font-size: 14");
         }

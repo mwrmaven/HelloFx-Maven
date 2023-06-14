@@ -275,7 +275,7 @@ public class GetCommentsNew implements Function {
 		DatePicker startDatePicker = new DatePicker();
 		Label labelEndTime = new Label("结束时间：");
 		DatePicker endDatePicker = new DatePicker();
-		dataTimeHbox.getChildren().addAll(labelDataTime, labelStartTime, startDatePicker, labelEndTime, endDatePicker);
+		dataTimeHbox.getChildren().addAll(labelStartTime, startDatePicker, labelEndTime, endDatePicker);
 
 		// 定时时间设置
 		HBox timeHbox = new HBox();
@@ -368,7 +368,7 @@ public class GetCommentsNew implements Function {
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
-		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, commentPageNumLine, dataTimeHbox, timeHbox, toAddressHbox, line3, line4);
+		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, commentPageNumLine, labelDataTime, dataTimeHbox, timeHbox, toAddressHbox, line3, line4);
 
 		// 启动测试浏览器按钮事件
 		startButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -453,17 +453,24 @@ public class GetCommentsNew implements Function {
 					new Thread(new Runnable() {
 						@Override
 						public void run() {
-							// 发送邮件
-							String username = Config.get(EMAILUSERNAME);
-							String password = Config.get(EMAILPASSWORD);
-							password = "en" + password;
-							// base64解密
-							String realPassword = new String(Base64.getDecoder().decode(password.getBytes()));
-							MavenrQQEmail email = new MavenrQQEmail(username, realPassword);
-							// 测试接口连接
-							email.checkMailUserBySmtp();
-
 							ta.setText("");
+
+							if (StringUtils.isNotBlank(n1.getText())) {
+								// 发送邮件
+								String username = Config.get(EMAILUSERNAME);
+								String password = Config.get(EMAILPASSWORD);
+								password = "en" + password;
+								// base64解密
+								String realPassword = new String(Base64.getDecoder().decode(password.getBytes()));
+								MavenrQQEmail email = new MavenrQQEmail(username, realPassword);
+								// 测试接口连接
+								boolean emailFlag = email.checkMailUserBySmtp();
+								if (!emailFlag) {
+									updateTextArea(ta, "未配置邮箱相关参数，或配置错误，请确认！");
+									return;
+								}
+							}
+
 							// 获取模板文件路径
 							String templatePath = ((TextField) template.get(1)).getText();
 							if (StringUtils.isBlank(templatePath)) {
