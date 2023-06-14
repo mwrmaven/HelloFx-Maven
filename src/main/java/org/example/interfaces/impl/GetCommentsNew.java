@@ -2,6 +2,7 @@ package org.example.interfaces.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.mavenr.email.MavenrQQEmail;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -34,7 +35,9 @@ import org.example.entity.CommentInfo;
 import org.example.entity.TemplateInfo;
 import org.example.init.Config;
 import org.example.interfaces.Function;
+import org.example.service.GetCommentNumService;
 import org.example.util.SocketUtil;
+import org.example.util.TimeUtil;
 import org.example.util.Unit;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Cookie;
@@ -42,12 +45,16 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.quartz.*;
+import org.quartz.impl.StdSchedulerFactory;
 
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -66,6 +73,11 @@ public class GetCommentsNew implements Function {
 	 */
 	private Unit unit = new Unit();
 
+	/**
+	 * 时间工具类
+	 */
+	private TimeUtil timeUtil = new TimeUtil();
+
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmmss");
 
 	/**
@@ -83,7 +95,23 @@ public class GetCommentsNew implements Function {
 	 */
 	private static final String DRAFTSURL = "DRAFTSURL";
 
+	/**
+	 * 目标邮件的地址
+	 */
+	private static final String TO = "TO";
+
+	/**
+	 * 邮箱用户名
+	 */
+	private static final String EMAILUSERNAME = "EMAILUSERNAME";
+
+	/**
+	 * 邮箱用户授权码
+	 */
+	private static final String EMAILPASSWORD = "EMAILPASSWORD";
+
 	private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd");
+	private static final DateTimeFormatter timestampDtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
 	/**
 	 * 标签名称
@@ -242,12 +270,64 @@ public class GetCommentsNew implements Function {
 		HBox dataTimeHbox = new HBox();
 		dataTimeHbox.setAlignment(Pos.CENTER_LEFT);
 		dataTimeHbox.setSpacing(10);
-		Label labelDataTime = new Label("请选择下载数据文件的开始和结束时间：");
+		Label labelDataTime = new Label("请选择下载数据文件的开始和结束时间（注意开始时间要在发文之前）：");
 		Label labelStartTime = new Label("开始时间：");
 		DatePicker startDatePicker = new DatePicker();
 		Label labelEndTime = new Label("结束时间：");
 		DatePicker endDatePicker = new DatePicker();
 		dataTimeHbox.getChildren().addAll(labelDataTime, labelStartTime, startDatePicker, labelEndTime, endDatePicker);
+
+		// 定时时间设置
+		HBox timeHbox = new HBox();
+		timeHbox.setAlignment(Pos.CENTER_LEFT);
+		timeHbox.setSpacing(10);
+		Label labelTime = new Label("请选择定时任务执行时间：日期：");
+		DatePicker timeFirst = new DatePicker();
+		Label labelTimeAppend = new Label("时间：");
+		ComboBox<String> hComb = new ComboBox<>();
+		for (int i = 0; i < 25; i++) {
+			String hTime = String.valueOf(i);
+			if (i < 10) {
+				hTime = "0" + hTime;
+			}
+			hComb.getItems().add(hTime);
+		}
+		hComb.getSelectionModel().select(11);
+		ComboBox<String> mComb = new ComboBox<>();
+		for (int i = 0; i < 60; i++) {
+			String mTime = String.valueOf(i);
+			if (i < 10) {
+				mTime = "0" + mTime;
+			}
+			mComb.getItems().add(mTime);
+		}
+		mComb.getSelectionModel().select(0);
+		timeHbox.getChildren().addAll(labelTime, timeFirst, labelTimeAppend, hComb, mComb);
+
+		// 发送的目标邮件的地址，多个以英文;分隔
+		HBox toAddressHbox = new HBox();
+		toAddressHbox.setAlignment(Pos.CENTER_LEFT);
+		toAddressHbox.setSpacing(10);
+		List<Node> toNodes = unit.newInputText(width - 80, "请输入目标邮件的地址(多个以英文;分隔)：", 290);
+		for (Node n : toNodes) {
+			toAddressHbox.getChildren().add(n);
+		}
+		String to = Config.get(TO);
+		TextField n1 = (TextField) toNodes.get(1);
+		if (StringUtils.isNotBlank(to)) {
+			n1.setText(to);
+		}
+		String n1Text = n1.getText();
+		n1.focusedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
+			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+				// 判断内容改变，则保存内容
+				if (!n1Text.equals(n1.getText())) {
+					// 设置配置文件
+					Config.set(TO, n1.getText());
+				}
+			}
+		});
 
 		// 草稿箱页面的网页路径
 		TextField draftsPathTf = (TextField) drafts.get(1);
@@ -284,11 +364,11 @@ public class GetCommentsNew implements Function {
 		line4.setSpacing(10);
 		TextArea ta = new TextArea();
 		ta.setPrefWidth(width / 2);
-		ta.setPrefHeight(stage.getHeight() - 500);
+		ta.setPrefHeight(stage.getHeight() - 600);
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
-		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, commentPageNumLine, dataTimeHbox, line3, line4);
+		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, commentPageNumLine, dataTimeHbox, timeHbox, toAddressHbox, line3, line4);
 
 		// 启动测试浏览器按钮事件
 		startButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -370,28 +450,122 @@ public class GetCommentsNew implements Function {
 						}
 					}).start();
 				} else if ("定时获取微信文章评论数".equals(functionName)) {
-					// 获取模板文件路径
-					String templatePath = ((TextField) template.get(1)).getText();
-					if (StringUtils.isBlank(templatePath)) {
-						updateTextArea(ta, "请选择模板文件");
-						return;
-					}
-					// 获取汇总文件路径
-					String summaryPath = ((TextField) summary.get(1)).getText();
-					if (StringUtils.isBlank(summaryPath)) {
-						updateTextArea(ta, "请选择汇总文件");
-						return;
-					}
-					// 获取开始时间和结束时间
-					LocalDate startDate = startDatePicker.getValue();
-					LocalDate endDate = endDatePicker.getValue();
-					if (startDate == null || endDate == null) {
-						updateTextArea(ta, "请选择下载数据文件的开始时间和结束时间");
-						return;
-					}
-					String start = startDatePicker.getValue().format(dtf);
-					String end = endDatePicker.getValue().format(dtf);
-					System.out.println("开始时间：" + start + "; 结束时间：" + end);
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							// 发送邮件
+							String username = Config.get(EMAILUSERNAME);
+							String password = Config.get(EMAILPASSWORD);
+							password = "en" + password;
+							// base64解密
+							String realPassword = new String(Base64.getDecoder().decode(password.getBytes()));
+							MavenrQQEmail email = new MavenrQQEmail(username, realPassword);
+							// 测试接口连接
+							email.checkMailUserBySmtp();
+
+							ta.setText("");
+							// 获取模板文件路径
+							String templatePath = ((TextField) template.get(1)).getText();
+							if (StringUtils.isBlank(templatePath)) {
+								updateTextArea(ta, "请选择模板文件");
+								return;
+							}
+							// 获取汇总文件路径
+							String summaryPath = ((TextField) summary.get(1)).getText();
+							if (StringUtils.isBlank(summaryPath)) {
+								updateTextArea(ta, "请选择汇总文件");
+								return;
+							}
+							// 获取开始时间和结束时间
+							LocalDate startDate = startDatePicker.getValue();
+							LocalDate endDate = endDatePicker.getValue();
+							if (startDate == null || endDate == null) {
+								updateTextArea(ta, "请选择下载数据文件的开始时间和结束时间");
+								return;
+							}
+							if (startDate.isAfter(endDate)) {
+								updateTextArea(ta, "结束时间需大于等于开始时间");
+								return;
+							}
+							String start = startDate.format(dtf);
+							String end = endDate.format(dtf);
+							System.out.println("开始时间：" + start + "; 结束时间：" + end);
+							updateTextArea(ta, "开始时间：" + start + "; 结束时间：" + end);
+
+							// 定时时间
+							LocalDate timeDate = timeFirst.getValue();
+							String hString = hComb.getSelectionModel().getSelectedItem();
+							String mString = mComb.getSelectionModel().getSelectedItem();
+							String timeStamp = timeDate + " " + hString + ":" + mString + ":00";
+							System.out.println("定时时间：" + timeStamp);
+							updateTextArea(ta, "定时时间：" + timeStamp);
+
+							LocalDateTime timeFlag = LocalDateTime.parse(timeStamp, timestampDtf);
+							if (timeFlag.isBefore(LocalDateTime.now())) {
+								System.out.println("定时时间不可早于当前时间，建议至少定时为10分钟后");
+								updateTextArea(ta, "定时时间不可早于当前时间，建议至少定时为10分钟后");
+								return;
+							}
+
+							// 生成定时任务
+							// 1、创建调度器
+							SchedulerFactory schedulerFactory = new StdSchedulerFactory();
+							Scheduler scheduler = null;
+							try {
+								scheduler = schedulerFactory.getScheduler();
+								// 添加定时任务使用到的参数
+								JobDataMap jobDataMap = new JobDataMap();
+								jobDataMap.put("ta", ta);
+								jobDataMap.put("dataFile", dataFile);
+								jobDataMap.put("template", template);
+								jobDataMap.put("summary", summary);
+								jobDataMap.put("pageNum", pageNum);
+								jobDataMap.put("dataStartTime", start);
+								jobDataMap.put("dataEndTime", end);
+								jobDataMap.put("sendMail", true);
+								jobDataMap.put("to", n1.getText());
+								// 添加参数
+								JobDetail jobDetail = JobBuilder.newJob(GetCommentNumService.class)
+										.withIdentity("myJob", "jobGroup")
+										.usingJobData(jobDataMap).build();
+								// 创建触发器
+								Trigger trigger = TriggerBuilder.newTrigger()
+										.withIdentity("myTrigger", "triggerGroup")
+										.withSchedule(CronScheduleBuilder.cronSchedule(timeUtil.cron(timeFlag)))
+										.build();
+								// 执行
+								scheduler.scheduleJob(jobDetail, trigger);
+								System.out.println("定时任务开始执行！");
+								updateTextArea(ta, "定时任务开始执行！");
+								scheduler.start();
+
+								// 计算定时任务时间到现在的时间，再加10分钟
+								LocalDateTime now = LocalDateTime.now();
+								Duration duration = Duration.between(now, timeFlag);
+								long millis = duration.toMillis();
+
+								// 睡眠等待
+								Thread.sleep(millis + (60 * 1000 * 3));
+
+
+							} catch (Exception e) {
+								throw new RuntimeException(e);
+							} finally {
+								if (scheduler != null) {
+									// 停止
+									try {
+										scheduler.shutdown(true);
+										System.out.println("定时任务执行结束！");
+									} catch (Exception e) {
+										throw new RuntimeException(e);
+									}
+								}
+							}
+
+						}
+					}).start();
+
+
 
 				} else {
 					Alert alertError = new Alert(Alert.AlertType.ERROR,
