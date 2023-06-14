@@ -741,6 +741,7 @@ public class GetCommentNumService implements Job {
                             // 发送邮件
                             String username = Config.get(EMAILUSERNAME);
                             String password = Config.get(EMAILPASSWORD);
+                            password = "en" + password;
                             // base64解密
                             String realPassword = new String(Base64.getDecoder().decode(password.getBytes()));
                             MavenrQQEmail email = new MavenrQQEmail(username, realPassword);
