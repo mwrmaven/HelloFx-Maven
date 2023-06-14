@@ -2,6 +2,7 @@ package org.example.interfaces.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.mavenr.email.MavenrQQEmail;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -98,6 +99,16 @@ public class GetCommentsNew implements Function {
 	 * 目标邮件的地址
 	 */
 	private static final String TO = "TO";
+
+	/**
+	 * 邮箱用户名
+	 */
+	private static final String EMAILUSERNAME = "EMAILUSERNAME";
+
+	/**
+	 * 邮箱用户授权码
+	 */
+	private static final String EMAILPASSWORD = "EMAILPASSWORD";
 
 	private static final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMdd");
 	private static final DateTimeFormatter timestampDtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -442,6 +453,16 @@ public class GetCommentsNew implements Function {
 					new Thread(new Runnable() {
 						@Override
 						public void run() {
+							// 发送邮件
+							String username = Config.get(EMAILUSERNAME);
+							String password = Config.get(EMAILPASSWORD);
+							password = "en" + password;
+							// base64解密
+							String realPassword = new String(Base64.getDecoder().decode(password.getBytes()));
+							MavenrQQEmail email = new MavenrQQEmail(username, realPassword);
+							// 测试接口连接
+							email.checkMailUserBySmtp();
+
 							ta.setText("");
 							// 获取模板文件路径
 							String templatePath = ((TextField) template.get(1)).getText();
