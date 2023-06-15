@@ -364,7 +364,7 @@ public class GetCommentsNew implements Function {
 		line4.setSpacing(10);
 		TextArea ta = new TextArea();
 		ta.setPrefWidth(width / 2);
-		ta.setPrefHeight(stage.getHeight() - 600);
+		ta.setPrefHeight(stage.getHeight() - 650);
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
