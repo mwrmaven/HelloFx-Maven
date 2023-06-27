@@ -742,8 +742,8 @@ public class GetCommentsNew implements Function {
 				draftsUrl = driver.getCurrentUrl();
 			}
 		} else {
+			updateTextArea(ta, "请求填写的草稿箱地址为：" + draftsUrl);
 			driver.get(draftsUrl);
-			updateTextArea(ta, "请求草稿箱：" + draftsUrl);
 		}
 
 		File file = new File(templateFilePath);
