@@ -364,7 +364,7 @@ public class GetCommentsNew implements Function {
 		line4.setSpacing(10);
 		TextArea ta = new TextArea();
 		ta.setPrefWidth(width / 2);
-		ta.setPrefHeight(stage.getHeight() - 600);
+		ta.setPrefHeight(stage.getHeight() - 650);
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
@@ -742,8 +742,8 @@ public class GetCommentsNew implements Function {
 				draftsUrl = driver.getCurrentUrl();
 			}
 		} else {
+			updateTextArea(ta, "请求填写的草稿箱地址为：" + draftsUrl);
 			driver.get(draftsUrl);
-			updateTextArea(ta, "请求草稿箱：" + draftsUrl);
 		}
 
 		File file = new File(templateFilePath);
