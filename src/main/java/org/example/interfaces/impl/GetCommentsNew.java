@@ -240,6 +240,10 @@ public class GetCommentsNew implements Function {
 //			line2.getChildren().add(n);
 //		}
 
+		// 在切换到草稿箱链接和微信文章评论数时，隐藏该部分
+		VBox hiddenVbox = new VBox();
+		hiddenVbox.setSpacing(10);
+
 		HBox commentPageNumLine = new HBox();
 		commentPageNumLine.setAlignment(Pos.CENTER_LEFT);
 		commentPageNumLine.setSpacing(10);
@@ -350,6 +354,8 @@ public class GetCommentsNew implements Function {
 //			}
 //		});
 
+		hiddenVbox.getChildren().addAll(commentPageNumLine, labelDataTime, dataTimeHbox, timeHbox, toAddressHbox);
+
 		HBox line3 = new HBox();
 		line3.setAlignment(Pos.CENTER_LEFT);
 		line3.setSpacing(10);
@@ -368,7 +374,23 @@ public class GetCommentsNew implements Function {
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
-		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, commentPageNumLine, labelDataTime, dataTimeHbox, timeHbox, toAddressHbox, line3, line4);
+		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line3, line4);
+
+		// 当分别选择“草稿箱链接”、“微信文章评论数”、“定时获取微信文章评论数”时触发的事件
+		conditon.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+			@Override
+			public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
+				String text = ((RadioButton) newValue).getText();
+				ta.setText("");
+				if (text.equals(draft.getText()) || text.equals(comments.getText())) {
+					// 草稿箱链接、微信文章评论数，移除 hiddenVbox
+					vBox.getChildren().remove(hiddenVbox);
+				} else if (text.equals(timeComments.getText())) {
+					// 定时获取微信文章评论数，添加 hiddenVbox
+					vBox.getChildren().add(vBox.getChildren().indexOf(line3), hiddenVbox);
+				}
+			}
+		});
 
 		// 启动测试浏览器按钮事件
 		startButton.setOnAction(new EventHandler<ActionEvent>() {
