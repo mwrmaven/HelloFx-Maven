@@ -407,6 +407,18 @@ public class GetCommentsNew implements Function {
 						vBox.getChildren().add(vBox.getChildren().indexOf(line1) + 1, hiddenFilePath);
 					}
 				}
+
+				if (text.equals(comments.getText())) {
+					// 微信文章评论数中添加 数据文件选项
+					if (!hiddenFilePath.getChildren().contains(line1Next)) {
+						hiddenFilePath.getChildren().add(0, line1Next);
+					}
+				} else if (text.equals(timeComments.getText())) {
+					// 定时获取微信文章评论数中移除 数据文件选项
+					if (hiddenFilePath.getChildren().contains(line1Next)) {
+						hiddenFilePath.getChildren().remove(line1Next);
+					}
+				}
 			}
 		});
 
