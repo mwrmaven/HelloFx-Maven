@@ -232,13 +232,13 @@ public class GetCommentsNew implements Function {
 		}
 
 		// 第二行，请输入草稿箱页面的网页地址
-		HBox line2 = new HBox();
-		line2.setAlignment(Pos.CENTER_LEFT);
-		line2.setSpacing(10);
-		List<Node> drafts = unit.newInputText(width, "请输入草稿箱页面的网页地址(可不填)：", 250);
-		for (Node n : drafts) {
-			line2.getChildren().add(n);
-		}
+//		HBox line2 = new HBox();
+//		line2.setAlignment(Pos.CENTER_LEFT);
+//		line2.setSpacing(10);
+//		List<Node> drafts = unit.newInputText(width, "请输入草稿箱页面的网页地址(可不填)：", 250);
+//		for (Node n : drafts) {
+//			line2.getChildren().add(n);
+//		}
 
 		HBox commentPageNumLine = new HBox();
 		commentPageNumLine.setAlignment(Pos.CENTER_LEFT);
@@ -330,25 +330,25 @@ public class GetCommentsNew implements Function {
 		});
 
 		// 草稿箱页面的网页路径
-		TextField draftsPathTf = (TextField) drafts.get(1);
+//		TextField draftsPathTf = (TextField) drafts.get(1);
 		// 设置样式为下划线
-		String draftsUrl = Config.get(DRAFTSURL);
+//		String draftsUrl = Config.get(DRAFTSURL);
 		// 加载配置文件中的参数
-		if (StringUtils.isNotEmpty(draftsUrl)) {
-			draftsPathTf.setText(draftsUrl);
-		}
-		String draftsText = draftsPathTf.getText();
+//		if (StringUtils.isNotEmpty(draftsUrl)) {
+//			draftsPathTf.setText(draftsUrl);
+//		}
+//		String draftsText = draftsPathTf.getText();
 		// 失去焦点触发保存事件
-		draftsPathTf.focusedProperty().addListener(new ChangeListener<Boolean>() {
-			@Override
-			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-				// 判断内容改变，则保存内容
-				if (!draftsText.equals(draftsPathTf.getText())) {
-					// 设置配置文件
-					Config.set(DRAFTSURL, draftsPathTf.getText());
-				}
-			}
-		});
+//		draftsPathTf.focusedProperty().addListener(new ChangeListener<Boolean>() {
+//			@Override
+//			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+//				// 判断内容改变，则保存内容
+//				if (!draftsText.equals(draftsPathTf.getText())) {
+//					// 设置配置文件
+//					Config.set(DRAFTSURL, draftsPathTf.getText());
+//				}
+//			}
+//		});
 
 		HBox line3 = new HBox();
 		line3.setAlignment(Pos.CENTER_LEFT);
@@ -368,7 +368,7 @@ public class GetCommentsNew implements Function {
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
-		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, commentPageNumLine, labelDataTime, dataTimeHbox, timeHbox, toAddressHbox, line3, line4);
+		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, commentPageNumLine, labelDataTime, dataTimeHbox, timeHbox, toAddressHbox, line3, line4);
 
 		// 启动测试浏览器按钮事件
 		startButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -426,9 +426,9 @@ public class GetCommentsNew implements Function {
 								return;
 							}
 							// 获取草稿箱网页地址
-							String draftsUrl = ((TextField) drafts.get(1)).getText();
+//							String draftsUrl = ((TextField) drafts.get(1)).getText();
 							try {
-								debugChrome(templatePath, draftsUrl, ta);
+								debugChrome(templatePath, "", ta);
 							} catch (Exception e) {
 								throw new RuntimeException(e);
 							}
