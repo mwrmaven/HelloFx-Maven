@@ -213,11 +213,13 @@ public class GetCommentsNew implements Function {
 			line1.getChildren().add(n);
 		}
 
+		VBox hiddenFilePath = new VBox();
+		hiddenFilePath.setSpacing(10);
+
 		HBox line1Next = new HBox();
 		line1Next.setAlignment(Pos.CENTER_LEFT);
 		line1Next.setSpacing(10);
 		List<Node> dataFile = unit.chooseFile(stage, width, "数据文件");
-		((TextField) dataFile.get(1)).setPromptText("微信文章评论数功能下可不选");
 		for (Node n : dataFile) {
 			line1Next.getChildren().add(n);
 		}
@@ -226,10 +228,10 @@ public class GetCommentsNew implements Function {
 		line1Next1.setAlignment(Pos.CENTER_LEFT);
 		line1Next1.setSpacing(10);
 		List<Node> summary = unit.chooseFile(stage, width, "汇总文件");
-		((TextField) summary.get(1)).setPromptText("微信文章评论数功能下可不选");
 		for (Node n : summary) {
 			line1Next1.getChildren().add(n);
 		}
+		hiddenFilePath.getChildren().addAll(line1Next, line1Next1);
 
 		// 第二行，请输入草稿箱页面的网页地址
 //		HBox line2 = new HBox();
@@ -374,7 +376,7 @@ public class GetCommentsNew implements Function {
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
-		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line3, line4);
+		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line3, line4);
 
 		// 当分别选择“草稿箱链接”、“微信文章评论数”、“定时获取微信文章评论数”时触发的事件
 		conditon.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
@@ -384,10 +386,26 @@ public class GetCommentsNew implements Function {
 				ta.setText("");
 				if (text.equals(draft.getText()) || text.equals(comments.getText())) {
 					// 草稿箱链接、微信文章评论数，移除 hiddenVbox
-					vBox.getChildren().remove(hiddenVbox);
+					if (vBox.getChildren().contains(hiddenVbox)) {
+						vBox.getChildren().remove(hiddenVbox);
+					}
 				} else if (text.equals(timeComments.getText())) {
 					// 定时获取微信文章评论数，添加 hiddenVbox
-					vBox.getChildren().add(vBox.getChildren().indexOf(line3), hiddenVbox);
+					if (!vBox.getChildren().contains(hiddenVbox)) {
+						vBox.getChildren().add(vBox.getChildren().indexOf(line3), hiddenVbox);
+					}
+				}
+
+				if (text.equals(draft.getText())) {
+					// 草稿箱链接，移除 hiddenFilePath
+					if (vBox.getChildren().contains(hiddenFilePath)) {
+						vBox.getChildren().remove(hiddenFilePath);
+					}
+				} else if (text.equals(timeComments.getText()) || text.equals(comments.getText())) {
+					// 微信文章评论数、定时获取微信文章评论数，添加 hiddenFilePath
+					if (!vBox.getChildren().contains(hiddenFilePath)) {
+						vBox.getChildren().add(vBox.getChildren().indexOf(line1) + 1, hiddenFilePath);
+					}
 				}
 			}
 		});
