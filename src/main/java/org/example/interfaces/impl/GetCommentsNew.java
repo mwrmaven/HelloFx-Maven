@@ -213,9 +213,6 @@ public class GetCommentsNew implements Function {
 			line1.getChildren().add(n);
 		}
 
-		VBox hiddenFilePath = new VBox();
-		hiddenFilePath.setSpacing(10);
-
 		HBox line1Next = new HBox();
 		line1Next.setAlignment(Pos.CENTER_LEFT);
 		line1Next.setSpacing(10);
@@ -231,7 +228,6 @@ public class GetCommentsNew implements Function {
 		for (Node n : summary) {
 			line1Next1.getChildren().add(n);
 		}
-		hiddenFilePath.getChildren().addAll(line1Next, line1Next1);
 
 		// 第二行，请输入草稿箱页面的网页地址
 //		HBox line2 = new HBox();
@@ -241,10 +237,6 @@ public class GetCommentsNew implements Function {
 //		for (Node n : drafts) {
 //			line2.getChildren().add(n);
 //		}
-
-		// 在切换到草稿箱链接和微信文章评论数时，隐藏该部分
-		VBox hiddenVbox = new VBox();
-		hiddenVbox.setSpacing(10);
 
 		HBox commentPageNumLine = new HBox();
 		commentPageNumLine.setAlignment(Pos.CENTER_LEFT);
@@ -356,7 +348,14 @@ public class GetCommentsNew implements Function {
 //			}
 //		});
 
-		hiddenVbox.getChildren().addAll(commentPageNumLine, labelDataTime, dataTimeHbox, timeHbox, toAddressHbox);
+		// 在切换到草稿箱链接和微信文章评论数时，隐藏该部分
+		VBox hiddenVbox = new VBox();
+		hiddenVbox.setSpacing(10);
+		hiddenVbox.getChildren().addAll(labelDataTime, dataTimeHbox, timeHbox, toAddressHbox);
+		// 在切换到草稿箱链接时，隐藏该部分
+		VBox hiddenFilePath = new VBox();
+		hiddenFilePath.setSpacing(10);
+		hiddenFilePath.getChildren().addAll(line1Next, line1Next1, commentPageNumLine);
 
 		HBox line3 = new HBox();
 		line3.setAlignment(Pos.CENTER_LEFT);
