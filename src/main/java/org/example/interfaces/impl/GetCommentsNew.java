@@ -957,50 +957,49 @@ public class GetCommentsNew implements Function {
 				start += 1;
 			}
 		}
-//		// 获取token
-//		Pattern compile = Pattern.compile("token=(\\d+)");
-//		Matcher matcher = compile.matcher(draftsUrl);
-//		String token = "";
-//		while (matcher.find()) {
-//			token = matcher.group(1);
-//		}
-//		// 获取用户管理页面中的分组用户人数
-//		String userManageUrl = "https://mp.weixin.qq.com/cgi-bin/user_tag?action=get_all_data&lang=zh_CN&token=" + token;
-//		driver.get(userManageUrl);
-//		Thread.sleep(5000);
-//		// 获取excel中的新系统分组人数列
-//		int newSystemGroupIndex = -1;
-//		for (int i = 0; i <= titleRow.getLastCellNum(); i++) {
-//			Cell cell = titleRow.getCell(i);
-//			if (cell == null) {
-//				continue;
-//			}
-//			if ("新系统分组人数".equals(cell.getStringCellValue().trim())
-//					|| cell.getStringCellValue().trim().contains("分组人数")) {
-//				newSystemGroupIndex = i;
-//			}
-//		}
-//		// 获取用户分组所有数据
-//		WebElement groupsList = driver.findElement(By.id("groupsList"));
-//		List<WebElement> aList = groupsList.findElements(By.tagName("a"));
-//		for (WebElement we : aList) {
-//			String group = we.findElement(By.tagName("strong")).getText();
-//			String num = we.findElement(By.tagName("em")).getText();
-//			int[] se = groupAndPosition.get(group);
-//			if (null != se) {
-//				// 获取起始行
-//				num = num.substring(1, num.length() - 1);
-//				updateTextArea(ta, "group: " + group + "; num: " + num);
-//				int start = se[0];
-//				Row row = sheet.getRow(start);
-//				Cell cell = row.getCell(newSystemGroupIndex);
-//
-//				if (cell.getCellType().equals(CellType.BLANK) || StringUtils.isBlank(cell.getStringCellValue())) {
-//					cell.setCellValue(Integer.parseInt(num));
-//				}
-//			}
-//		}
+		// 获取token
+		Pattern compile = Pattern.compile("token=(\\d+)");
+		Matcher matcher = compile.matcher(draftsUrl);
+		String token = "";
+		while (matcher.find()) {
+			token = matcher.group(1);
+		}
+		// 获取用户管理页面中的分组用户人数
+		String userManageUrl = "https://mp.weixin.qq.com/cgi-bin/user_tag?action=get_all_data&lang=zh_CN&token=" + token;
+		driver.get(userManageUrl);
+		Thread.sleep(5000);
+		// 获取excel中的新系统分组人数列
+		int newSystemGroupIndex = -1;
+		for (int i = 0; i <= titleRow.getLastCellNum(); i++) {
+			Cell cell = titleRow.getCell(i);
+			if (cell == null) {
+				continue;
+			}
+			if ("新系统分组人数".equals(cell.getStringCellValue().trim())
+					|| cell.getStringCellValue().trim().contains("分组人数")) {
+				newSystemGroupIndex = i;
+			}
+		}
+		// 获取用户分组所有数据
+		WebElement groupsList = driver.findElement(By.id("groupsList"));
+		List<WebElement> aList = groupsList.findElements(By.tagName("a"));
+		for (WebElement we : aList) {
+			String group = we.findElement(By.tagName("strong")).getText();
+			String num = we.findElement(By.tagName("em")).getText();
+			int[] se = groupAndPosition.get(group);
+			if (null != se) {
+				// 获取起始行
+				num = num.substring(1, num.length() - 1);
+				updateTextArea(ta, "group: " + group + "; num: " + num);
+				int start = se[0];
+				Row row = sheet.getRow(start);
+				Cell cell = row.getCell(newSystemGroupIndex);
 
+				if (cell.getCellType().equals(CellType.BLANK) || StringUtils.isBlank(cell.getStringCellValue())) {
+					cell.setCellValue(Integer.parseInt(num));
+				}
+			}
+		}
 
 		// 将workbook写入文件
 		workbook.write(fos);
@@ -1240,7 +1239,14 @@ public class GetCommentsNew implements Function {
 						httpGet.releaseConnection();
 						// 将行数据放入到map中rigin
 						String articleTitle = row.getCell(0).getStringCellValue();
-						int pushPeople = Integer.parseInt(row.getCell(7).getStringCellValue());
+						int pushPeople = -1;
+						try {
+							pushPeople = Integer.parseInt(row.getCell(7).getStringCellValue());
+						} catch (Exception e) {
+							updateTextArea(ta, "第" + (i + 1) + "行的送达人数需要改为文本类型");
+							return;
+						}
+
 						CommentInfo info = CommentInfo.builder()
 								.title(articleTitle.trim())
 								.pushDate(row.getCell(1).getStringCellValue())
