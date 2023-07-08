@@ -217,7 +217,6 @@ public class GetCommentsNew implements Function {
 		line1Next.setAlignment(Pos.CENTER_LEFT);
 		line1Next.setSpacing(10);
 		List<Node> dataFile = unit.chooseFile(stage, width, "数据文件");
-		((TextField) dataFile.get(1)).setPromptText("微信文章评论数功能下可不选");
 		for (Node n : dataFile) {
 			line1Next.getChildren().add(n);
 		}
@@ -226,19 +225,18 @@ public class GetCommentsNew implements Function {
 		line1Next1.setAlignment(Pos.CENTER_LEFT);
 		line1Next1.setSpacing(10);
 		List<Node> summary = unit.chooseFile(stage, width, "汇总文件");
-		((TextField) summary.get(1)).setPromptText("微信文章评论数功能下可不选");
 		for (Node n : summary) {
 			line1Next1.getChildren().add(n);
 		}
 
 		// 第二行，请输入草稿箱页面的网页地址
-		HBox line2 = new HBox();
-		line2.setAlignment(Pos.CENTER_LEFT);
-		line2.setSpacing(10);
-		List<Node> drafts = unit.newInputText(width, "请输入草稿箱页面的网页地址(可不填)：", 250);
-		for (Node n : drafts) {
-			line2.getChildren().add(n);
-		}
+//		HBox line2 = new HBox();
+//		line2.setAlignment(Pos.CENTER_LEFT);
+//		line2.setSpacing(10);
+//		List<Node> drafts = unit.newInputText(width, "请输入草稿箱页面的网页地址(可不填)：", 250);
+//		for (Node n : drafts) {
+//			line2.getChildren().add(n);
+//		}
 
 		HBox commentPageNumLine = new HBox();
 		commentPageNumLine.setAlignment(Pos.CENTER_LEFT);
@@ -330,25 +328,34 @@ public class GetCommentsNew implements Function {
 		});
 
 		// 草稿箱页面的网页路径
-		TextField draftsPathTf = (TextField) drafts.get(1);
+//		TextField draftsPathTf = (TextField) drafts.get(1);
 		// 设置样式为下划线
-		String draftsUrl = Config.get(DRAFTSURL);
+//		String draftsUrl = Config.get(DRAFTSURL);
 		// 加载配置文件中的参数
-		if (StringUtils.isNotEmpty(draftsUrl)) {
-			draftsPathTf.setText(draftsUrl);
-		}
-		String draftsText = draftsPathTf.getText();
+//		if (StringUtils.isNotEmpty(draftsUrl)) {
+//			draftsPathTf.setText(draftsUrl);
+//		}
+//		String draftsText = draftsPathTf.getText();
 		// 失去焦点触发保存事件
-		draftsPathTf.focusedProperty().addListener(new ChangeListener<Boolean>() {
-			@Override
-			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-				// 判断内容改变，则保存内容
-				if (!draftsText.equals(draftsPathTf.getText())) {
-					// 设置配置文件
-					Config.set(DRAFTSURL, draftsPathTf.getText());
-				}
-			}
-		});
+//		draftsPathTf.focusedProperty().addListener(new ChangeListener<Boolean>() {
+//			@Override
+//			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+//				// 判断内容改变，则保存内容
+//				if (!draftsText.equals(draftsPathTf.getText())) {
+//					// 设置配置文件
+//					Config.set(DRAFTSURL, draftsPathTf.getText());
+//				}
+//			}
+//		});
+
+		// 在切换到草稿箱链接和微信文章评论数时，隐藏该部分
+		VBox hiddenVbox = new VBox();
+		hiddenVbox.setSpacing(10);
+		hiddenVbox.getChildren().addAll(labelDataTime, dataTimeHbox, timeHbox, toAddressHbox);
+		// 在切换到草稿箱链接时，隐藏该部分
+		VBox hiddenFilePath = new VBox();
+		hiddenFilePath.setSpacing(10);
+		hiddenFilePath.getChildren().addAll(line1Next, line1Next1, commentPageNumLine);
 
 		HBox line3 = new HBox();
 		line3.setAlignment(Pos.CENTER_LEFT);
@@ -368,7 +375,51 @@ public class GetCommentsNew implements Function {
 		ta.setEditable(false);
 		line4.getChildren().add(ta);
 
-		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line1Next, line1Next1, line2, commentPageNumLine, labelDataTime, dataTimeHbox, timeHbox, toAddressHbox, line3, line4);
+		vBox.getChildren().addAll(line1Pre, tips2, tips, radio, line1, line3, line4);
+
+		// 当分别选择“草稿箱链接”、“微信文章评论数”、“定时获取微信文章评论数”时触发的事件
+		conditon.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+			@Override
+			public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
+				String text = ((RadioButton) newValue).getText();
+				ta.setText("");
+				if (text.equals(draft.getText()) || text.equals(comments.getText())) {
+					// 草稿箱链接、微信文章评论数，移除 hiddenVbox
+					if (vBox.getChildren().contains(hiddenVbox)) {
+						vBox.getChildren().remove(hiddenVbox);
+					}
+				} else if (text.equals(timeComments.getText())) {
+					// 定时获取微信文章评论数，添加 hiddenVbox
+					if (!vBox.getChildren().contains(hiddenVbox)) {
+						vBox.getChildren().add(vBox.getChildren().indexOf(line3), hiddenVbox);
+					}
+				}
+
+				if (text.equals(draft.getText())) {
+					// 草稿箱链接，移除 hiddenFilePath
+					if (vBox.getChildren().contains(hiddenFilePath)) {
+						vBox.getChildren().remove(hiddenFilePath);
+					}
+				} else if (text.equals(timeComments.getText()) || text.equals(comments.getText())) {
+					// 微信文章评论数、定时获取微信文章评论数，添加 hiddenFilePath
+					if (!vBox.getChildren().contains(hiddenFilePath)) {
+						vBox.getChildren().add(vBox.getChildren().indexOf(line1) + 1, hiddenFilePath);
+					}
+				}
+
+				if (text.equals(comments.getText())) {
+					// 微信文章评论数中添加 数据文件选项
+					if (!hiddenFilePath.getChildren().contains(line1Next)) {
+						hiddenFilePath.getChildren().add(0, line1Next);
+					}
+				} else if (text.equals(timeComments.getText())) {
+					// 定时获取微信文章评论数中移除 数据文件选项
+					if (hiddenFilePath.getChildren().contains(line1Next)) {
+						hiddenFilePath.getChildren().remove(line1Next);
+					}
+				}
+			}
+		});
 
 		// 启动测试浏览器按钮事件
 		startButton.setOnAction(new EventHandler<ActionEvent>() {
@@ -426,9 +477,9 @@ public class GetCommentsNew implements Function {
 								return;
 							}
 							// 获取草稿箱网页地址
-							String draftsUrl = ((TextField) drafts.get(1)).getText();
+//							String draftsUrl = ((TextField) drafts.get(1)).getText();
 							try {
-								debugChrome(templatePath, draftsUrl, ta);
+								debugChrome(templatePath, "", ta);
 							} catch (Exception e) {
 								throw new RuntimeException(e);
 							}
