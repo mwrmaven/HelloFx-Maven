@@ -12,10 +12,14 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
 import org.example.init.Config;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -247,6 +251,30 @@ public class Unit {
             return list;
         }
         return null;
+    }
+
+    public String getCellValue(Cell cell) {
+        if (cell == null || cell.getCellType() == CellType.BLANK
+                || cell.getCellType() == CellType._NONE || cell.getCellType() == CellType.ERROR) {
+            return "";
+        } else if (cell.getCellType() == CellType.STRING) {
+            return cell.getStringCellValue();
+        } else if (cell.getCellType() == CellType.BOOLEAN) {
+            boolean booleanCellValue = cell.getBooleanCellValue();
+            return String.valueOf(booleanCellValue);
+        } else if (cell.getCellType() == CellType.NUMERIC) {
+            double numericCellValue = cell.getNumericCellValue();
+            // 去掉double末尾的0
+            BigDecimal bd = new BigDecimal(numericCellValue);
+            BigDecimal noZeroBigDecimal = bd.stripTrailingZeros();
+            // 不使用科学计数法
+            String value = noZeroBigDecimal.toPlainString();
+            return String.valueOf(value);
+        } else if (cell.getCellType() == CellType.FORMULA) {
+            return cell.getStringCellValue();
+        } else {
+            return "";
+        }
     }
 
 }
