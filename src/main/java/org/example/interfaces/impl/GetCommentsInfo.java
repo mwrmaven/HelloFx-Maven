@@ -406,7 +406,9 @@ public class GetCommentsInfo implements Function {
                     }
                 }
                 int start = i + 1;
-                for (NickNameAndComment n : nickNameAndComments) {
+                // 留言列表是最晚发布的在列表最前面，所以这里倒序输出，让最早发布的放在文件的最开始
+                for (int l = nickNameAndComments.size() - 1; l >= 0; l--) {
+                    NickNameAndComment n = nickNameAndComments.get(l);
                     i++;
                     Row row = sheet.createRow(i);
 //                    // id
@@ -424,8 +426,8 @@ public class GetCommentsInfo implements Function {
                     // 用户名称
                     Cell nickNameCell = row.createCell(3);
                     nickNameCell.setCellValue(n.getNickName());
-
                 }
+
                 int end = i;
                 if (start != end) {
                     // 合并单元格
