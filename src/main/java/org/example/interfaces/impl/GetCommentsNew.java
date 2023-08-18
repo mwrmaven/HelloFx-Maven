@@ -995,7 +995,9 @@ public class GetCommentsNew implements Function {
 				Row row = sheet.getRow(start);
 				Cell cell = row.getCell(newSystemGroupIndex);
 
-				if (cell.getCellType().equals(CellType.BLANK) || StringUtils.isBlank(cell.getStringCellValue())) {
+				String cellValue = unit.getCellValue(cell);
+
+				if (StringUtils.isBlank(cellValue)) {
 					cell.setCellValue(Integer.parseInt(num));
 				}
 			}
