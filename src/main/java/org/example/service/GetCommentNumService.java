@@ -17,6 +17,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.DefaultIndexedColorMap;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.example.entity.CommentInfo;
 import org.example.entity.TemplateInfo;
@@ -401,6 +403,7 @@ public class GetCommentNumService implements Job {
                             String cell3Value = unit.getCellValue(row.getCell(groupIndex));
                             if (StringUtils.isNotBlank(cell3Value)) {
                                 group = cell3Value;
+                                info.setFirst(true);
                                 flag = true;
                             }
                             if (flag) {
@@ -457,6 +460,22 @@ public class GetCommentNumService implements Job {
                         // 设置行高 22
                         resultRow.setHeightInPoints(22);
                         TemplateInfo templateInfo = baseList.get(i);
+                        // 险判断推送人数
+                        int tpush = templateInfo.getPushPeople();
+                        int key = -1;
+                        int min = 1000000000;
+                        for (Integer k : pushPeopleKeys) {
+                            if (Math.abs(tpush - k) < min) {
+                                key = k;
+                                min = Math.abs(tpush - k);
+                            }
+                        }
+
+                        if (key < 1000000 && templateInfo.isFirst()) {
+                            cloneCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                            cloneCellStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+                        }
+
                         Cell cell0 = resultRow.createCell(0);
                         CellStyle leftCellStyle = dataWb.createCellStyle();
                         leftCellStyle.cloneStyleFrom(cloneCellStyle);
@@ -484,15 +503,6 @@ public class GetCommentNumService implements Job {
                         rightCellStyle.setBorderRight(BorderStyle.MEDIUM);
                         cell11.setCellStyle(rightCellStyle);
 
-                        int tpush = templateInfo.getPushPeople();
-                        int key = -1;
-                        int min = 1000000000;
-                        for (Integer k : pushPeopleKeys) {
-                            if (Math.abs(tpush - k) < min) {
-                                key = k;
-                                min = Math.abs(tpush - k);
-                            }
-                        }
                         Cell cell4 = resultRow.createCell(4);
                         cell4.setCellValue(key);
                         cell4.setCellStyle(cloneCellStyle);
@@ -540,6 +550,7 @@ public class GetCommentNumService implements Job {
                             Cell cell12 = resultRow.createCell(12);
                             cell12.setCellValue(cell12Value);
                         }
+
                     }
                     updateTextArea(ta, "写入结果数据文件完成！");
                     updateTextArea(ta, "开始合并数据文件中的单元格！");

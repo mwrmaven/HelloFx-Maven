@@ -559,6 +559,11 @@ public class GetCommentsNew implements Function {
 							updateTextArea(ta, "定时时间：" + timeStamp);
 
 							LocalDateTime timeFlag = LocalDateTime.parse(timeStamp, timestampDtf);
+							if (timeFlag.isBefore(LocalDateTime.now())) {
+								System.out.println("定时时间不可早于当前时间，建议至少定时为10分钟后");
+								updateTextArea(ta, "定时时间不可早于当前时间，建议至少定时为10分钟后");
+								return;
+							}
 
 							// 生成定时任务
 							// 1、创建调度器
@@ -1328,6 +1333,7 @@ public class GetCommentsNew implements Function {
 							String cell3Value = unit.getCellValue(row.getCell(groupIndex));
 							if (StringUtils.isNotBlank(cell3Value)) {
 								group = cell3Value;
+								info.setFirst(true);
 								flag = true;
 							}
 							if (flag) {
@@ -1385,6 +1391,22 @@ public class GetCommentsNew implements Function {
 						// 设置行高 22
 						resultRow.setHeightInPoints(22);
 						TemplateInfo templateInfo = baseList.get(i);
+						// 险判断推送人数
+						int tpush = templateInfo.getPushPeople();
+						int key = -1;
+						int min = 1000000000;
+						for (Integer k : pushPeopleKeys) {
+							if (Math.abs(tpush - k) < min) {
+								key = k;
+								min = Math.abs(tpush - k);
+							}
+						}
+
+						if (key < 1000000 && templateInfo.isFirst()) {
+							cloneCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+							cloneCellStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+						}
+
 						Cell cell0 = resultRow.createCell(0);
 						CellStyle leftCellStyle = dataWb.createCellStyle();
 						leftCellStyle.cloneStyleFrom(cloneCellStyle);
@@ -1412,17 +1434,6 @@ public class GetCommentsNew implements Function {
 						rightCellStyle.setBorderRight(BorderStyle.MEDIUM);
 						cell11.setCellStyle(rightCellStyle);
 
-						int tpush = templateInfo.getPushPeople();
-						System.out.println("获取到模板文件的推荐人数为：" + tpush);
-						int key = -1;
-						int min = 1000000000;
-						for (Integer k : pushPeopleKeys) {
-							if (Math.abs(tpush - k) < min) {
-								System.out.println("tpush:" + tpush + "; k:" + k);
-								key = k;
-								min = Math.abs(tpush - k);
-							}
-						}
 						Cell cell4 = resultRow.createCell(4);
 						cell4.setCellValue(key);
 						cell4.setCellStyle(cloneCellStyle);
@@ -1471,8 +1482,6 @@ public class GetCommentsNew implements Function {
 							Cell cell12 = resultRow.createCell(12);
 							cell12.setCellValue(cell12Value);
 						}
-
-
 					}
 					updateTextArea(ta, "写入结果数据文件完成！");
 					updateTextArea(ta, "开始合并数据文件中的单元格！");

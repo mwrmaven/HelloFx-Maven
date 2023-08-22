@@ -42,4 +42,9 @@ public class TemplateInfo {
      * 推送人数
      */
     private Integer pushPeople;
+
+    /**
+     * 是否为首行
+     */
+    private boolean first;
 }
