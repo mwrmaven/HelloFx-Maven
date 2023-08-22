@@ -559,11 +559,6 @@ public class GetCommentsNew implements Function {
 							updateTextArea(ta, "定时时间：" + timeStamp);
 
 							LocalDateTime timeFlag = LocalDateTime.parse(timeStamp, timestampDtf);
-							if (timeFlag.isBefore(LocalDateTime.now())) {
-								System.out.println("定时时间不可早于当前时间，建议至少定时为10分钟后");
-								updateTextArea(ta, "定时时间不可早于当前时间，建议至少定时为10分钟后");
-								return;
-							}
 
 							// 生成定时任务
 							// 1、创建调度器
@@ -656,10 +651,10 @@ public class GetCommentsNew implements Function {
 				if (cell == null) {
 					continue;
 				}
-				if ("组别".equals(cell.getStringCellValue().trim())) {
+				if ("组别".equals(unit.getCellValue(cell).trim())) {
 					groupIndex = i;
 				}
-				if ("位置".equals(cell.getStringCellValue().trim())) {
+				if ("位置".equals(unit.getCellValue(cell).trim())) {
 					positionIndex = i;
 				}
 			}
@@ -699,7 +694,7 @@ public class GetCommentsNew implements Function {
 				if (cell == null) {
 					break;
 				}
-				String cellValue = cell.getStringCellValue().trim();
+				String cellValue = unit.getCellValue(cell).trim();
 				if (StringUtils.isNotBlank(cellValue)) {
 					// 给上一个组别结束行赋值
 					if (name != null) {
@@ -915,14 +910,14 @@ public class GetCommentsNew implements Function {
 		for (int i = 0; i <= titleRow.getLastCellNum(); i++) {
 			Cell cell = titleRow.getCell(i);
 			if (cell == null || cell.getCellType().equals(CellType.BLANK)
-					|| StringUtils.isBlank(cell.getStringCellValue())) {
+					|| StringUtils.isBlank(unit.getCellValue(cell))) {
 				continue;
 			}
-			if ("文章标题".equals(cell.getStringCellValue().trim())) {
+			if ("文章标题".equals(unit.getCellValue(cell).trim())) {
 				titleIndex = i;
 				continue;
 			}
-			if ("文章链接".equals(cell.getStringCellValue().trim())) {
+			if ("文章链接".equals(unit.getCellValue(cell).trim())) {
 				linkIndex = i;
 			}
 		}
@@ -975,8 +970,8 @@ public class GetCommentsNew implements Function {
 			if (cell == null) {
 				continue;
 			}
-			if ("新系统分组人数".equals(cell.getStringCellValue().trim())
-					|| cell.getStringCellValue().trim().contains("分组人数")) {
+			if ("新系统分组人数".equals(unit.getCellValue(cell).trim())
+					|| unit.getCellValue(cell).trim().contains("分组人数")) {
 				newSystemGroupIndex = i;
 			}
 		}
@@ -994,12 +989,8 @@ public class GetCommentsNew implements Function {
 				int start = se[0];
 				Row row = sheet.getRow(start);
 				Cell cell = row.getCell(newSystemGroupIndex);
-
-				String cellValue = unit.getCellValue(cell);
-
-				if (StringUtils.isBlank(cellValue)) {
-					cell.setCellValue(Integer.parseInt(num));
-				}
+				// 将微信后台的新系统分组人数加到单元格
+				cell.setCellValue(Integer.parseInt(num));
 			}
 		}
 
@@ -1179,7 +1170,7 @@ public class GetCommentsNew implements Function {
 						if (latCell == null) {
 							continue;
 						}
-						if ("内容url".equals(titleRow.getCell(i).getStringCellValue())) {
+						if ("内容url".equals(unit.getCellValue(titleRow.getCell(i)))) {
 							lastNum = i;
 							titleCellStyle = titleRow.getCell(i).getCellStyle();
 							break;
@@ -1209,7 +1200,7 @@ public class GetCommentsNew implements Function {
 						if (lastCellOnRow == null) {
 							continue;
 						}
-						String contentUrl = lastCellOnRow.getStringCellValue();
+						String contentUrl = unit.getCellValue(lastCellOnRow);
 						CellStyle preCellStyle = row.getCell(lastNum).getCellStyle();
 						cell.setCellStyle(preCellStyle);
 						System.out.println("请求url为" + contentUrl);
@@ -1240,10 +1231,10 @@ public class GetCommentsNew implements Function {
 						updateTextArea(ta, "获取到公众号文章ID，并插入对应的评论数");
 						httpGet.releaseConnection();
 						// 将行数据放入到map中rigin
-						String articleTitle = row.getCell(0).getStringCellValue();
+						String articleTitle = unit.getCellValue(row.getCell(0));
 						int pushPeople = -1;
 						try {
-							pushPeople = Integer.parseInt(row.getCell(7).getStringCellValue());
+							pushPeople = Integer.parseInt(unit.getCellValue(row.getCell(7)));
 						} catch (Exception e) {
 							updateTextArea(ta, "第" + (i + 1) + "行的送达人数需要改为文本类型");
 							return;
@@ -1251,11 +1242,11 @@ public class GetCommentsNew implements Function {
 
 						CommentInfo info = CommentInfo.builder()
 								.title(articleTitle.trim())
-								.pushDate(row.getCell(1).getStringCellValue())
-								.allReadPeople(Integer.valueOf(row.getCell(2).getStringCellValue()))
-								.allSharePeople(Integer.valueOf(row.getCell(4).getStringCellValue()))
+								.pushDate(unit.getCellValue(row.getCell(1)).trim())
+								.allReadPeople(Integer.valueOf(unit.getCellValue(row.getCell(2)).trim()))
+								.allSharePeople(Integer.valueOf(unit.getCellValue(row.getCell(4)).trim()))
 								.pushPeople(pushPeople)
-								.completeReadRate(row.getCell(14).getStringCellValue())
+								.completeReadRate(unit.getCellValue(row.getCell(14)).trim())
 								.commentNum(commentNum)
 								.url(contentUrl)
 								.build();
@@ -1308,7 +1299,7 @@ public class GetCommentsNew implements Function {
 						if (cell == null || cell.getCellType().equals(CellType.BLANK)) {
 							continue;
 						}
-						String cellV = cell.getStringCellValue();
+						String cellV = unit.getCellValue(cell);
 						if ("文章标题".equals(cellV)) {
 							titleIndex = i;
 						} else if ("标题类型".equals(cellV)) {
@@ -1325,16 +1316,16 @@ public class GetCommentsNew implements Function {
 					for (int i = 2; i <= templateSheet.getLastRowNum(); i++) {
 						Row row = templateSheet.getRow(i);
 						if (row == null || row.getCell(titleIndex) == null
-								|| StringUtils.isBlank(row.getCell(titleIndex).getStringCellValue())) {
+								|| StringUtils.isBlank(unit.getCellValue(row.getCell(titleIndex)))) {
 							continue;
 						} else {
 							System.out.println(" i = " + i);
 							TemplateInfo info = TemplateInfo.builder()
-									.title(row.getCell(titleIndex).getStringCellValue().trim())
-									.titleType(row.getCell(titleTypeIndex).getStringCellValue())
+									.title(unit.getCellValue(row.getCell(titleIndex)).trim())
+									.titleType(unit.getCellValue(row.getCell(titleTypeIndex)))
 									.position(BigDecimal.valueOf(row.getCell(positionIndex).getNumericCellValue()).intValue())
 									.build();
-							String cell3Value = row.getCell(groupIndex).getStringCellValue();
+							String cell3Value = unit.getCellValue(row.getCell(groupIndex));
 							if (StringUtils.isNotBlank(cell3Value)) {
 								group = cell3Value;
 								flag = true;
@@ -1375,6 +1366,7 @@ public class GetCommentsNew implements Function {
 					defaultCellStyle.setBorderRight(BorderStyle.THIN);
 
 					Set<Integer> pushPeopleKeys = commentInfoMap.keySet();
+					System.out.println("map: " + commentInfoMap);
 					// 存储推送人群需要合并单元格的起始行和结束行
 					List<Integer> beginAndEnd = new ArrayList<>();
 					String groupStandard = "";
@@ -1421,10 +1413,12 @@ public class GetCommentsNew implements Function {
 						cell11.setCellStyle(rightCellStyle);
 
 						int tpush = templateInfo.getPushPeople();
+						System.out.println("获取到模板文件的推荐人数为：" + tpush);
 						int key = -1;
 						int min = 1000000000;
 						for (Integer k : pushPeopleKeys) {
 							if (Math.abs(tpush - k) < min) {
+								System.out.println("tpush:" + tpush + "; k:" + k);
 								key = k;
 								min = Math.abs(tpush - k);
 							}
@@ -1436,45 +1430,49 @@ public class GetCommentsNew implements Function {
 						int excelRowNum = rowNum + 1;
 						// 获取map中的评论信息
 						CommentInfo commentInfo = commentInfoMap.get(key).get(tTitle);
+						System.out.println(commentInfo);
 						if (commentInfo == null) {
 							updateTextArea(ta, "未匹配到送达人数：" + key + "，文章标题：" + tTitle + " 的评论信息！");
-						}
-						Cell cell5 = resultRow.createCell(5);
-						cell5.setCellValue(commentInfo.getAllReadPeople());
-						cell5.setCellStyle(cloneCellStyle);
-						Cell cell6 = resultRow.createCell(6);
-						cell6.setCellValue(commentInfo.getAllSharePeople());
-						cell6.setCellStyle(cloneCellStyle);
-						// 设置百分比格式
-						CellStyle rateCellStyle = dataWb.createCellStyle();
-						rateCellStyle.cloneStyleFrom(cloneCellStyle);
-						DataFormat xdf = dataWb.createDataFormat();
-						rateCellStyle.setDataFormat(xdf.getFormat("0.00%"));
+						} else {
+							Cell cell5 = resultRow.createCell(5);
+							cell5.setCellValue(commentInfo.getAllReadPeople());
+							cell5.setCellStyle(cloneCellStyle);
+							Cell cell6 = resultRow.createCell(6);
+							cell6.setCellValue(commentInfo.getAllSharePeople());
+							cell6.setCellStyle(cloneCellStyle);
+							// 设置百分比格式
+							CellStyle rateCellStyle = dataWb.createCellStyle();
+							rateCellStyle.cloneStyleFrom(cloneCellStyle);
+							DataFormat xdf = dataWb.createDataFormat();
+							rateCellStyle.setDataFormat(xdf.getFormat("0.00%"));
 
-						Cell cell7 = resultRow.createCell(7);
-						String cell7Formula = "F" + excelRowNum + "/E" + excelRowNum;
-						cell7.setCellFormula(cell7Formula);
-						cell7.setCellStyle(rateCellStyle);
-						Cell cell8 = resultRow.createCell(8);
-						String cell8Formula = "G" + excelRowNum + "/F" + excelRowNum;
-						cell8.setCellFormula(cell8Formula);
-						cell8.setCellStyle(rateCellStyle);
-						Cell cell9 = resultRow.createCell(9);
-						cell9.setCellValue(Double.valueOf(commentInfo.getCompleteReadRate()));
-						cell9.setCellStyle(rateCellStyle);
-						Cell cell10 = resultRow.createCell(10);
-						cell10.setCellValue(commentInfo.getCommentNum());
-						cell10.setCellStyle(cloneCellStyle);
+							Cell cell7 = resultRow.createCell(7);
+							String cell7Formula = "F" + excelRowNum + "/E" + excelRowNum;
+							cell7.setCellFormula(cell7Formula);
+							cell7.setCellStyle(rateCellStyle);
+							Cell cell8 = resultRow.createCell(8);
+							String cell8Formula = "G" + excelRowNum + "/F" + excelRowNum;
+							cell8.setCellFormula(cell8Formula);
+							cell8.setCellStyle(rateCellStyle);
+							Cell cell9 = resultRow.createCell(9);
+							cell9.setCellValue(Double.valueOf(commentInfo.getCompleteReadRate()));
+							cell9.setCellStyle(rateCellStyle);
+							Cell cell10 = resultRow.createCell(10);
+							cell10.setCellValue(commentInfo.getCommentNum());
+							cell10.setCellStyle(cloneCellStyle);
 
-						String groupValue = templateInfo.getGroup();
-						String cell12Value = "";
-						if (!groupStandard.equals(groupValue)) {
-							beginAndEnd.add(rowNum);
-							groupStandard = groupValue;
-							cell12Value = commentInfo.getUrl();
+							String groupValue = templateInfo.getGroup();
+							String cell12Value = "";
+							if (!groupStandard.equals(groupValue)) {
+								beginAndEnd.add(rowNum);
+								groupStandard = groupValue;
+								cell12Value = commentInfo.getUrl();
+							}
+							Cell cell12 = resultRow.createCell(12);
+							cell12.setCellValue(cell12Value);
 						}
-						Cell cell12 = resultRow.createCell(12);
-						cell12.setCellValue(cell12Value);
+
+
 					}
 					updateTextArea(ta, "写入结果数据文件完成！");
 					updateTextArea(ta, "开始合并数据文件中的单元格！");
@@ -1532,7 +1530,7 @@ public class GetCommentsNew implements Function {
 						for (int i = 0; i < summarySheet.getLastRowNum(); i++) {
 							Row summaryRow = summarySheet.getRow(i);
 							if (summaryRow != null && summaryRow.getCell(0) != null
-									&& StringUtils.isNotBlank(summaryRow.getCell(0).getStringCellValue())) {
+									&& StringUtils.isNotBlank(unit.getCellValue(summaryRow.getCell(0)))) {
 								continue;
 							}
 							startLine = i;
@@ -1566,12 +1564,12 @@ public class GetCommentsNew implements Function {
 										String cell8Formula = "G" + excelRowNum + "/F" + excelRowNum;
 										newCell.setCellFormula(cell8Formula);
 									} else if (j == 0 || j == 1 || j == 2 || j == 3 || j == 12 || j == 11) {
-										newCell.setCellValue(dataCell.getStringCellValue());
+										newCell.setCellValue(unit.getCellValue(dataCell));
 									} else {
 										newCell.setCellValue(dataCell.getNumericCellValue());
 									}
 								} else {
-									newCell.setCellValue(dataCell.getStringCellValue());
+									newCell.setCellValue(unit.getCellValue(dataCell));
 								}
 							}
 						}
@@ -1588,7 +1586,7 @@ public class GetCommentsNew implements Function {
 							cra.setFirstRow(newFirstRow);
 							cra.setLastRow(newLastRow);
 							summarySheet.addMergedRegion(cra);
-							if (!pushDate.equals(resultSheet.getRow(oldFirstRow).getCell(cra.getFirstColumn()).getStringCellValue())) {
+							if (!pushDate.equals(unit.getCellValue(resultSheet.getRow(oldFirstRow).getCell(cra.getFirstColumn())))) {
 								int[] be = new int[]{newFirstRow + 1, newLastRow + 1};
 								rangeBeginAndEnd.add(be);
 							}
@@ -1609,7 +1607,7 @@ public class GetCommentsNew implements Function {
 							if (!countFlag && (cell3 == null || !cell3.getCellType().equals(CellType.STRING))) {
 								continue;
 							}
-							if (cell3.getCellType().equals(CellType.STRING) && "推送时间".equals(cell3.getStringCellValue().trim())) {
+							if (cell3.getCellType().equals(CellType.STRING) && "推送时间".equals(unit.getCellValue(cell3).trim())) {
 								countFlag = true;
 								continue;
 							}

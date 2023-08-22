@@ -1075,7 +1075,7 @@ public class UrlConvert implements Function {
                                 continue;
                             }
 
-                            String sourceUrl = cell.getStringCellValue();
+                            String sourceUrl = unit.getCellValue(cell);
                             if (StringUtils.isEmpty(sourceUrl)) {
                                 continue;
                             }
@@ -1379,7 +1379,7 @@ public class UrlConvert implements Function {
             String value = noZeroBigDecimal.toPlainString();
             return String.valueOf(value);
         } else if (cell.getCellType() == CellType.FORMULA) {
-            return cell.getStringCellValue();
+            return unit.getCellValue(cell);
         } else {
             return "";
         }
@@ -1567,7 +1567,7 @@ public class UrlConvert implements Function {
                         if (titleCell == null || titleCell.getCellType().equals(CellType.BLANK)) {
                             continue;
                         }
-                        if ("链接转换明细".equals(titleCell.getStringCellValue().trim())) {
+                        if ("链接转换明细".equals(unit.getCellValue(titleCell).trim())) {
                             index = i;
                         }
                     }
@@ -1578,7 +1578,7 @@ public class UrlConvert implements Function {
                         return;
                     } else {
                         Cell titleCell = titleRow.getCell(index + 1);
-                        if (titleCell != null && "货号".equals(titleCell.getStringCellValue().trim())) {
+                        if (titleCell != null && "货号".equals(unit.getCellValue(titleCell).trim())) {
                             // 跳过
                             flag = false;
                         } else {
@@ -1606,7 +1606,7 @@ public class UrlConvert implements Function {
                         }
                         // 获取链接转换明细
                         Cell detailCel = row.getCell(index);
-                        String detail = detailCel.getStringCellValue();
+                        String detail = unit.getCellValue(detailCel);
                         int end = detail.length();
                         if (detail.contains("价格")) {
                             end = detail.indexOf("价格");
@@ -1707,7 +1707,7 @@ public class UrlConvert implements Function {
                 if (titleCell == null || titleCell.getCellType().equals(CellType.BLANK)) {
                     continue;
                 }
-                if ("链接转换明细".equals(titleCell.getStringCellValue().trim())) {
+                if ("链接转换明细".equals(unit.getCellValue(titleCell).trim())) {
                     index = i;
                 }
             }
@@ -1718,7 +1718,7 @@ public class UrlConvert implements Function {
                 return;
             } else {
                 Cell titleCell = titleRow.getCell(index + 1);
-                if (titleCell != null && "货号".equals(titleCell.getStringCellValue().trim())) {
+                if (titleCell != null && "货号".equals(unit.getCellValue(titleCell).trim())) {
                     // 跳过
                     flag = false;
                 } else {
@@ -1751,7 +1751,7 @@ public class UrlConvert implements Function {
                 }
                 // 获取链接转换明细
                 Cell detailCel = row.getCell(index);
-                String detail = detailCel.getStringCellValue();
+                String detail = unit.getCellValue(detailCel);
                 int end = detail.length();
                 if (detail.contains("价格")) {
                     end = detail.indexOf("价格");

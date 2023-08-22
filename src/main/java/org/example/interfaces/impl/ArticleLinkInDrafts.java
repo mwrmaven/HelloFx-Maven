@@ -294,10 +294,10 @@ public class ArticleLinkInDrafts implements Function {
 				if (cell == null) {
 					continue;
 				}
-				if ("组别".equals(cell.getStringCellValue().trim())) {
+				if ("组别".equals(unit.getCellValue(cell).trim())) {
 					groupIndex = i;
 				}
-				if ("位置".equals(cell.getStringCellValue().trim())) {
+				if ("位置".equals(unit.getCellValue(cell).trim())) {
 					positionIndex = i;
 				}
 			}
@@ -334,7 +334,7 @@ public class ArticleLinkInDrafts implements Function {
 				}
 
 				Cell cell = row.getCell(groupIndex);
-				String cellValue = cell.getStringCellValue().trim();
+				String cellValue = unit.getCellValue(cell).trim();
 				if (StringUtils.isNotBlank(cellValue)) {
 					// 给上一个组别结束行赋值
 					if (name != null) {
@@ -504,14 +504,14 @@ public class ArticleLinkInDrafts implements Function {
 		for (int i = 0; i <= titleRow.getLastCellNum(); i++) {
 			Cell cell = titleRow.getCell(i);
 			if (cell == null || cell.getCellType().equals(CellType.BLANK)
-					|| StringUtils.isBlank(cell.getStringCellValue())) {
+					|| StringUtils.isBlank(unit.getCellValue(cell))) {
 				continue;
 			}
-			if ("文章标题".equals(cell.getStringCellValue().trim())) {
+			if ("文章标题".equals(unit.getCellValue(cell).trim())) {
 				titleIndex = i;
 				continue;
 			}
-			if ("文章链接".equals(cell.getStringCellValue().trim())) {
+			if ("文章链接".equals(unit.getCellValue(cell).trim())) {
 				linkIndex = i;
 			}
 		}

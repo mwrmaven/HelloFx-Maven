@@ -259,7 +259,7 @@ public class GetComments implements Function {
 						if (latCell == null) {
 							continue;
 						}
-						if ("内容url".equals(titleRow.getCell(i).getStringCellValue())) {
+						if ("内容url".equals(unit.getCellValue(titleRow.getCell(i)))) {
 							lastNum = i;
 							titleCellStyle = titleRow.getCell(i).getCellStyle();
 							break;
@@ -289,7 +289,7 @@ public class GetComments implements Function {
 						if (lastCellOnRow == null) {
 							continue;
 						}
-						String contentUrl = lastCellOnRow.getStringCellValue();
+						String contentUrl = unit.getCellValue(lastCellOnRow);
 						CellStyle preCellStyle = row.getCell(lastNum).getCellStyle();
 						cell.setCellStyle(preCellStyle);
 						System.out.println("请求url为" + contentUrl);
@@ -317,15 +317,15 @@ public class GetComments implements Function {
 						updateTextArea(ta, "获取到公众号文章ID，并插入对应的评论数");
 						httpGet.releaseConnection();
 						// 将行数据放入到map中rigin
-						String articleTitle = row.getCell(0).getStringCellValue();
-						int pushPeople = Integer.parseInt(row.getCell(7).getStringCellValue());
+						String articleTitle = unit.getCellValue(row.getCell(0));
+						int pushPeople = Integer.parseInt(unit.getCellValue(row.getCell(7)));
 						CommentInfo info = CommentInfo.builder()
 								.title(articleTitle.trim())
-								.pushDate(row.getCell(1).getStringCellValue())
-								.allReadPeople(Integer.valueOf(row.getCell(2).getStringCellValue()))
-								.allSharePeople(Integer.valueOf(row.getCell(4).getStringCellValue()))
+								.pushDate(unit.getCellValue(row.getCell(1)))
+								.allReadPeople(Integer.valueOf(unit.getCellValue(row.getCell(2))))
+								.allSharePeople(Integer.valueOf(unit.getCellValue(row.getCell(4))))
 								.pushPeople(pushPeople)
-								.completeReadRate(row.getCell(14).getStringCellValue())
+								.completeReadRate(unit.getCellValue(row.getCell(14)))
 								.commentNum(commentNum)
 								.url(contentUrl)
 								.build();
@@ -378,7 +378,7 @@ public class GetComments implements Function {
 						if (cell == null || cell.getCellType().equals(CellType.BLANK)) {
 							continue;
 						}
-						String cellV = cell.getStringCellValue();
+						String cellV = unit.getCellValue(cell);
 						if ("文章标题".equals(cellV)) {
 							titleIndex = i;
 						} else if ("标题类型".equals(cellV)) {
@@ -395,16 +395,16 @@ public class GetComments implements Function {
 					for (int i = 2; i <= templateSheet.getLastRowNum(); i++) {
 						Row row = templateSheet.getRow(i);
 						if (row == null || row.getCell(titleIndex) == null
-								|| StringUtils.isBlank(row.getCell(titleIndex).getStringCellValue())) {
+								|| StringUtils.isBlank(unit.getCellValue(row.getCell(titleIndex)))) {
 							continue;
 						} else {
 							System.out.println(" i = " + i);
 							TemplateInfo info = TemplateInfo.builder()
-									.title(row.getCell(titleIndex).getStringCellValue().trim())
-									.titleType(row.getCell(titleTypeIndex).getStringCellValue())
+									.title(unit.getCellValue(row.getCell(titleIndex)).trim())
+									.titleType(unit.getCellValue(row.getCell(titleTypeIndex)))
 									.position(BigDecimal.valueOf(row.getCell(positionIndex).getNumericCellValue()).intValue())
 									.build();
-							String cell3Value = row.getCell(groupIndex).getStringCellValue();
+							String cell3Value = unit.getCellValue(row.getCell(groupIndex));
 							if (StringUtils.isNotBlank(cell3Value)) {
 								group = cell3Value;
 								flag = true;
@@ -599,7 +599,7 @@ public class GetComments implements Function {
 						for (int i = 0; i < summarySheet.getLastRowNum(); i++) {
 							Row summaryRow = summarySheet.getRow(i);
 							if (summaryRow != null && summaryRow.getCell(0) != null
-									&& StringUtils.isNotBlank(summaryRow.getCell(0).getStringCellValue())) {
+									&& StringUtils.isNotBlank(unit.getCellValue(summaryRow.getCell(0)))) {
 								continue;
 							}
 							startLine = i;
@@ -655,7 +655,7 @@ public class GetComments implements Function {
 							cra.setFirstRow(newFirstRow);
 							cra.setLastRow(newLastRow);
 							summarySheet.addMergedRegion(cra);
-							if (!pushDate.equals(resultSheet.getRow(oldFirstRow).getCell(cra.getFirstColumn()).getStringCellValue())) {
+							if (!pushDate.equals(unit.getCellValue(resultSheet.getRow(oldFirstRow).getCell(cra.getFirstColumn())))) {
 								int[] be = new int[]{newFirstRow + 1, newLastRow + 1};
 								rangeBeginAndEnd.add(be);
 							}
@@ -676,7 +676,7 @@ public class GetComments implements Function {
 							if (!countFlag && (cell3 == null || !cell3.getCellType().equals(CellType.STRING))) {
 								continue;
 							}
-							if (cell3.getCellType().equals(CellType.STRING) && "推送时间".equals(cell3.getStringCellValue().trim())) {
+							if (cell3.getCellType().equals(CellType.STRING) && "推送时间".equals(unit.getCellValue(cell3).trim())) {
 								countFlag = true;
 								continue;
 							}

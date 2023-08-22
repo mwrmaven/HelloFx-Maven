@@ -9,6 +9,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.example.entity.ArticleLink;
 import org.example.entity.TypeMapTitle;
+import org.example.util.Unit;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -27,6 +28,8 @@ import java.util.*;
  * @Date 2023/3/10 14:25
  */
 public class CreateArticle {
+
+    private static Unit unit = new Unit();
 
     public static void main(String[] args) {
         // 获取文件工具的路径
@@ -297,8 +300,8 @@ public class CreateArticle {
                     break;
                 }
                 Cell second = row.getCell(1);
-                String firstValue = first.getStringCellValue();
-                String secondValue = second == null ? "" : second.getStringCellValue();
+                String firstValue = unit.getCellValue(first);
+                String secondValue = second == null ? "" : unit.getCellValue(second);
                 typeAndTitle.put(firstValue, secondValue);
             }
 
@@ -315,8 +318,8 @@ public class CreateArticle {
                 if (second == null) {
                     break;
                 }
-                String firstValue = first.getStringCellValue();
-                String secondValue = second.getStringCellValue();
+                String firstValue = unit.getCellValue(first);
+                String secondValue = unit.getCellValue(second);
                 if (StringUtils.isBlank(secondValue)) {
                     break;
                 }

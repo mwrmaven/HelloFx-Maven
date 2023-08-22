@@ -372,7 +372,7 @@ public class GetCommentsInfo implements Function {
                     continue;
                 }
                 Cell urlCell = row.getCell(urlIndex);
-                urlAndName.put(urlCell.getStringCellValue(), titleCell.getStringCellValue());
+                urlAndName.put(unit.getCellValue(urlCell), unit.getCellValue(titleCell));
             }
 
             Sheet sheet = wb.createSheet();
