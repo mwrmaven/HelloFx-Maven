@@ -436,6 +436,13 @@ public class GetCommentsNew implements Function {
 		batchButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
+				// 查看端口是否被占用，如果被占用则先停掉端口再启动 区分 windows 和 mac ，命令行也是
+				boolean alive = SocketUtil.isAlive("127.0.0.1", 9527);
+				if (!alive) {
+					ta.setText("测试浏览器未启动，请点击上面的\"启动测试浏览器\"按钮，启动测试浏览器！");
+					return;
+				}
+
 				// 判断是草稿箱还是微信文章评论数
 				String functionName = ((RadioButton) conditon.getSelectedToggle()).getText();
 				Alert alert = new Alert(Alert.AlertType.NONE,
@@ -461,13 +468,6 @@ public class GetCommentsNew implements Function {
 					new Thread(new Runnable() {
 						@Override
 						public void run() {
-							// 查看端口是否被占用，如果被占用则先停掉端口再启动 区分 windows 和 mac ，命令行也是
-							boolean alive = SocketUtil.isAlive("127.0.0.1", 9527);
-							if (!alive) {
-								ta.setText("测试浏览器未启动，请点击上面的\"启动测试浏览器\"按钮，启动测试浏览器！");
-								return;
-							}
-
 							ta.setText("");
 							long start = System.currentTimeMillis();
 							// 获取模板文件路径
@@ -560,66 +560,66 @@ public class GetCommentsNew implements Function {
 
 							LocalDateTime timeFlag = LocalDateTime.parse(timeStamp, timestampDtf);
 							if (timeFlag.isBefore(LocalDateTime.now())) {
-								System.out.println("定时时间不可早于当前时间，建议至少定时为10分钟后");
-								updateTextArea(ta, "定时时间不可早于当前时间，建议至少定时为10分钟后");
-								return;
-							}
+								// 直接执行
+								GetCommentNumService service = new GetCommentNumService();
+								service.executeButton(ta, dataFile, template, summary, pageNum,
+										true, start, end, true, n1.getText());
+							} else {
+								// 生成定时任务
+								// 1、创建调度器
+								SchedulerFactory schedulerFactory = new StdSchedulerFactory();
+								Scheduler scheduler = null;
+								try {
+									scheduler = schedulerFactory.getScheduler();
+									// 添加定时任务使用到的参数
+									JobDataMap jobDataMap = new JobDataMap();
+									jobDataMap.put("ta", ta);
+									jobDataMap.put("dataFile", dataFile);
+									jobDataMap.put("template", template);
+									jobDataMap.put("summary", summary);
+									jobDataMap.put("pageNum", pageNum);
+									jobDataMap.put("dataStartTime", start);
+									jobDataMap.put("dataEndTime", end);
+									jobDataMap.put("sendMail", true);
+									jobDataMap.put("to", n1.getText());
+									// 添加参数
+									JobDetail jobDetail = JobBuilder.newJob(GetCommentNumService.class)
+											.withIdentity("myJob", "jobGroup")
+											.usingJobData(jobDataMap).build();
+									// 创建触发器
+									Trigger trigger = TriggerBuilder.newTrigger()
+											.withIdentity("myTrigger", "triggerGroup")
+											.withSchedule(CronScheduleBuilder.cronSchedule(timeUtil.cron(timeFlag)))
+											.build();
+									// 执行
+									scheduler.scheduleJob(jobDetail, trigger);
+									System.out.println("定时任务开始执行！");
+									updateTextArea(ta, "定时任务开始执行！");
+									scheduler.start();
 
-							// 生成定时任务
-							// 1、创建调度器
-							SchedulerFactory schedulerFactory = new StdSchedulerFactory();
-							Scheduler scheduler = null;
-							try {
-								scheduler = schedulerFactory.getScheduler();
-								// 添加定时任务使用到的参数
-								JobDataMap jobDataMap = new JobDataMap();
-								jobDataMap.put("ta", ta);
-								jobDataMap.put("dataFile", dataFile);
-								jobDataMap.put("template", template);
-								jobDataMap.put("summary", summary);
-								jobDataMap.put("pageNum", pageNum);
-								jobDataMap.put("dataStartTime", start);
-								jobDataMap.put("dataEndTime", end);
-								jobDataMap.put("sendMail", true);
-								jobDataMap.put("to", n1.getText());
-								// 添加参数
-								JobDetail jobDetail = JobBuilder.newJob(GetCommentNumService.class)
-										.withIdentity("myJob", "jobGroup")
-										.usingJobData(jobDataMap).build();
-								// 创建触发器
-								Trigger trigger = TriggerBuilder.newTrigger()
-										.withIdentity("myTrigger", "triggerGroup")
-										.withSchedule(CronScheduleBuilder.cronSchedule(timeUtil.cron(timeFlag)))
-										.build();
-								// 执行
-								scheduler.scheduleJob(jobDetail, trigger);
-								System.out.println("定时任务开始执行！");
-								updateTextArea(ta, "定时任务开始执行！");
-								scheduler.start();
+									// 计算定时任务时间到现在的时间，再加10分钟
+									LocalDateTime now = LocalDateTime.now();
+									Duration duration = Duration.between(now, timeFlag);
+									long millis = duration.toMillis();
 
-								// 计算定时任务时间到现在的时间，再加10分钟
-								LocalDateTime now = LocalDateTime.now();
-								Duration duration = Duration.between(now, timeFlag);
-								long millis = duration.toMillis();
-
-								// 睡眠等待
-								Thread.sleep(millis + (60 * 1000 * 3));
+									// 睡眠等待
+									Thread.sleep(millis + (60 * 1000 * 3));
 
 
-							} catch (Exception e) {
-								throw new RuntimeException(e);
-							} finally {
-								if (scheduler != null) {
-									// 停止
-									try {
-										scheduler.shutdown(true);
-										System.out.println("定时任务执行结束！");
-									} catch (Exception e) {
-										throw new RuntimeException(e);
+								} catch (Exception e) {
+									throw new RuntimeException(e);
+								} finally {
+									if (scheduler != null) {
+										// 停止
+										try {
+											scheduler.shutdown(true);
+											System.out.println("定时任务执行结束！");
+										} catch (Exception e) {
+											throw new RuntimeException(e);
+										}
 									}
 								}
 							}
-
 						}
 					}).start();
 

@@ -39,6 +39,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author mavenr
@@ -155,9 +156,6 @@ public class GetCommentNumService implements Job {
         }
         String realToken = token;
 
-//        updateTextArea(ta, "获取到cookie = " + realCookie);
-//        updateTextArea(ta, "获取到token = " + realToken);
-
         String url = "https://mp.weixin.qq.com/misc/appmsgcomment?action=get_unread_appmsg_comment&has_comment=0&sort_type=1&sendtype=MASSSEND&lang=zh_CN&f=json&ajax=1&token=";
         HttpClient client = HttpClients.createDefault();
         Map<String, Integer> commentsMap = new HashMap<>();
@@ -200,14 +198,8 @@ public class GetCommentNumService implements Job {
                     System.out.println("articleNum = " + articleNum);
                     updateTextArea(ta, "数据文件中的文章条数为：" + articleNum);
 
-                    // 请求评论数信息，这里的评论总数按数据文件excel中的文章条数计算
-                    int count = articleNum;
+                    // 每页的数据条数
                     int divisor = 10;
-
-//					int num = count / divisor;
-//					if (count % divisor > 0) {
-//						num++;
-//					}
                     int num = commentPageNum;
                     updateTextArea(ta, "开始请求所有文章的评论数！共 " + num + " 页");
                     System.out.println("开始请求所有文章的评论数！共 " + num + " 页");
@@ -313,9 +305,21 @@ public class GetCommentNumService implements Job {
                         }
                         updateTextArea(ta, "获取到公众号文章ID，并插入对应的评论数");
                         httpGet.releaseConnection();
-                        // 将行数据放入到map中rigin
+                        // 将行数据放入到map中
                         String articleTitle = unit.getCellValue(row.getCell(0));
                         int pushPeople = Integer.parseInt(unit.getCellValue(row.getCell(7)));
+                        // 根据url获取文章的排序
+                        Integer index = -1;
+                        String[] urlParams = contentUrl.split("&");
+                        for (String p : urlParams) {
+                            // 判断参数是否为 idx
+                            if (!p.startsWith("idx")) {
+                                continue;
+                            }
+                            // 获取idx=之后的数据
+                            index = Integer.valueOf(p.substring(p.indexOf("=") + 1));
+                            break;
+                        }
                         CommentInfo info = CommentInfo.builder()
                                 .title(articleTitle.trim())
                                 .pushDate(unit.getCellValue(row.getCell(1)))
@@ -325,6 +329,7 @@ public class GetCommentNumService implements Job {
                                 .completeReadRate(unit.getCellValue(row.getCell(14)))
                                 .commentNum(commentNum)
                                 .url(contentUrl)
+                                .index(index)
                                 .build();
                         Map<String, CommentInfo> temp = commentInfoMap.get(pushPeople);
                         if (temp == null) {
@@ -335,6 +340,18 @@ public class GetCommentNumService implements Job {
                             temp.put(articleTitle, info);
                         }
                     }
+                    // 数据文件中每个分组的顺序
+                    Map<Integer, List<String>> groupArtFromData = new HashMap<>();
+                    commentInfoMap.forEach((k, v) -> {
+                        List<String> titles = v.values().stream().sorted(new Comparator<CommentInfo>() {
+                            @Override
+                            public int compare(CommentInfo o1, CommentInfo o2) {
+                                // 升序
+                                return o1.getIndex() - o2.getIndex();
+                            }
+                        }).map(CommentInfo::getTitle).collect(Collectors.toList());
+                        groupArtFromData.put(k, titles);
+                    });
                     updateTextArea(ta, "实际共获取到公众号文章 " + urlCount + " 条！");
                     updateTextArea(ta, "数据文件的最后插入一列插入完成！");
 
@@ -388,6 +405,8 @@ public class GetCommentNumService implements Job {
                         }
                     }
 
+                    // 存储模板文件中每个分组的顺序
+                    Map<Integer, List<String>> groupArtFromTemp = new HashMap<>();
                     for (int i = 2; i <= templateSheet.getLastRowNum(); i++) {
                         Row row = templateSheet.getRow(i);
                         if (row == null || row.getCell(titleIndex) == null
@@ -410,6 +429,13 @@ public class GetCommentNumService implements Job {
                                 int cell5Value = BigDecimal.valueOf(row.getCell(peopleNumIndex).getNumericCellValue()).intValue();
                                 pushPeople = cell5Value;
                                 flag = false;
+                            }
+                            if (groupArtFromTemp.get(pushPeople) == null) {
+                                List<String> arts = new ArrayList<>();
+                                arts.add(info.getTitle());
+                                groupArtFromTemp.put(pushPeople, arts);
+                            } else {
+                                groupArtFromTemp.get(pushPeople).add(info.getTitle());
                             }
                             info.setGroup(group);
                             info.setPushDate(pushDate);
@@ -460,12 +486,15 @@ public class GetCommentNumService implements Job {
                         // 设置行高 22
                         resultRow.setHeightInPoints(22);
                         TemplateInfo templateInfo = baseList.get(i);
-                        // 险判断推送人数
+                        // 先判断推送人数
                         int tpush = templateInfo.getPushPeople();
+                        // 获取模板文件中的文章顺序
+                        List<String> templateArtsByGroup = groupArtFromTemp.get(tpush);
                         int key = -1;
                         int min = 1000000000;
                         for (Integer k : pushPeopleKeys) {
-                            if (Math.abs(tpush - k) < min) {
+                            List<String> dataArtsByGroup = groupArtFromData.get(k);
+                            if (Math.abs(tpush - k) < min && templateArtsByGroup.equals(dataArtsByGroup)) {
                                 key = k;
                                 min = Math.abs(tpush - k);
                             }

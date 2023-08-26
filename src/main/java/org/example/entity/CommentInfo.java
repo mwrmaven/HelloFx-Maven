@@ -55,4 +55,9 @@ public class CommentInfo {
      */
     private String url;
 
+    /**
+     * 文章顺序
+     */
+    private Integer index;
+
 }
