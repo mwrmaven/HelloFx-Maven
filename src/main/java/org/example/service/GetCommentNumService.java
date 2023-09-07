@@ -125,7 +125,7 @@ public class GetCommentNumService implements Job {
             String[] second = split[2].split(" ");
             sb.append("当前驱动版本为：").append(first[first.length - 1]).append("\n");
             sb.append("当前浏览器版本为：").append(second[second.length - 1]).append("\n");
-            sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html");
+            sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html 或 https://googlechromelabs.github.io/chrome-for-testing/");
             updateTextArea(ta, sb.toString());
             return;
         }
