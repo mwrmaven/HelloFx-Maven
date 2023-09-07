@@ -685,6 +685,10 @@ public class GetCommentsNew implements Function {
 					break;
 				}
 				Row row = sheet.getRow(i);
+				if (row == null) {
+					// 空行表示读取结束
+					break;
+				}
 				// 判断位置列是否为空，为空则也结束
 				Cell positionCell = row.getCell(positionIndex);
 				if (positionCell == null || positionCell.getCellType().equals(CellType.BLANK)) {
@@ -1554,6 +1558,9 @@ public class GetCommentsNew implements Function {
 							// 获取数据文件的行
 							Row newRow = summarySheet.createRow(startLine + i);
 							Row dataRow = resultSheet.getRow(i);
+							if (dataRow == null) {
+								continue;
+							}
 							newRow.setHeightInPoints(dataRow.getHeightInPoints());
 							for (int j = 0; j <= 12; j++) {
 								Cell newCell = newRow.createCell(j);
