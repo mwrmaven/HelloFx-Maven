@@ -176,7 +176,8 @@ public class GetCommentNumService implements Job {
                     System.out.println("请求数据文件地址：" + downloadDataUrl);
 //                    updateTextArea(ta, "请求数据文件地址：" + downloadDataUrl);
                     // 下载
-                    String downloadPath= DownloadImageToFileByUrl.download(downloadDataUrl, currentPath, "dataFile.xls", null, realCookie);
+                    String targetPath = templateFilePath.substring(0, templateFilePath.lastIndexOf(File.separator));
+                    String downloadPath= DownloadImageToFileByUrl.download(downloadDataUrl, targetPath, "dataFile.xls", null, realCookie);
                     System.out.println("下载的数据文件路径为：" + downloadPath);
                     updateTextArea(ta, "下载的数据文件路径为：" + downloadPath);
                     dataFilePath = downloadPath;
