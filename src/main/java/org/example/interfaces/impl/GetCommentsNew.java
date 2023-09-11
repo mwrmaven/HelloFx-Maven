@@ -55,6 +55,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -190,19 +191,17 @@ public class GetCommentsNew implements Function {
 
 		// 以下添加单选
 		RadioButton draft = new RadioButton("草稿箱链接");
-		RadioButton comments = new RadioButton("微信文章评论数");
 		RadioButton timeComments = new RadioButton("定时获取微信文章评论数");
 		ToggleGroup conditon = new ToggleGroup();
 		// 单选设为同组
 		draft.setToggleGroup(conditon);
 		draft.setSelected(true);
-		comments.setToggleGroup(conditon);
 		timeComments.setToggleGroup(conditon);
 
 		HBox radio = new HBox();
 		radio.setAlignment(Pos.CENTER_LEFT);
 		radio.setSpacing(10);
-		radio.getChildren().addAll(draft, comments, timeComments);
+		radio.getChildren().addAll(draft, timeComments);
 
 		// 第一行，获取模板文件
 		HBox line1 = new HBox();
@@ -264,6 +263,11 @@ public class GetCommentsNew implements Function {
 			}
 		});
 
+		// 当天日期
+		LocalDate nowDay = LocalDate.now();
+		// 当前时间
+		LocalTime nowTime = LocalTime.now();
+
 		// 下载文件的开始日期和结束日期
 		HBox dataTimeHbox = new HBox();
 		dataTimeHbox.setAlignment(Pos.CENTER_LEFT);
@@ -273,14 +277,16 @@ public class GetCommentsNew implements Function {
 		DatePicker startDatePicker = new DatePicker();
 		Label labelEndTime = new Label("结束时间：");
 		DatePicker endDatePicker = new DatePicker();
+		endDatePicker.setValue(nowDay);
 		dataTimeHbox.getChildren().addAll(labelStartTime, startDatePicker, labelEndTime, endDatePicker);
 
 		// 定时时间设置
 		HBox timeHbox = new HBox();
 		timeHbox.setAlignment(Pos.CENTER_LEFT);
 		timeHbox.setSpacing(10);
-		Label labelTime = new Label("请选择定时任务执行时间：日期：");
+		Label labelTime = new Label("请选择定时任务执行时间（如果设置为当前时间之前，则立即执行）：日期：");
 		DatePicker timeFirst = new DatePicker();
+		timeFirst.setValue(nowDay);
 		Label labelTimeAppend = new Label("时间：");
 		ComboBox<String> hComb = new ComboBox<>();
 		for (int i = 0; i < 25; i++) {
@@ -290,7 +296,7 @@ public class GetCommentsNew implements Function {
 			}
 			hComb.getItems().add(hTime);
 		}
-		hComb.getSelectionModel().select(11);
+		hComb.getSelectionModel().select(nowTime.getHour());
 		ComboBox<String> mComb = new ComboBox<>();
 		for (int i = 0; i < 60; i++) {
 			String mTime = String.valueOf(i);
@@ -299,7 +305,7 @@ public class GetCommentsNew implements Function {
 			}
 			mComb.getItems().add(mTime);
 		}
-		mComb.getSelectionModel().select(0);
+		mComb.getSelectionModel().select(nowTime.getMinute());
 		timeHbox.getChildren().addAll(labelTime, timeFirst, labelTimeAppend, hComb, mComb);
 
 		// 发送的目标邮件的地址，多个以英文;分隔
@@ -383,7 +389,7 @@ public class GetCommentsNew implements Function {
 			public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
 				String text = ((RadioButton) newValue).getText();
 				ta.setText("");
-				if (text.equals(draft.getText()) || text.equals(comments.getText())) {
+				if (text.equals(draft.getText())) {
 					// 草稿箱链接、微信文章评论数，移除 hiddenVbox
 					if (vBox.getChildren().contains(hiddenVbox)) {
 						vBox.getChildren().remove(hiddenVbox);
@@ -400,19 +406,14 @@ public class GetCommentsNew implements Function {
 					if (vBox.getChildren().contains(hiddenFilePath)) {
 						vBox.getChildren().remove(hiddenFilePath);
 					}
-				} else if (text.equals(timeComments.getText()) || text.equals(comments.getText())) {
+				} else if (text.equals(timeComments.getText())) {
 					// 微信文章评论数、定时获取微信文章评论数，添加 hiddenFilePath
 					if (!vBox.getChildren().contains(hiddenFilePath)) {
 						vBox.getChildren().add(vBox.getChildren().indexOf(line1) + 1, hiddenFilePath);
 					}
 				}
 
-				if (text.equals(comments.getText())) {
-					// 微信文章评论数中添加 数据文件选项
-					if (!hiddenFilePath.getChildren().contains(line1Next)) {
-						hiddenFilePath.getChildren().add(0, line1Next);
-					}
-				} else if (text.equals(timeComments.getText())) {
+				if (text.equals(timeComments.getText())) {
 					// 定时获取微信文章评论数中移除 数据文件选项
 					if (hiddenFilePath.getChildren().contains(line1Next)) {
 						hiddenFilePath.getChildren().remove(line1Next);
@@ -597,7 +598,7 @@ public class GetCommentsNew implements Function {
 									updateTextArea(ta, "定时任务开始执行！");
 									scheduler.start();
 
-									// 计算定时任务时间到现在的时间，再加10分钟
+									// 计算定时任务时间到现在的时间，再加3分钟
 									LocalDateTime now = LocalDateTime.now();
 									Duration duration = Duration.between(now, timeFlag);
 									long millis = duration.toMillis();
