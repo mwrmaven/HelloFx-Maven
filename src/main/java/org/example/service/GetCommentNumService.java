@@ -174,7 +174,7 @@ public class GetCommentNumService implements Job {
                             "&lang=zh_CN";
 
                     System.out.println("请求数据文件地址：" + downloadDataUrl);
-//                    updateTextArea(ta, "请求数据文件地址：" + downloadDataUrl);
+                    updateTextArea(ta, "请求数据文件地址：" + downloadDataUrl);
                     // 下载
                     String targetPath = templateFilePath.substring(0, templateFilePath.lastIndexOf(File.separator));
                     String downloadPath= DownloadImageToFileByUrl.download(downloadDataUrl, targetPath, "dataFile.xls", null, realCookie);
@@ -807,6 +807,9 @@ public class GetCommentNumService implements Job {
                         } catch (IOException se) {
                             se.printStackTrace();
                         }
+                    }
+                    if (e.getMessage().contains("timed out")) {
+                        updateTextArea(ta, "请求连接超时，请重新开始处理！");
                     }
                     e.printStackTrace();
                 } finally {
