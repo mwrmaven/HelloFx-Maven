@@ -123,7 +123,7 @@ public class ArticleLinkInDrafts implements Function {
 
 		// 提示信息
 		HBox tips = new HBox();
-		Label label = new Label("请点击按钮启动测试浏览器，然后在测试浏览器中输入草稿箱地址，如果需要登陆则先扫码登陆");
+		Label label = new Label("请点击按钮启动测试浏览器，然后登陆公众号平台（注意：只能登陆一个公众号平台）");
 		label.setStyle("-fx-text-fill: red; -fx-font-size: 20");
 		tips.getChildren().add(label);
 

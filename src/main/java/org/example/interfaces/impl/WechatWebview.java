@@ -18,9 +18,6 @@ import javafx.stage.Stage;
 import org.example.button.BatchButton;
 import org.example.interfaces.Function;
 import org.example.util.Unit;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.html.HTMLInputElement;
 
 import java.util.List;
 

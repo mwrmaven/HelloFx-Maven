@@ -17,8 +17,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.DefaultIndexedColorMap;
-import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.example.entity.CommentInfo;
 import org.example.entity.TemplateInfo;
@@ -125,7 +123,7 @@ public class GetCommentNumService implements Job {
             String[] second = split[2].split(" ");
             sb.append("当前驱动版本为：").append(first[first.length - 1]).append("\n");
             sb.append("当前浏览器版本为：").append(second[second.length - 1]).append("\n");
-            sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html");
+            sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html 或 https://googlechromelabs.github.io/chrome-for-testing/");
             updateTextArea(ta, sb.toString());
             return;
         }
@@ -174,9 +172,10 @@ public class GetCommentNumService implements Job {
                             "&lang=zh_CN";
 
                     System.out.println("请求数据文件地址：" + downloadDataUrl);
-//                    updateTextArea(ta, "请求数据文件地址：" + downloadDataUrl);
+                    updateTextArea(ta, "请求数据文件地址：" + downloadDataUrl);
                     // 下载
-                    String downloadPath= DownloadImageToFileByUrl.download(downloadDataUrl, currentPath, "dataFile.xls", null, realCookie);
+                    String targetPath = templateFilePath.substring(0, templateFilePath.lastIndexOf(File.separator));
+                    String downloadPath= DownloadImageToFileByUrl.download(downloadDataUrl, targetPath, "dataFile.xls", null, realCookie);
                     System.out.println("下载的数据文件路径为：" + downloadPath);
                     updateTextArea(ta, "下载的数据文件路径为：" + downloadPath);
                     dataFilePath = downloadPath;
@@ -806,6 +805,9 @@ public class GetCommentNumService implements Job {
                         } catch (IOException se) {
                             se.printStackTrace();
                         }
+                    }
+                    if (e.getMessage().contains("timed out")) {
+                        updateTextArea(ta, "请求连接超时，请重新开始处理！");
                     }
                     e.printStackTrace();
                 } finally {

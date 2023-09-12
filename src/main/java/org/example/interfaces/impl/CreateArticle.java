@@ -7,7 +7,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.example.entity.ArticleLink;
 import org.example.entity.TypeMapTitle;
 import org.example.util.Unit;
 import org.openqa.selenium.By;

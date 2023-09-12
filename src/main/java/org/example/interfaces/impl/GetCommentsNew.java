@@ -55,6 +55,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -179,7 +180,7 @@ public class GetCommentsNew implements Function {
 
 		// 提示信息
 		HBox tips = new HBox();
-		Label label = new Label("请点击按钮启动测试浏览器，然后在测试浏览器中输入草稿箱地址，如果需要登陆则先扫码登陆");
+		Label label = new Label("请点击按钮启动测试浏览器，然后登陆公众号平台（注意：只能登陆一个公众号平台）");
 		label.setStyle("-fx-text-fill: red; -fx-font-size: 20");
 		tips.getChildren().add(label);
 
@@ -190,19 +191,17 @@ public class GetCommentsNew implements Function {
 
 		// 以下添加单选
 		RadioButton draft = new RadioButton("草稿箱链接");
-		RadioButton comments = new RadioButton("微信文章评论数");
 		RadioButton timeComments = new RadioButton("定时获取微信文章评论数");
 		ToggleGroup conditon = new ToggleGroup();
 		// 单选设为同组
 		draft.setToggleGroup(conditon);
 		draft.setSelected(true);
-		comments.setToggleGroup(conditon);
 		timeComments.setToggleGroup(conditon);
 
 		HBox radio = new HBox();
 		radio.setAlignment(Pos.CENTER_LEFT);
 		radio.setSpacing(10);
-		radio.getChildren().addAll(draft, comments, timeComments);
+		radio.getChildren().addAll(draft, timeComments);
 
 		// 第一行，获取模板文件
 		HBox line1 = new HBox();
@@ -264,6 +263,11 @@ public class GetCommentsNew implements Function {
 			}
 		});
 
+		// 当天日期
+		LocalDate nowDay = LocalDate.now();
+		// 当前时间
+		LocalTime nowTime = LocalTime.now();
+
 		// 下载文件的开始日期和结束日期
 		HBox dataTimeHbox = new HBox();
 		dataTimeHbox.setAlignment(Pos.CENTER_LEFT);
@@ -273,14 +277,16 @@ public class GetCommentsNew implements Function {
 		DatePicker startDatePicker = new DatePicker();
 		Label labelEndTime = new Label("结束时间：");
 		DatePicker endDatePicker = new DatePicker();
+		endDatePicker.setValue(nowDay);
 		dataTimeHbox.getChildren().addAll(labelStartTime, startDatePicker, labelEndTime, endDatePicker);
 
 		// 定时时间设置
 		HBox timeHbox = new HBox();
 		timeHbox.setAlignment(Pos.CENTER_LEFT);
 		timeHbox.setSpacing(10);
-		Label labelTime = new Label("请选择定时任务执行时间：日期：");
+		Label labelTime = new Label("请选择定时任务执行时间（如果设置为当前时间之前，则立即执行）：日期：");
 		DatePicker timeFirst = new DatePicker();
+		timeFirst.setValue(nowDay);
 		Label labelTimeAppend = new Label("时间：");
 		ComboBox<String> hComb = new ComboBox<>();
 		for (int i = 0; i < 25; i++) {
@@ -290,7 +296,7 @@ public class GetCommentsNew implements Function {
 			}
 			hComb.getItems().add(hTime);
 		}
-		hComb.getSelectionModel().select(11);
+		hComb.getSelectionModel().select(nowTime.getHour());
 		ComboBox<String> mComb = new ComboBox<>();
 		for (int i = 0; i < 60; i++) {
 			String mTime = String.valueOf(i);
@@ -299,7 +305,7 @@ public class GetCommentsNew implements Function {
 			}
 			mComb.getItems().add(mTime);
 		}
-		mComb.getSelectionModel().select(0);
+		mComb.getSelectionModel().select(nowTime.getMinute());
 		timeHbox.getChildren().addAll(labelTime, timeFirst, labelTimeAppend, hComb, mComb);
 
 		// 发送的目标邮件的地址，多个以英文;分隔
@@ -383,7 +389,7 @@ public class GetCommentsNew implements Function {
 			public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
 				String text = ((RadioButton) newValue).getText();
 				ta.setText("");
-				if (text.equals(draft.getText()) || text.equals(comments.getText())) {
+				if (text.equals(draft.getText())) {
 					// 草稿箱链接、微信文章评论数，移除 hiddenVbox
 					if (vBox.getChildren().contains(hiddenVbox)) {
 						vBox.getChildren().remove(hiddenVbox);
@@ -400,19 +406,14 @@ public class GetCommentsNew implements Function {
 					if (vBox.getChildren().contains(hiddenFilePath)) {
 						vBox.getChildren().remove(hiddenFilePath);
 					}
-				} else if (text.equals(timeComments.getText()) || text.equals(comments.getText())) {
+				} else if (text.equals(timeComments.getText())) {
 					// 微信文章评论数、定时获取微信文章评论数，添加 hiddenFilePath
 					if (!vBox.getChildren().contains(hiddenFilePath)) {
 						vBox.getChildren().add(vBox.getChildren().indexOf(line1) + 1, hiddenFilePath);
 					}
 				}
 
-				if (text.equals(comments.getText())) {
-					// 微信文章评论数中添加 数据文件选项
-					if (!hiddenFilePath.getChildren().contains(line1Next)) {
-						hiddenFilePath.getChildren().add(0, line1Next);
-					}
-				} else if (text.equals(timeComments.getText())) {
+				if (text.equals(timeComments.getText())) {
 					// 定时获取微信文章评论数中移除 数据文件选项
 					if (hiddenFilePath.getChildren().contains(line1Next)) {
 						hiddenFilePath.getChildren().remove(line1Next);
@@ -597,7 +598,7 @@ public class GetCommentsNew implements Function {
 									updateTextArea(ta, "定时任务开始执行！");
 									scheduler.start();
 
-									// 计算定时任务时间到现在的时间，再加10分钟
+									// 计算定时任务时间到现在的时间，再加3分钟
 									LocalDateTime now = LocalDateTime.now();
 									Duration duration = Duration.between(now, timeFlag);
 									long millis = duration.toMillis();
@@ -685,6 +686,10 @@ public class GetCommentsNew implements Function {
 					break;
 				}
 				Row row = sheet.getRow(i);
+				if (row == null) {
+					// 空行表示读取结束
+					break;
+				}
 				// 判断位置列是否为空，为空则也结束
 				Cell positionCell = row.getCell(positionIndex);
 				if (positionCell == null || positionCell.getCellType().equals(CellType.BLANK)) {
@@ -757,7 +762,7 @@ public class GetCommentsNew implements Function {
 			String[] second = split[2].split(" ");
 			sb.append("当前驱动版本为：").append(first[first.length - 1]).append("\n");
 			sb.append("当前浏览器版本为：").append(second[second.length - 1]).append("\n");
-			sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html");
+			sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html 或 https://googlechromelabs.github.io/chrome-for-testing/");
 			updateTextArea(ta, sb.toString());
 			return;
 		}
@@ -1063,7 +1068,7 @@ public class GetCommentsNew implements Function {
 			String[] second = split[2].split(" ");
 			sb.append("当前驱动版本为：").append(first[first.length - 1]).append("\n");
 			sb.append("当前浏览器版本为：").append(second[second.length - 1]).append("\n");
-			sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html");
+			sb.append("请下载与浏览器版本相对应的驱动，并将驱动放置到该工具所在目录，下载网址：https://chromedriver.storage.googleapis.com/index.html 或 https://googlechromelabs.github.io/chrome-for-testing/");
 			updateTextArea(ta, sb.toString());
 			return;
 		}
@@ -1554,6 +1559,9 @@ public class GetCommentsNew implements Function {
 							// 获取数据文件的行
 							Row newRow = summarySheet.createRow(startLine + i);
 							Row dataRow = resultSheet.getRow(i);
+							if (dataRow == null) {
+								continue;
+							}
 							newRow.setHeightInPoints(dataRow.getHeightInPoints());
 							for (int j = 0; j <= 12; j++) {
 								Cell newCell = newRow.createCell(j);
