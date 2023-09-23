@@ -8,6 +8,7 @@ import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
@@ -144,6 +145,7 @@ public class GetCommentNumService implements Job {
         String realCookie = ck.substring(0, ck.length() - 2);
         // 获取token
         String currentUrl = driver.getCurrentUrl();
+        updateTextArea(ta, "当前网页地址：" + currentUrl);
         String[] split = currentUrl.split("&");
         String token = null;
         for (String s : split) {
@@ -153,6 +155,8 @@ public class GetCommentNumService implements Job {
             }
         }
         String realToken = token;
+
+        updateTextArea(ta, "获取的token：" + realToken);
 
         String url = "https://mp.weixin.qq.com/misc/appmsgcomment?action=get_unread_appmsg_comment&has_comment=0&sort_type=1&sendtype=MASSSEND&lang=zh_CN&f=json&ajax=1&token=";
         HttpClient client = HttpClients.createDefault();
@@ -491,6 +495,9 @@ public class GetCommentNumService implements Job {
                         List<String> templateArtsByGroup = groupArtFromTemp.get(tpush);
                         int key = -1;
                         int min = 1000000000;
+                        String tTitle = templateInfo.getTitle();
+                        updateTextArea(ta, "开始匹配模板文件中：" + tTitle + "的推送人数：" + tpush);
+                        updateTextArea(ta, "模板文件中的文章顺序：" + String.join(",", templateArtsByGroup));
                         for (Integer k : pushPeopleKeys) {
                             List<String> dataArtsByGroup = groupArtFromData.get(k);
                             if (Math.abs(tpush - k) < min && templateArtsByGroup.equals(dataArtsByGroup)) {
@@ -498,6 +505,7 @@ public class GetCommentNumService implements Job {
                                 min = Math.abs(tpush - k);
                             }
                         }
+                        updateTextArea(ta, "匹配到数据文件中的实际推送人数：" + key);
 
                         if (key < 1000000 && templateInfo.isFirst()) {
                             cloneCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -508,7 +516,6 @@ public class GetCommentNumService implements Job {
                         CellStyle leftCellStyle = dataWb.createCellStyle();
                         leftCellStyle.cloneStyleFrom(cloneCellStyle);
                         leftCellStyle.setBorderLeft(BorderStyle.MEDIUM);
-                        String tTitle = templateInfo.getTitle();
                         cell0.setCellValue(tTitle);
                         cell0.setCellStyle(leftCellStyle);
                         Cell cell1 = resultRow.createCell(1);
@@ -537,7 +544,11 @@ public class GetCommentNumService implements Job {
 
                         int excelRowNum = rowNum + 1;
                         // 获取map中的评论信息
-                        CommentInfo commentInfo = commentInfoMap.get(key).get(tTitle);
+                        Map<String, CommentInfo> stringCommentInfoMap = commentInfoMap.get(key);
+                        if (stringCommentInfoMap == null || stringCommentInfoMap.isEmpty()) {
+                            updateTextArea(ta, "未匹配到送达人数：" + key + " 的评论信息！");
+                        }
+                        CommentInfo commentInfo = stringCommentInfoMap.get(tTitle);
                         if (commentInfo == null) {
                             updateTextArea(ta, "未匹配到送达人数：" + key + "，文章标题：" + tTitle + " 的评论信息！");
                         } else {
@@ -792,6 +803,7 @@ public class GetCommentNumService implements Job {
                         }
                     }
                 } catch (Exception e) {
+                    System.out.println(e.getMessage());
                     if (dataWb != null) {
                         try {
                             dataWb.close();
@@ -806,9 +818,9 @@ public class GetCommentNumService implements Job {
                             se.printStackTrace();
                         }
                     }
-                    if (e.getMessage().contains("timed out")) {
-                        updateTextArea(ta, "请求连接超时，请重新开始处理！");
-                    }
+//                    if (e.getMessage().contains("timed out")) {
+//                        updateTextArea(ta, "请求连接超时，请重新开始处理！");
+//                    }
                     e.printStackTrace();
                 } finally {
                     if (dataWb != null) {
