@@ -73,10 +73,17 @@ public class GetCommentNumService implements Job {
         String dataEndTime = jobDataMap.getString("dataEndTime");
         boolean sendMail = jobDataMap.getBoolean("sendMail");
         String to = jobDataMap.getString("to");
-
-        // 执行实际逻辑
-        executeButton(ta, dataFile, template, summaryDataFile, commentPageNum,
-                true, dataStartTime, dataEndTime, sendMail, to);
+        // 获取数据文件路径
+        String dataFilePath = ((TextField) dataFile.get(1)).getText();
+        if (StringUtils.isNotBlank(dataFilePath)) {
+            // 执行实际逻辑
+            executeButton(ta, dataFile, template, summaryDataFile, commentPageNum,
+                    false, dataStartTime, dataEndTime, sendMail, to);
+        } else {
+            // 执行实际逻辑
+            executeButton(ta, dataFile, template, summaryDataFile, commentPageNum,
+                    true, dataStartTime, dataEndTime, sendMail, to);
+        }
     }
 
     /**
@@ -180,6 +187,11 @@ public class GetCommentNumService implements Job {
                     // 下载
                     String targetPath = templateFilePath.substring(0, templateFilePath.lastIndexOf(File.separator));
                     String downloadPath= DownloadImageToFileByUrl.download(downloadDataUrl, targetPath, "dataFile.xls", null, realCookie);
+                    if (downloadPath.endsWith("dataFile.xls")) {
+                        System.out.println("数据文件下载失败，请确认浏览器中只有一个公众号平台，且网页登录未过期（刷新网页）");
+                        updateTextArea(ta, "数据文件下载失败，请确认浏览器中只有一个公众号平台，且网页登录未过期（刷新网页）");
+                        return;
+                    }
                     System.out.println("下载的数据文件路径为：" + downloadPath);
                     updateTextArea(ta, "下载的数据文件路径为：" + downloadPath);
                     dataFilePath = downloadPath;
