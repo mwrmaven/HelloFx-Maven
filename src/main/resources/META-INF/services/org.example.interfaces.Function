@@ -8,3 +8,4 @@ org.example.interfaces.impl.GenerateText
 org.example.interfaces.impl.ReplacePane
 org.example.interfaces.impl.IncreaseIdentificationPane
 org.example.interfaces.impl.SortTextLine
+org.example.interfaces.impl.ScreenShotAndReadQRCode
