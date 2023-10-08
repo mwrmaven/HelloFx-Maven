@@ -3,6 +3,7 @@ org.example.interfaces.impl.GetCommentsNew
 org.example.interfaces.impl.ReplaceArticle
 org.example.interfaces.impl.GetCommentsInfo
 org.example.interfaces.impl.DownLoadMediaFromArticle
+org.example.interfaces.impl.ScreenShotAndReadQRCode
 org.example.interfaces.impl.FileCompare
 org.example.interfaces.impl.GenerateText
 org.example.interfaces.impl.ReplacePane

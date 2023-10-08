@@ -51,6 +51,14 @@ public class BatchButton {
 
     /**
      *
+     * @param text
+     */
+    public BatchButton(String text) {
+        this.text = text;
+    }
+
+    /**
+     *
      * @param text 按钮上的显示文本
      * @param wight 按钮宽度
      * @param height 按钮高度

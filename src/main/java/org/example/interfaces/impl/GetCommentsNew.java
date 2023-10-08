@@ -216,9 +216,14 @@ public class GetCommentsNew implements Function {
 		line1Next.setAlignment(Pos.CENTER_LEFT);
 		line1Next.setSpacing(10);
 		List<Node> dataFile = unit.chooseFile(stage, width, "数据文件");
-		for (Node n : dataFile) {
+		for (int i = 0; i < dataFile.size(); i++) {
+			Node n = dataFile.get(i);
 			line1Next.getChildren().add(n);
+			if (i == 1) {
+				((TextField) n).setPromptText("使用自动下载数据文件时，该项可以不选择");
+			}
 		}
+
 
 		HBox line1Next1 = new HBox();
 		line1Next1.setAlignment(Pos.CENTER_LEFT);
@@ -272,7 +277,7 @@ public class GetCommentsNew implements Function {
 		HBox dataTimeHbox = new HBox();
 		dataTimeHbox.setAlignment(Pos.CENTER_LEFT);
 		dataTimeHbox.setSpacing(10);
-		Label labelDataTime = new Label("请选择下载数据文件的开始和结束时间（注意开始时间要在发文之前）：");
+		Label labelDataTime = new Label("请选择自动下载数据文件的开始和结束时间（注意开始时间要在发文之前）：");
 		Label labelStartTime = new Label("开始时间：");
 		DatePicker startDatePicker = new DatePicker();
 		Label labelEndTime = new Label("结束时间：");
@@ -361,7 +366,7 @@ public class GetCommentsNew implements Function {
 		// 在切换到草稿箱链接时，隐藏该部分
 		VBox hiddenFilePath = new VBox();
 		hiddenFilePath.setSpacing(10);
-		hiddenFilePath.getChildren().addAll(line1Next, line1Next1, commentPageNumLine);
+		hiddenFilePath.getChildren().addAll(line1Next1, line1Next, commentPageNumLine);
 
 		HBox line3 = new HBox();
 		line3.setAlignment(Pos.CENTER_LEFT);
@@ -413,12 +418,12 @@ public class GetCommentsNew implements Function {
 					}
 				}
 
-				if (text.equals(timeComments.getText())) {
-					// 定时获取微信文章评论数中移除 数据文件选项
-					if (hiddenFilePath.getChildren().contains(line1Next)) {
-						hiddenFilePath.getChildren().remove(line1Next);
-					}
-				}
+//				if (text.equals(timeComments.getText())) {
+//					// 定时获取微信文章评论数中移除 数据文件选项
+//					if (hiddenFilePath.getChildren().contains(line1Next)) {
+//						hiddenFilePath.getChildren().remove(line1Next);
+//					}
+//				}
 			}
 		});
 
@@ -535,21 +540,29 @@ public class GetCommentsNew implements Function {
 								updateTextArea(ta, "请选择汇总文件");
 								return;
 							}
-							// 获取开始时间和结束时间
-							LocalDate startDate = startDatePicker.getValue();
-							LocalDate endDate = endDatePicker.getValue();
-							if (startDate == null || endDate == null) {
-								updateTextArea(ta, "请选择下载数据文件的开始时间和结束时间");
-								return;
+							// 获取数据文件路径
+							String dataFilePath = ((TextField) dataFile.get(1)).getText();
+							String start = null;
+							String end = null;
+							if (StringUtils.isNotBlank(dataFilePath)) {
+								updateTextArea(ta, "数据文件路径：" + dataFilePath);
+							} else {
+								// 获取开始时间和结束时间
+								LocalDate startDate = startDatePicker.getValue();
+								LocalDate endDate = endDatePicker.getValue();
+								if (startDate == null || endDate == null) {
+									updateTextArea(ta, "请选择下载数据文件的开始时间和结束时间");
+									return;
+								}
+								if (startDate.isAfter(endDate)) {
+									updateTextArea(ta, "结束时间需大于等于开始时间");
+									return;
+								}
+								start = startDate.format(dtf);
+								end = endDate.format(dtf);
+								System.out.println("开始时间：" + start + "; 结束时间：" + end);
+								updateTextArea(ta, "开始时间：" + start + "; 结束时间：" + end);
 							}
-							if (startDate.isAfter(endDate)) {
-								updateTextArea(ta, "结束时间需大于等于开始时间");
-								return;
-							}
-							String start = startDate.format(dtf);
-							String end = endDate.format(dtf);
-							System.out.println("开始时间：" + start + "; 结束时间：" + end);
-							updateTextArea(ta, "开始时间：" + start + "; 结束时间：" + end);
 
 							// 定时时间
 							LocalDate timeDate = timeFirst.getValue();
@@ -563,8 +576,13 @@ public class GetCommentsNew implements Function {
 							if (timeFlag.isBefore(LocalDateTime.now())) {
 								// 直接执行
 								GetCommentNumService service = new GetCommentNumService();
-								service.executeButton(ta, dataFile, template, summary, pageNum,
-										true, start, end, true, n1.getText());
+								if (StringUtils.isNotBlank(dataFilePath)) {
+									service.executeButton(ta, dataFile, template, summary, pageNum,
+											false, start, end, true, n1.getText());
+								} else {
+									service.executeButton(ta, dataFile, template, summary, pageNum,
+											true, start, end, true, n1.getText());
+								}
 							} else {
 								// 生成定时任务
 								// 1、创建调度器
