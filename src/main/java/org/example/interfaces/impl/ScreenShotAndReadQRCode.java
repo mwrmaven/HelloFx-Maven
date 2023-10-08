@@ -216,9 +216,10 @@ public class ScreenShotAndReadQRCode implements Function {
                     public void handle(ActionEvent event) {
                         try {
                             getCodeContent();
-                            privateStage.setIconified(false);
                         } catch (Exception e) {
-                            throw new RuntimeException(e);
+                            ta.setText("未找到二维码");
+                        } finally {
+                            privateStage.setIconified(false);
                         }
                     }
                 });
