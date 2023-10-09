@@ -649,7 +649,7 @@ public class GetCommentNumService implements Job {
                         // 获取文件的起始行(行为空或单元格为空或单元格数据为空字符串)
                         String sheetName = pushDate.substring(0, pushDate.indexOf("月") + 1).trim();
                         if (summaryWb.getSheetIndex(sheetName) == -1) {
-                            updateTextArea(ta, "未查询到对应" + sheetName + "名称的sheet页！");
+                            updateTextArea(ta, "未查询到与文件名对应的" + sheetName + "名称的sheet页！请确认文件名中日期为 xx年xx月xx日格式，或者确认汇总文件中存在对应" + sheetName + "的sheet页名称");
                             return;
                         }
                         Sheet summarySheet = summaryWb.getSheet(sheetName);
