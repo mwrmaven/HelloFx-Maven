@@ -2,6 +2,7 @@ package org.example.interfaces.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.mavenr.encrypt.MD5;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -374,23 +375,31 @@ public class GetCommentsInfo implements Function {
                 urlAndName.put(unit.getCellValue(urlCell), unit.getCellValue(titleCell));
             }
 
-            Sheet sheet = wb.createSheet();
-            Row titleRow = sheet.createRow(0);
-//            Cell cell1 = titleRow.createCell(0);
-//            cell1.setCellValue("文章ID");
-            Cell cell2 = titleRow.createCell(0);
-            cell2.setCellValue("文章标题");
-            Cell cell3 = titleRow.createCell(1);
-            cell3.setCellValue("链接");
-            Cell cell4 = titleRow.createCell(2);
-            cell4.setCellValue("评论");
-            Cell cell5 = titleRow.createCell(3);
-            cell5.setCellValue("用户名称");
-
-            int i = 0;
             for (String key : commendIdAndStr.keySet()) {
                 List<NickNameAndComment> nickNameAndComments = commendIdAndStr.get(key);
                 String articleName = commendIdAndName.get(key);
+                // 求 MD5
+                String encode = MD5.encode(articleName);
+                // 取中间16位
+                encode = encode.substring(8, 24);
+                String sheetName = articleName.substring(0, 10) + encode;
+                Sheet sheet = wb.getSheet(sheetName);
+                if (sheet == null) {
+                    // 根据文章标题，创建sheet页
+                    sheet = wb.createSheet(sheetName);
+                    Row titleRow = sheet.createRow(0);
+//            Cell cell1 = titleRow.createCell(0);
+//            cell1.setCellValue("文章ID");
+                    Cell cell2 = titleRow.createCell(0);
+                    cell2.setCellValue("文章标题");
+                    Cell cell3 = titleRow.createCell(1);
+                    cell3.setCellValue("链接");
+                    Cell cell4 = titleRow.createCell(2);
+                    cell4.setCellValue("评论");
+                    Cell cell5 = titleRow.createCell(3);
+                    cell5.setCellValue("用户名称");
+                }
+                int i = sheet.getLastRowNum();
 
                 // 获取mid
                 Long mid = commentIdAndMid.get(key);
