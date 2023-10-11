@@ -75,7 +75,7 @@ public class Common {
 
     // 指定url列，或根据某列先生成url
     public static final String FIXCOL = "指定URL列";
-    public static final String FROMCOL = "根据某列生成URL";
+    public static final String FROMCOL = "根据货号列生成URL";
 
 
 }

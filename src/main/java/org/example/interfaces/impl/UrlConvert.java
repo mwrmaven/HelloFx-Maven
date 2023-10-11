@@ -2,6 +2,7 @@ package org.example.interfaces.impl;
 
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -94,6 +95,8 @@ public class UrlConvert implements Function {
         return Common.TOP_BUTTON_5;
     }
 
+    private TextArea privateTa;
+
     @Override
     public String tabStyle() {
         String style = "-fx-font-weight: bold; " +
@@ -180,7 +183,7 @@ public class UrlConvert implements Function {
         TextField tf = new TextField();
         tf.setPrefWidth(300);
         tf.setVisible(true);
-        tf.setPromptText("请输入url或指定列在excel文件中的第几列");
+        tf.setPromptText("请输入url或货号列在excel文件中的第几列");
 
         HBox line3_1 = new HBox();
         line3_1.setSpacing(10);
@@ -669,137 +672,164 @@ public class UrlConvert implements Function {
         execute.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                long start = System.currentTimeMillis();
-                // 获取下拉框中的选项
-                String fixedPreAfterFirst = preFixes.getEditor().getText();
-                System.out.println("下拉框中输入的值: " + fixedPreAfterFirst);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ta.setText("");
+                        privateTa = ta;
+                        long start = System.currentTimeMillis();
+                        // 获取下拉框中的选项
+                        String fixedPreAfterFirst = preFixes.getEditor().getText();
+                        System.out.println("下拉框中输入的值: " + fixedPreAfterFirst);
+                        updateTextArea(ta, "下拉框中输入的值: " + fixedPreAfterFirst);
 
-                // 获取要拷贝出来的列
-                System.out.println("获取到了选中的列名：" + comboBox.getButtonCell().getText());
-                ObservableList<Col> items = comboBox.getItems();
-                List<Col> cols = new ArrayList<>();
-                for (Col c : items) {
-                    if (c.isSelected()) {
-                        // 选中的列信息
-                        cols.add(c);
-                    }
-                }
-
-                ta.setText("");
-                // 首行的数据源类型
-                String toggleText = ((RadioButton) toggleGroup.getSelectedToggle()).getText();
-                // 编译前的前置字符和后置字符
-                String startPre = preTf.getText();
-                String startEnd = endTf.getText();
-                // 编译后的前置字符和后置字符
-                String afterPre = afterPreTf.getText();
-                String afterEnd = afterEndTf.getText();
-                // 正则去掉字符串中utf-8字符编码的空格
-                byte[] bytes = new byte[]{(byte) 0xC2, (byte) 0xA0};
-                Pattern p = Pattern.compile(new String(bytes, StandardCharsets.UTF_8));
-                Matcher m;
-                m = p.matcher(startPre);
-                startPre = m.replaceAll("");
-                m = p.matcher(startEnd);
-                startEnd = m.replaceAll("");
-                m = p.matcher(afterPre);
-                afterPre = m.replaceAll("");
-                m = p.matcher(afterEnd);
-                afterEnd = m.replaceAll("");
-                startPre = startPre.trim();
-                startEnd = startEnd.trim();
-                afterPre = afterPre.trim();
-                afterEnd = afterEnd.trim();
-                System.out.println("startPre=>>>" + startPre + "<<<");
-                System.out.println("startEnd=>>>" + startEnd + "<<<");
-                System.out.println("afterPre=>>>" + afterPre + "<<<");
-                System.out.println("afterEnd=>>>" + afterEnd + "<<<");
-                // 编译类型
-                String encodeType = ((RadioButton) encodeGroup.getSelectedToggle()).getText();
-                // 文件格式
-                String type = ((RadioButton) fileType.getSelectedToggle()).getText();
-                // 获取是否在编译前的url后面追加固定字符（在后置字符前），以及固定字符本身
-                boolean preEncodeAfterFirstSelected = fixedPreAfterFirstCb.isSelected();
-                String preEncodeAfterFirstText = fixedPreAfterFirst;
-                System.out.println("编译前固定 " + preEncodeAfterFirstText);
-
-                // 获取是否在编译后的url前面追加固定字符（在前置字符前），以及固定字符本身
-                boolean selected = fixedAfterPreCb.isSelected();
-                String fixedAfterPre = fixedAfterPreTf.getText();
-
-                // excel中url所在的列数
-                int colIndex = -1;
-                if (excelRadio.getText().equals(type) && !onlyTextLineRadio.getText().equals(toggleText)) {
-                    if (StringUtils.isEmpty(tf.getText().trim())) {
-                        ta.setText("请输入url在excel文件中的第几列");
-                        return;
-                    }
-                    colIndex = Integer.parseInt(tf.getText().trim()) - 1;
-                }
-
-                String templateFilePath = ((TextField) nodes.get(1)).getText();
-
-                // 获取选中的日期
-                LocalDate pointDate = dp.getValue();
-
-                // 获取生成URL的基础URL模板的下拉框中的选项
-                String baseWordValue = baseWordText.getEditor().getText();
-
-                if (toggleText.equals(onlyTextLineRadio.getText())) {
-                    // 如果为单个url转换
-                    // 获取单个url
-                    String oneUrl = startPre + ((TextField) aList.get(1)).getText();
-                    if (preEncodeAfterFirstSelected) {
-                        oneUrl += preEncodeAfterFirstText;
-                    }
-                    oneUrl += startEnd;
-                    String convertUrl = "";
-                    if (encodeType.equals(encodeRadio.getText())) {
-                        // 编码
-                        try {
-                            convertUrl = URLEncoder.encode(oneUrl, "utf-8");
-                        } catch (UnsupportedEncodingException e) {
-                            e.printStackTrace();
+                        // 获取要拷贝出来的列
+                        System.out.println("获取到了选中的列名：" + comboBox.getButtonCell().getText());
+                        updateTextArea(ta, "获取到了选中的列名：" + comboBox.getButtonCell().getText());
+                        ObservableList<Col> items = comboBox.getItems();
+                        List<Col> cols = new ArrayList<>();
+                        for (Col c : items) {
+                            if (c.isSelected()) {
+                                // 选中的列信息
+                                cols.add(c);
+                            }
                         }
-                    } else {
-                        // 解码
-                        try {
-                            convertUrl = URLDecoder.decode(oneUrl, "utf-8");
-                        } catch (UnsupportedEncodingException e) {
-                            e.printStackTrace();
+
+                        // 首行的数据源类型
+                        String toggleText = ((RadioButton) toggleGroup.getSelectedToggle()).getText();
+                        // 编译前的前置字符和后置字符
+                        String startPre = preTf.getText();
+                        String startEnd = endTf.getText();
+                        // 编译后的前置字符和后置字符
+                        String afterPre = afterPreTf.getText();
+                        String afterEnd = afterEndTf.getText();
+                        // 正则去掉字符串中utf-8字符编码的空格
+                        byte[] bytes = new byte[]{(byte) 0xC2, (byte) 0xA0};
+                        Pattern p = Pattern.compile(new String(bytes, StandardCharsets.UTF_8));
+                        Matcher m;
+                        m = p.matcher(startPre);
+                        startPre = m.replaceAll("");
+                        m = p.matcher(startEnd);
+                        startEnd = m.replaceAll("");
+                        m = p.matcher(afterPre);
+                        afterPre = m.replaceAll("");
+                        m = p.matcher(afterEnd);
+                        afterEnd = m.replaceAll("");
+                        startPre = startPre.trim();
+                        startEnd = startEnd.trim();
+                        afterPre = afterPre.trim();
+                        afterEnd = afterEnd.trim();
+                        System.out.println("startPre=>>>" + startPre + "<<<");
+                        updateTextArea(ta, "startPre=>>>" + startPre + "<<<");
+                        System.out.println("startEnd=>>>" + startEnd + "<<<");
+                        updateTextArea(ta, "startEnd=>>>" + startEnd + "<<<");
+                        System.out.println("afterPre=>>>" + afterPre + "<<<");
+                        updateTextArea(ta, "afterPre=>>>" + afterPre + "<<<");
+                        System.out.println("afterEnd=>>>" + afterEnd + "<<<");
+                        updateTextArea(ta, "afterEnd=>>>" + afterEnd + "<<<");
+                        // 编译类型
+                        String encodeType = ((RadioButton) encodeGroup.getSelectedToggle()).getText();
+                        // 文件格式
+                        String type = ((RadioButton) fileType.getSelectedToggle()).getText();
+                        // 获取是否在编译前的url后面追加固定字符（在后置字符前），以及固定字符本身
+                        boolean preEncodeAfterFirstSelected = fixedPreAfterFirstCb.isSelected();
+                        String preEncodeAfterFirstText = fixedPreAfterFirst;
+                        System.out.println("编译前固定 " + preEncodeAfterFirstText);
+                        updateTextArea(ta, "编译前固定 " + preEncodeAfterFirstText);
+
+                        // 获取是否在编译后的url前面追加固定字符（在前置字符前），以及固定字符本身
+                        boolean selected = fixedAfterPreCb.isSelected();
+                        String fixedAfterPre = fixedAfterPreTf.getText();
+
+                        // excel中url所在的列数
+                        int colIndex = -1;
+                        if (excelRadio.getText().equals(type) && !onlyTextLineRadio.getText().equals(toggleText)) {
+                            if (StringUtils.isEmpty(tf.getText().trim())) {
+                                updateTextArea(ta, "请输入货号在excel文件中的第几列");
+                                return;
+                            }
+                            colIndex = Integer.parseInt(tf.getText().trim()) - 1;
                         }
+
+                        String templateFilePath = ((TextField) nodes.get(1)).getText();
+
+                        // 获取选中的日期
+                        LocalDate pointDate = dp.getValue();
+
+                        // 获取生成URL的基础URL模板的下拉框中的选项
+                        String baseWordValue = baseWordText.getEditor().getText();
+
+                        if (toggleText.equals(onlyTextLineRadio.getText())) {
+                            // 如果为单个url转换
+                            // 获取单个url
+                            String oneUrl = startPre + ((TextField) aList.get(1)).getText();
+                            if (preEncodeAfterFirstSelected) {
+                                oneUrl += preEncodeAfterFirstText;
+                            }
+                            oneUrl += startEnd;
+                            String convertUrl = "";
+                            if (encodeType.equals(encodeRadio.getText())) {
+                                // 编码
+                                try {
+                                    convertUrl = URLEncoder.encode(oneUrl, "utf-8");
+                                } catch (UnsupportedEncodingException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                // 解码
+                                try {
+                                    convertUrl = URLDecoder.decode(oneUrl, "utf-8");
+                                } catch (UnsupportedEncodingException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            convertUrl = afterPre + convertUrl + afterEnd;
+                            if (selected) {
+                                convertUrl = fixedAfterPre + convertUrl;
+                            }
+                            ta.setText(convertUrl);
+                        } else if (toggleText.equals(folderRadio.getText())) {
+                            // 如果为文件夹下所有文件中url批量转换
+                            // 获取文件夹路径
+                            String folderPath = ((TextField) cList.get(1)).getText();
+                            // 获取所有文件
+                            File folder = new File(folderPath);
+                            File[] files = folder.listFiles();
+                            batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
+                                    afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
+                                    selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordValue, pointDate);
+                        } else {
+                            // 如果为文件中url批量转换
+                            String filePath = ((TextField) bList.get(1)).getText();
+                            File file = new File(filePath);
+                            File[] files = new File[]{file};
+                            batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
+                                    afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
+                                    selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordValue, pointDate);
+                        }
+                        System.out.println("处理耗时：" + (System.currentTimeMillis() - start) / 1000 + " 秒");
+                        updateTextArea(ta, "处理耗时：" + (System.currentTimeMillis() - start) / 1000 + " 秒");
                     }
-                    convertUrl = afterPre + convertUrl + afterEnd;
-                    if (selected) {
-                        convertUrl = fixedAfterPre + convertUrl;
-                    }
-                    ta.setText(convertUrl);
-                } else if (toggleText.equals(folderRadio.getText())) {
-                    // 如果为文件夹下所有文件中url批量转换
-                    // 获取文件夹路径
-                    String folderPath = ((TextField) cList.get(1)).getText();
-                    // 获取所有文件
-                    File folder = new File(folderPath);
-                    File[] files = folder.listFiles();
-                    batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
-                            afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
-                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordValue, pointDate);
-                } else {
-                    // 如果为文件中url批量转换
-                    String filePath = ((TextField) bList.get(1)).getText();
-                    File file = new File(filePath);
-                    File[] files = new File[]{file};
-                    batchFilesAndExportToExcel(files, type, colIndex, cols, startPre, startEnd, afterPre,
-                            afterEnd, encodeType, ta, preEncodeAfterFirstSelected, preEncodeAfterFirstText,
-                            selected, fixedAfterPre, templateFilePath, ((RadioButton) colType.getSelectedToggle()).getText(), baseWordValue, pointDate);
-                }
-                System.out.println("处理耗时：" + (System.currentTimeMillis() - start) / 1000 + " 秒");
+                }).start();
             }
         });
 
         vBox.getChildren().addAll(line1, line2, line3, line3_1, line3_2, line3_3, line3After, line4Pre, line4, line5Pre, line5, line6, template, execute, ta);
         anchorPane.getChildren().add(vBox);
         return anchorPane;
+    }
+
+    /**
+     * TextArea区域填充文本后自动滑动
+     * @param ta
+     * @param message
+     */
+    public void updateTextArea(TextArea ta, String message) {
+        if (Platform.isFxApplicationThread()) {
+            ta.appendText("\n" + message);
+        } else {
+            Platform.runLater(() -> ta.appendText("\n" + message));
+        }
     }
 
     /**
@@ -823,7 +853,9 @@ public class UrlConvert implements Function {
         Date now = new Date();
 
         System.out.println("编译前的url后面追加固定字符（在后置字符前）" + preEncodeFlag + " 固定" + preEncodeFixed);
+        updateTextArea(privateTa, "编译前的url后面追加固定字符（在后置字符前）" + preEncodeFlag + " 固定" + preEncodeFixed);
         System.out.println("编译后在url前面追加的固定字符(在前置字符前) " + fixedFlag + " 固定" + fixed);
+        updateTextArea(privateTa, "编译后在url前面追加的固定字符(在前置字符前) " + fixedFlag + " 固定" + fixed);
         // 获取文件路径
         String path = files[0].getPath();
         // 结果文件路径
@@ -1193,6 +1225,7 @@ public class UrlConvert implements Function {
 
                                 String pd = pointDate.format(dtf);
                                 System.out.println("选中的日期为：" + pd);
+                                updateTextArea(privateTa, "选中的日期为：" + pd);
                                 sourceUrl = baseWordValue.replaceAll("【para】", sourceUrl);
                                 sourceUrl = sourceUrl.replaceAll("【date】", pd);
                             }
@@ -1443,7 +1476,7 @@ public class UrlConvert implements Function {
                 e.printStackTrace();
             }
         }
-        ta.setText(ta.getText() + "\n" + "批处理完成，Excel结果文件：" + excelFilePath);
+        updateTextArea(ta, "批处理完成，Excel结果文件：" + excelFilePath);
     }
 
     /**
@@ -1481,6 +1514,9 @@ public class UrlConvert implements Function {
         System.out.println("--------------------------------------------------------------------");
         System.out.println("sid = " + sid);
         System.out.println("--------------------------------------------------------------------");
+        updateTextArea(privateTa, "--------------------------------------------------------------------");
+        updateTextArea(privateTa, "sid = " + sid);
+        updateTextArea(privateTa, "--------------------------------------------------------------------");
 
         String goodsSn = "";
         String shopId = "";
@@ -1498,6 +1534,8 @@ public class UrlConvert implements Function {
         String realUrl = "https://m.sanfu.com/ms-sanfu-wap-goods-item/itemNew?goodsSn=" + goodsSn + "&sid=" + sid + "&shoId=" + shopId + "&localShoId=" + shopId;
         System.out.println("realUrl = " + realUrl);
         System.out.println("--------------------------------------------------------------------");
+        updateTextArea(privateTa, "realUrl = " + realUrl);
+        updateTextArea(privateTa, "--------------------------------------------------------------------");
         HttpGet get  = new HttpGet(realUrl);
         HttpResponse execute = client.execute(get);
         String goodsInfo = IOUtils.toString(execute.getEntity().getContent(), "UTF-8");
@@ -1523,6 +1561,9 @@ public class UrlConvert implements Function {
         System.out.println("mbPrice=" + mbPrice);
         System.out.println("scPrice=" + scPrice);
         System.out.println("memberPrice=" + memberPrice);
+        updateTextArea(privateTa, "mbPrice=" + mbPrice);
+        updateTextArea(privateTa, "scPrice=" + scPrice);
+        updateTextArea(privateTa, "memberPrice=" + memberPrice);
 
         priceArray[0] = String.valueOf(mbPrice);
         priceArray[1] = String.valueOf(scPrice);
