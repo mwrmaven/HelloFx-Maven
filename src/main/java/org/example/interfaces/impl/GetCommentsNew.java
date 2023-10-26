@@ -789,9 +789,17 @@ public class GetCommentsNew implements Function {
 		if (StringUtils.isBlank(draftsUrl)) {
 			List<WebElement> aList = driver.findElements(By.tagName("a"));
 			// 获取草稿箱的父目录名称
-			String draftsParentMenu = Config.get("DRAFTSPARENTMENU");
-			updateTextArea(ta, "查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
-			System.out.println("查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+			String draftsParentMenu = "展开";
+			String configParentMenu = Config.get("DRAFTSPARENTMENU");
+			if (StringUtils.isNotBlank(configParentMenu)) {
+				draftsParentMenu = configParentMenu;
+				updateTextArea(ta, "查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+				System.out.println("查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+			} else {
+				updateTextArea(ta, "配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
+				System.out.println("配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
+			}
+
 			for (WebElement w : aList) {
 				if (draftsParentMenu.equals(w.getText())) {
 					updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
