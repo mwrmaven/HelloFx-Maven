@@ -217,6 +217,9 @@ public class GetCommentNumService implements Job {
                     int articleNum = sheet.getLastRowNum();
                     System.out.println("articleNum = " + articleNum);
                     updateTextArea(ta, "数据文件中的文章条数为：" + articleNum);
+                    if (articleNum == 0) {
+                        updateTextArea(ta, "数据文件中无数据，请确认微信公众号后台数据文件下载正常！！！！！！");
+                    }
 
                     // 每页的数据条数
                     int divisor = 10;
@@ -427,6 +430,7 @@ public class GetCommentNumService implements Job {
 
                     // 存储模板文件中每个分组的顺序
                     Map<Integer, List<String>> groupArtFromTemp = new HashMap<>();
+                    Set<String> groupSetForPrint = new HashSet<>();
                     for (int i = 2; i <= templateSheet.getLastRowNum(); i++) {
                         Row row = templateSheet.getRow(i);
                         if (row == null || row.getCell(titleIndex) == null
@@ -461,9 +465,12 @@ public class GetCommentNumService implements Job {
                             info.setPushDate(pushDate);
                             info.setPushPeople(pushPeople);
                             baseList.add(info);
+                            // 保存分组，之后输出所有分组，以用于排查模板文件是否正常
+                            groupSetForPrint.add(group);
                         }
                     }
                     updateTextArea(ta, "获取到模板文件中所有数据！");
+                    updateTextArea(ta, "模板文件中的分组信息为：" + String.join("|", groupSetForPrint));
 
                     dataWb.close();
                     // 获取结果模板文件
@@ -514,7 +521,7 @@ public class GetCommentNumService implements Job {
                         int min = 1000000000;
                         String tTitle = templateInfo.getTitle();
                         updateTextArea(ta, "开始匹配模板文件中：" + tTitle + "的推送人数：" + tpush);
-                        updateTextArea(ta, "模板文件中的文章顺序：" + String.join(",", templateArtsByGroup));
+                        updateTextArea(ta, "模板文件中的文章顺序：" + String.join("|", templateArtsByGroup));
                         for (Integer k : pushPeopleKeys) {
                             List<String> dataArtsByGroup = groupArtFromData.get(k);
                             if (Math.abs(tpush - k) < min && templateArtsByGroup.equals(dataArtsByGroup)) {
