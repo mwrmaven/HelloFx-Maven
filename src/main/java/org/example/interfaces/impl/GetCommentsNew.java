@@ -221,6 +221,7 @@ public class GetCommentsNew implements Function {
 			line1Next.getChildren().add(n);
 			if (i == 1) {
 				((TextField) n).setPromptText("使用自动下载数据文件时，该项可以不选择");
+				((TextField) n).setDisable(false);
 			}
 		}
 
@@ -785,12 +786,12 @@ public class GetCommentsNew implements Function {
 			return;
 		}
 		updateTextArea(ta, "创建驱动");
-
+		System.out.println(driver.getPageSource());
 		if (StringUtils.isBlank(draftsUrl)) {
 			List<WebElement> aList = driver.findElements(By.tagName("a"));
 			for (WebElement w : aList) {
-				if ("展开".equals(w.getText())) {
-					updateTextArea(ta, "点击展开目录");
+				if ("内容与互动".equals(w.getText())) {
+					updateTextArea(ta, "点击内容与互动");
 					w.click();
 					Thread.sleep(500);
 					break;
@@ -801,6 +802,7 @@ public class GetCommentsNew implements Function {
 				if ("草稿箱".equals(w.getAttribute("title"))) {
 					flag = false;
 					updateTextArea(ta, "获取到草稿箱链接：" + w.getAttribute("href"));
+					System.out.println(w.toString());
 					w.click();
 					updateTextArea(ta, "跳转到草稿箱，等待5s");
 					Thread.sleep(5000);
