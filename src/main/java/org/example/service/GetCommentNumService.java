@@ -177,7 +177,12 @@ public class GetCommentNumService implements Job {
                 String dataFilePath = ((TextField) dataFile.get(1)).getText();
                 if (downloadFlag) {
                     // 下载数据文件
-                    String downloadDataUrl = "https://mp.weixin.qq.com/misc/datacubequery?action=query_download&busi=3&tmpl=19" +
+                    String baseDownloadDataUrl = "https://mp.weixin.qq.com/misc/datacubequery?action=query_download&busi=3&tmpl=19";
+                    String configBddUrl = Config.get("baseDownloadDataUrl");
+                    if (StringUtils.isNotBlank(configBddUrl)) {
+                        baseDownloadDataUrl = configBddUrl;
+                    }
+                    String downloadDataUrl = baseDownloadDataUrl +
                             "&args={%22begin_date%22:" + startTime + ",%22end_date%22:" + endTime + "}" +
                             "&token=" + realToken +
                             "&lang=zh_CN";
