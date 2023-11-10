@@ -977,7 +977,8 @@ public class GetCommentsNew implements Function {
 			// excel组别起始和结束行
 			int[] startAndEnd = groupAndPosition.get(key);
 			if ((startAndEnd[1] - startAndEnd[0] + 1) < articleLinks.size()) {
-				updateTextArea(ta, key + " 组别的草稿箱文章个数与Excel模板文件中的个数不同，请确认！");
+				updateTextArea(ta, key + " 组别的草稿箱文章个数与Excel模板文件中的个数不同，跳过！");
+				continue;
 			}
 			// 写入到excel中
 			int start = startAndEnd[0];
