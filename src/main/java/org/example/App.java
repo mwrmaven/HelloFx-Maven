@@ -11,17 +11,23 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import org.apache.commons.collections4.CollectionUtils;
 import org.example.common.Common;
+import org.example.entity.ProcessInfo;
 import org.example.init.Config;
 import org.example.interfaces.Function;
+import org.example.util.Unit;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ServiceLoader;
+import java.util.stream.Stream;
 
 /**
  * @author mavenr
@@ -117,19 +123,18 @@ public class App extends Application {
      */
     private void closeChromeDriver() {
         System.out.println("关闭窗口！");
-        // 创建系统进程，查询当前运行的 chromedriver.exe的进程
-        ProcessBuilder pb = new ProcessBuilder("tasklist | findstr \"chromedriver\"");
-        try {
-            Process p = pb.start();
-            BufferedReader out = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8));
-            BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-
-            String line;
-
-
-        } catch (Exception e) {
-            System.out.println("chromedriver进程关闭失败");
-            throw new RuntimeException(e);
+        List<ProcessInfo> windowsProcessList = Unit.getProcessList();
+        for (ProcessInfo pi : windowsProcessList) {
+            if (pi.getInfo().startsWith("chromedriver")) {
+                System.out.println("查询到chromedriver的相关进程id为：" + pi.getPid());
+                try {
+                    Runtime.getRuntime().exec("taskkill /f /t /pid " + pi.getPid());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
+
+
 }
