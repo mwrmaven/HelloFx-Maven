@@ -15,6 +15,11 @@ import org.example.common.Common;
 import org.example.init.Config;
 import org.example.interfaces.Function;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
@@ -68,6 +73,13 @@ public class App extends Application {
         primaryStage.setMaxHeight(h);
         primaryStage.show();
 
+        /**
+         * 窗口关闭时触发
+         */
+        primaryStage.setOnCloseRequest(event -> {
+            closeChromeDriver();
+        });
+
         ServiceLoader<Function> allTabs = ServiceLoader.load(Function.class);
         Iterator<Function> iterator = allTabs.iterator();
         while (iterator.hasNext()) {
@@ -98,5 +110,26 @@ public class App extends Application {
                 oldValue.setStyle(oldStyle.replace(" -fx-pref-height: 40; ", " -fx-pref-height: 30; "));
             }
         });
+    }
+
+    /**
+     * 关闭所有的chromedriver进程
+     */
+    private void closeChromeDriver() {
+        System.out.println("关闭窗口！");
+        // 创建系统进程，查询当前运行的 chromedriver.exe的进程
+        ProcessBuilder pb = new ProcessBuilder("tasklist | findstr \"chromedriver\"");
+        try {
+            Process p = pb.start();
+            BufferedReader out = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8));
+            BufferedReader error = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+
+            String line;
+
+
+        } catch (Exception e) {
+            System.out.println("chromedriver进程关闭失败");
+            throw new RuntimeException(e);
+        }
     }
 }
