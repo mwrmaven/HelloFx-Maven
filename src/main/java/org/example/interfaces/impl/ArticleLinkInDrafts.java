@@ -446,6 +446,7 @@ public class ArticleLinkInDrafts implements Function {
 			// 循环组元素
 			for (String key : groupAndParentElement.keySet()) {
 				updateTextArea(ta, "========" + key + "========");
+				System.out.println("========" + key + "========");
 				List<ArticleLink> articleList = groupAndArticleList.computeIfAbsent(key, k -> new ArrayList<>());
 				WebElement parent = groupAndParentElement.get(key);
 				// 获取组中的所有链接
@@ -469,6 +470,7 @@ public class ArticleLinkInDrafts implements Function {
 						String title = driver.getTitle();
 						String articleUrl = driver.getCurrentUrl();
 						updateTextArea(ta, title + " : " + articleUrl);
+						System.out.println(title + " : " + articleUrl);
 						ArticleLink articleLink = ArticleLink.builder()
 								.title(title)
 								.url(articleUrl)
