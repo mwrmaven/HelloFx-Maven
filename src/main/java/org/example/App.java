@@ -62,10 +62,16 @@ public class App extends Application {
 
         // 场景配置
         Scene scene = new Scene(tp);
-        // 解决mac环境下jdk11运行javafx显示乱码问题
+        // 获取系统信息
         String osName = System.getProperty("os.name");
         System.out.println("系统：" + osName);
-        if (!osName.contains("Windows")) {
+        if (osName.contains("Windows")) {
+            // 窗口关闭时触发
+            primaryStage.setOnCloseRequest(event -> {
+                closeWindowsChromeDriver();
+            });
+        } else if (osName.contains("Mac")){
+            // 解决mac环境下jdk11运行javafx显示乱码问题
             scene.getRoot().setStyle("-fx-font-family: 'serif'; -fx-font-size: 14");
         }
         primaryStage.setScene(scene);
@@ -78,13 +84,6 @@ public class App extends Application {
         primaryStage.setMaxWidth(w);
         primaryStage.setMaxHeight(h);
         primaryStage.show();
-
-        /**
-         * 窗口关闭时触发
-         */
-        primaryStage.setOnCloseRequest(event -> {
-            closeChromeDriver();
-        });
 
         ServiceLoader<Function> allTabs = ServiceLoader.load(Function.class);
         Iterator<Function> iterator = allTabs.iterator();
@@ -121,7 +120,7 @@ public class App extends Application {
     /**
      * 关闭所有的chromedriver进程
      */
-    private void closeChromeDriver() {
+    private void closeWindowsChromeDriver() {
         System.out.println("关闭窗口！");
         List<ProcessInfo> windowsProcessList = Unit.getProcessList();
         for (ProcessInfo pi : windowsProcessList) {
