@@ -16,6 +16,7 @@ import org.example.common.Common;
 import org.example.entity.ProcessInfo;
 import org.example.init.Config;
 import org.example.interfaces.Function;
+import org.example.util.SocketUtil;
 import org.example.util.Unit;
 
 import java.io.BufferedInputStream;
@@ -69,10 +70,18 @@ public class App extends Application {
             // 窗口关闭时触发
             primaryStage.setOnCloseRequest(event -> {
                 closeWindowsChromeDriver();
+                // 关闭chrome测试浏览器端口
+				SocketUtil.kill(9527);
             });
         } else if (osName.contains("Mac")){
             // 解决mac环境下jdk11运行javafx显示乱码问题
             scene.getRoot().setStyle("-fx-font-family: 'serif'; -fx-font-size: 14");
+
+            // 窗口关闭时触发
+            primaryStage.setOnCloseRequest(event -> {
+                // 关闭chrome测试浏览器端口
+                SocketUtil.kill(9527);
+            });
         }
         primaryStage.setScene(scene);
         primaryStage.setTitle(Common.STAGE_TITLE);

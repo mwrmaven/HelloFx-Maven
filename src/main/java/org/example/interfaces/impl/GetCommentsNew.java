@@ -497,7 +497,7 @@ public class GetCommentsNew implements Function {
 							updateTextArea(ta, "程序执行耗时约：" + bd.setScale(2, RoundingMode.HALF_UP).doubleValue() + " 分钟");
 
 							// 关闭chrome测试浏览器端口
-							SocketUtil.kill(9527);
+//							SocketUtil.kill(9527);
 						}
 					}).start();
 				} else if ("微信文章评论数".equals(functionName)) {
@@ -786,7 +786,7 @@ public class GetCommentsNew implements Function {
 			return;
 		}
 		updateTextArea(ta, "创建驱动");
-		System.out.println(driver.getPageSource());
+//		System.out.println(driver.getPageSource());
 		if (StringUtils.isBlank(draftsUrl)) {
 			List<WebElement> aList = driver.findElements(By.tagName("a"));
 			// 获取草稿箱的父目录名称
@@ -796,6 +796,7 @@ public class GetCommentsNew implements Function {
 				draftsParentMenu = configParentMenu;
 				updateTextArea(ta, "查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
 				System.out.println("查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+				return;
 			} else {
 				updateTextArea(ta, "配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
 				System.out.println("配置文件中草稿箱的父目录名称为空，使用默认的“展开”");

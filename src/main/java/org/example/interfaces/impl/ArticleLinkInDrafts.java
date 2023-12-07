@@ -267,7 +267,7 @@ public class ArticleLinkInDrafts implements Function {
 						updateTextArea(ta, "程序执行耗时约：" + bd.setScale(2, RoundingMode.HALF_UP).doubleValue() + " 分钟");
 
 						// 关闭chrome测试浏览器端口
-						SocketUtil.kill(9527);
+//						SocketUtil.kill(9527);
 					}
 				}).start();
 			}

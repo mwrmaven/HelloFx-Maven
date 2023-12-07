@@ -1,9 +1,6 @@
 package org.example.init;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Properties;
 
 /**
@@ -34,7 +31,8 @@ public class Config {
             }
         }
         try {
-            properties.load(new FileInputStream(configFile));
+            FileInputStream fileInputStream = new FileInputStream(configFile);
+            properties.load(new InputStreamReader(fileInputStream, "UTF-8"));
         } catch (IOException e) {
             e.printStackTrace();
         }
