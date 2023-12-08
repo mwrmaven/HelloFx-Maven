@@ -1,6 +1,10 @@
 package org.example.init;
 
+import org.apache.commons.lang3.StringUtils;
+import org.example.util.Unit;
+
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Properties;
 
 /**
@@ -32,7 +36,7 @@ public class Config {
         }
         try {
             FileInputStream fileInputStream = new FileInputStream(configFile);
-            properties.load(new InputStreamReader(fileInputStream, "UTF-8"));
+            properties.load(fileInputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -44,7 +48,8 @@ public class Config {
      * @return
      */
     public static String get(String key) {
-        return properties.getProperty(key);
+        String val = properties.getProperty(key);
+        return val;
     }
 
     /**

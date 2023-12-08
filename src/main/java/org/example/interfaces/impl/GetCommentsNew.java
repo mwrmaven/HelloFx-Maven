@@ -791,25 +791,39 @@ public class GetCommentsNew implements Function {
 			List<WebElement> aList = driver.findElements(By.tagName("a"));
 			// 获取草稿箱的父目录名称
 			String draftsParentMenu = "展开";
-			String configParentMenu = Config.get("DRAFTSPARENTMENU");
-			if (StringUtils.isNotBlank(configParentMenu)) {
-				draftsParentMenu = configParentMenu;
-				updateTextArea(ta, "查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
-				System.out.println("查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
-				return;
-			} else {
-				updateTextArea(ta, "配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
-				System.out.println("配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
-			}
+//			String configParentMenu = Config.get("DRAFTSPARENTMENU");
+//			if (StringUtils.isNotBlank(configParentMenu)) {
+//				draftsParentMenu = configParentMenu;
+//				updateTextArea(ta, "查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+//				System.out.println("查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+//			} else {
+//				updateTextArea(ta, "配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
+//				System.out.println("配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
+//			}
 
-			for (WebElement w : aList) {
-				if (draftsParentMenu.equals(w.getText())) {
-					updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
-					w.click();
-					Thread.sleep(500);
-					break;
+			try {
+				for (WebElement w : aList) {
+					if (draftsParentMenu.equals(w.getText())) {
+						updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
+						w.click();
+						Thread.sleep(500);
+						break;
+					}
+				}
+			} catch (Exception e) {
+				updateTextArea(ta, "未找到“" + draftsParentMenu + "”目录");
+				draftsParentMenu = "内容与互动";
+				updateTextArea(ta, "寻找“" + draftsParentMenu + "”目录");
+				for (WebElement w : aList) {
+					if (draftsParentMenu.equals(w.getText())) {
+						updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
+						w.click();
+						Thread.sleep(500);
+						break;
+					}
 				}
 			}
+
 			boolean flag = true;
 			for (WebElement w : aList) {
 				if ("草稿箱".equals(w.getAttribute("title"))) {

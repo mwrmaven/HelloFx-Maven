@@ -22,9 +22,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author mavenr
@@ -326,6 +330,41 @@ public class Unit {
             throw new RuntimeException(e);
         }
         return processInfoList;
+    }
+
+    /**
+     * 将配置文件中的Unicode 转 utf-8 汉字
+     * @param 原始字符串
+     * @return  转换后的格式的字符串
+     */
+    public String unicodeToChina(String str) {
+        Charset set = Charset.forName("UTF-16");
+        Pattern p = Pattern.compile("\\\\u([0-9a-fA-F]{4})");
+        Matcher m = p.matcher( str );
+        int start = 0 ;
+        int start2 = 0 ;
+        StringBuffer sb = new StringBuffer();
+        while( m.find( start ) ) {
+            start2 = m.start() ;
+            if( start2 > start ){
+                String seg = str.substring(start, start2) ;
+                sb.append( seg );
+            }
+            String code = m.group( 1 );
+            int i = Integer.valueOf( code , 16 );
+            byte[] bb = new byte[ 4 ] ;
+            bb[ 0 ] = (byte) ((i >> 8) & 0xFF );
+            bb[ 1 ] = (byte) ( i & 0xFF ) ;
+            ByteBuffer b = ByteBuffer.wrap(bb);
+            sb.append( String.valueOf( set.decode(b) ).trim() );
+            start = m.end() ;
+        }
+        start2 = str.length() ;
+        if( start2 > start ){
+            String seg = str.substring(start, start2) ;
+            sb.append( seg );
+        }
+        return sb.toString() ;
     }
 
 }
