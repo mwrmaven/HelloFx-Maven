@@ -805,6 +805,7 @@ public class GetCommentsNew implements Function {
 				for (WebElement w : aList) {
 					if (draftsParentMenu.equals(w.getText())) {
 						updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
+						System.out.println("点击“" + draftsParentMenu + "”目录");
 						w.click();
 						Thread.sleep(500);
 						break;
@@ -812,11 +813,14 @@ public class GetCommentsNew implements Function {
 				}
 			} catch (Exception e) {
 				updateTextArea(ta, "未找到“" + draftsParentMenu + "”目录");
+				System.out.println("未找到“" + draftsParentMenu + "”目录");
 				draftsParentMenu = "内容与互动";
 				updateTextArea(ta, "寻找“" + draftsParentMenu + "”目录");
+				System.out.println("寻找“" + draftsParentMenu + "”目录");
 				for (WebElement w : aList) {
 					if (draftsParentMenu.equals(w.getText())) {
 						updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
+						System.out.println("点击“" + draftsParentMenu + "”目录");
 						w.click();
 						Thread.sleep(500);
 						break;
@@ -1073,6 +1077,15 @@ public class GetCommentsNew implements Function {
 		} else {
 			Platform.runLater(() -> ta.appendText("\n" + message));
 		}
+	}
+
+	/**
+	 * TextArea区域填充文本后自动滑动——立即填充
+	 * @param ta
+	 * @param message
+	 */
+	public void updateTextAreaNow(TextArea ta, String message) {
+		ta.appendText("\n" + message);
 	}
 
 	/**
