@@ -311,7 +311,7 @@ public class GetCommentNumService implements Job {
                         // 遍历每一行
                         String line;
                         int commentNum = 0;
-                        while ((line = br.readLine()) != null) {
+                        while ((line = br.readLine()) != null) {:
                             if (line.contains("comment_id")) {
                                 // 解析到 comment_id
                                 String commentId = line.substring(line.indexOf("\"") + 1);
@@ -375,6 +375,7 @@ public class GetCommentNumService implements Job {
                         }).map(CommentInfo::getTitle).collect(Collectors.toList());
                         groupArtFromData.put(k, titles);
                     });
+                    updateTextArea(ta, "数据文件中的分组信息：" + groupArtFromData);
                     updateTextArea(ta, "实际共获取到公众号文章 " + urlCount + " 条！");
                     updateTextArea(ta, "数据文件的最后插入一列插入完成！");
 
@@ -495,6 +496,7 @@ public class GetCommentNumService implements Job {
                     defaultCellStyle.setBorderRight(BorderStyle.THIN);
 
                     Set<Integer> pushPeopleKeys = commentInfoMap.keySet();
+                    updateTextArea(ta, "实际推送人数信息key：" + pushPeopleKeys);
                     // 存储推送人群需要合并单元格的起始行和结束行
                     List<Integer> beginAndEnd = new ArrayList<>();
                     String groupStandard = "";
@@ -571,6 +573,7 @@ public class GetCommentNumService implements Job {
                         Map<String, CommentInfo> stringCommentInfoMap = commentInfoMap.get(key);
                         if (stringCommentInfoMap == null || stringCommentInfoMap.isEmpty()) {
                             updateTextArea(ta, "未匹配到送达人数：" + key + " 的评论信息！");
+                            continue;
                         }
                         CommentInfo commentInfo = stringCommentInfoMap.get(tTitle);
                         if (commentInfo == null) {
