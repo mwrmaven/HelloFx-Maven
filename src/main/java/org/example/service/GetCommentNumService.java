@@ -409,6 +409,7 @@ public class GetCommentNumService implements Job {
                     int positionIndex = 2;
                     int groupIndex = 3;
                     int peopleNumIndex = 5;
+                    int pushDateInCell = -1;
 
                     for (int i = 0; i <= row1.getLastCellNum(); i++) {
                         Cell cell = row1.getCell(i);
@@ -426,6 +427,8 @@ public class GetCommentNumService implements Job {
                             groupIndex = i;
                         } else if ("新系统分组人数".equals(cellV)) {
                             peopleNumIndex = i;
+                        } else if ("推送日期".equals(cellV)) {
+                            pushDateInCell = i;
                         }
                     }
 
@@ -663,6 +666,19 @@ public class GetCommentNumService implements Job {
                         }
                         // 获取文件的起始行(行为空或单元格为空或单元格数据为空字符串)
                         String sheetName = pushDate.substring(0, pushDate.indexOf("月") + 1).trim();
+                        if (StringUtils.isBlank(sheetName)) {
+                            // 从推送日期列获取
+                            if (pushDateInCell != -1) {
+                                Row row2 = templateSheet.getRow(2);
+                                String cellValue = unit.getCellValue(row2.getCell(pushDateInCell));
+                                if (cellValue != null) {
+                                    sheetName = cellValue.substring(0, cellValue.indexOf(".")) + "月";
+                                    if (StringUtils.isBlank(sheetName)) {
+                                        sheetName = cellValue.substring(0, cellValue.indexOf("月") + 1);
+                                    }
+                                }
+                            }
+                        }
                         if (summaryWb.getSheetIndex(sheetName) == -1) {
                             updateTextArea(ta, "未查询到与文件名对应的" + sheetName + "名称的sheet页！请确认文件名中日期为 xx年xx月xx日格式，或者确认汇总文件中存在对应" + sheetName + "的sheet页名称");
                             return;

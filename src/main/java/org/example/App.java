@@ -11,12 +11,24 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import org.apache.commons.collections4.CollectionUtils;
 import org.example.common.Common;
+import org.example.entity.ProcessInfo;
 import org.example.init.Config;
 import org.example.interfaces.Function;
+import org.example.util.SocketUtil;
+import org.example.util.Unit;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ServiceLoader;
+import java.util.stream.Stream;
 
 /**
  * @author mavenr
@@ -51,11 +63,25 @@ public class App extends Application {
 
         // 场景配置
         Scene scene = new Scene(tp);
-        // 解决mac环境下jdk11运行javafx显示乱码问题
+        // 获取系统信息
         String osName = System.getProperty("os.name");
         System.out.println("系统：" + osName);
-        if (!osName.contains("Windows")) {
+        if (osName.contains("Windows")) {
+            // 窗口关闭时触发
+            primaryStage.setOnCloseRequest(event -> {
+                closeWindowsChromeDriver();
+                // 关闭chrome测试浏览器端口
+				SocketUtil.kill(9527);
+            });
+        } else if (osName.contains("Mac")){
+            // 解决mac环境下jdk11运行javafx显示乱码问题
             scene.getRoot().setStyle("-fx-font-family: 'serif'; -fx-font-size: 14");
+
+            // 窗口关闭时触发
+            primaryStage.setOnCloseRequest(event -> {
+                // 关闭chrome测试浏览器端口
+                SocketUtil.kill(9527);
+            });
         }
         primaryStage.setScene(scene);
         primaryStage.setTitle(Common.STAGE_TITLE);
@@ -99,4 +125,24 @@ public class App extends Application {
             }
         });
     }
+
+    /**
+     * 关闭所有的chromedriver进程
+     */
+    private void closeWindowsChromeDriver() {
+        System.out.println("关闭窗口！");
+        List<ProcessInfo> windowsProcessList = Unit.getProcessList();
+        for (ProcessInfo pi : windowsProcessList) {
+            if (pi.getInfo().startsWith("chromedriver")) {
+                System.out.println("查询到chromedriver的相关进程id为：" + pi.getPid());
+                try {
+                    Runtime.getRuntime().exec("taskkill /f /t /pid " + pi.getPid());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+
+
 }

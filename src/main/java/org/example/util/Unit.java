@@ -10,16 +10,25 @@ import javafx.scene.control.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
+import org.example.entity.ProcessInfo;
 import org.example.init.Config;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author mavenr
@@ -273,6 +282,89 @@ public class Unit {
         } else {
             return "";
         }
+    }
+
+    /**
+     * 获取所有进程（当前使用windows系统）
+     * @return
+     */
+    public static List<ProcessInfo> getProcessList() {
+        // 创建系统进程，查询当前运行的 chromedriver.exe的进程
+        ProcessBuilder pb = new ProcessBuilder("tasklist");
+        List<ProcessInfo> processInfoList = new ArrayList<>();
+        try {
+            Process p = pb.start();
+            BufferedReader out = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8));
+
+            String line;
+            boolean flag = true;
+            List<Integer> blackIndex = new ArrayList<>();
+            while ((line = out.readLine()) != null) {
+                System.out.println("PROCESS: " + line);
+                // 不为空则，打印出pid
+                if (CollectionUtils.isNotEmpty(blackIndex)) {
+                    String pid = line.substring(blackIndex.get(0), blackIndex.get(1)).trim();
+//                    System.out.println("pid:" + pid + "<<<<<<");
+                    ProcessInfo pi = ProcessInfo.builder()
+                            .info(line)
+                            .pid(pid)
+                            .build();
+                    processInfoList.add(pi);
+                }
+                // 判断进程名是否以 chromedriver 开始
+                int index = -1;
+                int start = 0;
+                if (flag && line.matches("=+ =+ =+ =+ =+")) {
+                    // 获取空格位置
+                    while ((index = line.indexOf(" ", start)) != -1) {
+                        blackIndex.add(index);
+                        start = index + 1;
+                    }
+                    flag = false;
+                }
+            }
+
+
+        } catch (Exception e) {
+            System.out.println("chromedriver进程关闭失败");
+            throw new RuntimeException(e);
+        }
+        return processInfoList;
+    }
+
+    /**
+     * 将配置文件中的Unicode 转 utf-8 汉字
+     * @param 原始字符串
+     * @return  转换后的格式的字符串
+     */
+    public String unicodeToChina(String str) {
+        Charset set = Charset.forName("UTF-16");
+        Pattern p = Pattern.compile("\\\\u([0-9a-fA-F]{4})");
+        Matcher m = p.matcher( str );
+        int start = 0 ;
+        int start2 = 0 ;
+        StringBuffer sb = new StringBuffer();
+        while( m.find( start ) ) {
+            start2 = m.start() ;
+            if( start2 > start ){
+                String seg = str.substring(start, start2) ;
+                sb.append( seg );
+            }
+            String code = m.group( 1 );
+            int i = Integer.valueOf( code , 16 );
+            byte[] bb = new byte[ 4 ] ;
+            bb[ 0 ] = (byte) ((i >> 8) & 0xFF );
+            bb[ 1 ] = (byte) ( i & 0xFF ) ;
+            ByteBuffer b = ByteBuffer.wrap(bb);
+            sb.append( String.valueOf( set.decode(b) ).trim() );
+            start = m.end() ;
+        }
+        start2 = str.length() ;
+        if( start2 > start ){
+            String seg = str.substring(start, start2) ;
+            sb.append( seg );
+        }
+        return sb.toString() ;
     }
 
 }

@@ -267,7 +267,7 @@ public class ArticleLinkInDrafts implements Function {
 						updateTextArea(ta, "程序执行耗时约：" + bd.setScale(2, RoundingMode.HALF_UP).doubleValue() + " 分钟");
 
 						// 关闭chrome测试浏览器端口
-						SocketUtil.kill(9527);
+//						SocketUtil.kill(9527);
 					}
 				}).start();
 			}
@@ -446,6 +446,7 @@ public class ArticleLinkInDrafts implements Function {
 			// 循环组元素
 			for (String key : groupAndParentElement.keySet()) {
 				updateTextArea(ta, "========" + key + "========");
+				System.out.println("========" + key + "========");
 				List<ArticleLink> articleList = groupAndArticleList.computeIfAbsent(key, k -> new ArrayList<>());
 				WebElement parent = groupAndParentElement.get(key);
 				// 获取组中的所有链接
@@ -469,6 +470,7 @@ public class ArticleLinkInDrafts implements Function {
 						String title = driver.getTitle();
 						String articleUrl = driver.getCurrentUrl();
 						updateTextArea(ta, title + " : " + articleUrl);
+						System.out.println(title + " : " + articleUrl);
 						ArticleLink articleLink = ArticleLink.builder()
 								.title(title)
 								.url(articleUrl)
@@ -531,8 +533,8 @@ public class ArticleLinkInDrafts implements Function {
 			// excel组别起始和结束行
 			int[] startAndEnd = groupAndPosition.get(key);
 			if ((startAndEnd[1] - startAndEnd[0] + 1) < articleLinks.size()) {
-				updateTextArea(ta, key + " 组别的草稿箱文章个数与Excel模板文件中的个数不同，请确认！");
-				return;
+				updateTextArea(ta, key + " 组别的草稿箱文章个数与Excel模板文件中的个数不同，跳过！");
+				continue;
 			}
 			// 写入到excel中
 			int start = startAndEnd[0];

@@ -1,9 +1,10 @@
 package org.example.init;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import org.apache.commons.lang3.StringUtils;
+import org.example.util.Unit;
+
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Properties;
 
 /**
@@ -34,7 +35,8 @@ public class Config {
             }
         }
         try {
-            properties.load(new FileInputStream(configFile));
+            FileInputStream fileInputStream = new FileInputStream(configFile);
+            properties.load(fileInputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -46,7 +48,8 @@ public class Config {
      * @return
      */
     public static String get(String key) {
-        return properties.getProperty(key);
+        String val = properties.getProperty(key);
+        return val;
     }
 
     /**

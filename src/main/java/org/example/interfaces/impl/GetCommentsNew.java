@@ -497,7 +497,7 @@ public class GetCommentsNew implements Function {
 							updateTextArea(ta, "程序执行耗时约：" + bd.setScale(2, RoundingMode.HALF_UP).doubleValue() + " 分钟");
 
 							// 关闭chrome测试浏览器端口
-							SocketUtil.kill(9527);
+//							SocketUtil.kill(9527);
 						}
 					}).start();
 				} else if ("微信文章评论数".equals(functionName)) {
@@ -786,29 +786,48 @@ public class GetCommentsNew implements Function {
 			return;
 		}
 		updateTextArea(ta, "创建驱动");
-		System.out.println(driver.getPageSource());
+//		System.out.println(driver.getPageSource());
 		if (StringUtils.isBlank(draftsUrl)) {
 			List<WebElement> aList = driver.findElements(By.tagName("a"));
 			// 获取草稿箱的父目录名称
 			String draftsParentMenu = "展开";
-			String configParentMenu = Config.get("DRAFTSPARENTMENU");
-			if (StringUtils.isNotBlank(configParentMenu)) {
-				draftsParentMenu = configParentMenu;
-				updateTextArea(ta, "查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
-				System.out.println("查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
-			} else {
-				updateTextArea(ta, "配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
-				System.out.println("配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
-			}
+//			String configParentMenu = Config.get("DRAFTSPARENTMENU");
+//			if (StringUtils.isNotBlank(configParentMenu)) {
+//				draftsParentMenu = configParentMenu;
+//				updateTextArea(ta, "查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+//				System.out.println("查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+//			} else {
+//				updateTextArea(ta, "配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
+//				System.out.println("配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
+//			}
 
-			for (WebElement w : aList) {
-				if (draftsParentMenu.equals(w.getText())) {
-					updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
-					w.click();
-					Thread.sleep(500);
-					break;
+			try {
+				for (WebElement w : aList) {
+					if (draftsParentMenu.equals(w.getText())) {
+						updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
+						System.out.println("点击“" + draftsParentMenu + "”目录");
+						w.click();
+						Thread.sleep(500);
+						break;
+					}
+				}
+			} catch (Exception e) {
+				updateTextArea(ta, "未找到“" + draftsParentMenu + "”目录");
+				System.out.println("未找到“" + draftsParentMenu + "”目录");
+				draftsParentMenu = "内容与互动";
+				updateTextArea(ta, "寻找“" + draftsParentMenu + "”目录");
+				System.out.println("寻找“" + draftsParentMenu + "”目录");
+				for (WebElement w : aList) {
+					if (draftsParentMenu.equals(w.getText())) {
+						updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
+						System.out.println("点击“" + draftsParentMenu + "”目录");
+						w.click();
+						Thread.sleep(500);
+						break;
+					}
 				}
 			}
+
 			boolean flag = true;
 			for (WebElement w : aList) {
 				if ("草稿箱".equals(w.getAttribute("title"))) {
@@ -977,7 +996,8 @@ public class GetCommentsNew implements Function {
 			// excel组别起始和结束行
 			int[] startAndEnd = groupAndPosition.get(key);
 			if ((startAndEnd[1] - startAndEnd[0] + 1) < articleLinks.size()) {
-				updateTextArea(ta, key + " 组别的草稿箱文章个数与Excel模板文件中的个数不同，请确认！");
+				updateTextArea(ta, key + " 组别的草稿箱文章个数与Excel模板文件中的个数不同，跳过！");
+				continue;
 			}
 			// 写入到excel中
 			int start = startAndEnd[0];
@@ -1057,6 +1077,15 @@ public class GetCommentsNew implements Function {
 		} else {
 			Platform.runLater(() -> ta.appendText("\n" + message));
 		}
+	}
+
+	/**
+	 * TextArea区域填充文本后自动滑动——立即填充
+	 * @param ta
+	 * @param message
+	 */
+	public void updateTextAreaNow(TextArea ta, String message) {
+		ta.appendText("\n" + message);
 	}
 
 	/**
