@@ -311,7 +311,7 @@ public class GetCommentNumService implements Job {
                         // 遍历每一行
                         String line;
                         int commentNum = 0;
-                        while ((line = br.readLine()) != null) {:
+                        while ((line = br.readLine()) != null) {
                             if (line.contains("comment_id")) {
                                 // 解析到 comment_id
                                 String commentId = line.substring(line.indexOf("\"") + 1);
