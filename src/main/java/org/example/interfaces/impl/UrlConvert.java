@@ -1224,8 +1224,8 @@ public class UrlConvert implements Function {
                                 }
 
                                 String pd = pointDate.format(dtf);
-                                System.out.println("选中的日期为：" + pd);
-                                updateTextArea(privateTa, "选中的日期为：" + pd);
+//                                System.out.println("选中的日期为：" + pd);
+//                                updateTextArea(privateTa, "选中的日期为：" + pd);
                                 sourceUrl = baseWordValue.replaceAll("【para】", sourceUrl);
                                 sourceUrl = sourceUrl.replaceAll("【date】", pd);
                             }
