@@ -1199,6 +1199,7 @@ public class UrlConvert implements Function {
                         }
                     } else {
                         for (int i = 1; i < rowNum; i++) {
+                            updateTextArea(ta, "开始编码解析第" + (i+1) + "行");
                             XSSFRow rowi = sheet0.getRow(i);
                             if (rowi == null) {
                                 continue;
