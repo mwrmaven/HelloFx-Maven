@@ -680,8 +680,10 @@ public class GetCommentNumService implements Job {
                             }
                         }
                         if (summaryWb.getSheetIndex(sheetName) == -1) {
-                            updateTextArea(ta, "未查询到与文件名对应的" + sheetName + "名称的sheet页！请确认文件名中日期为 xx年xx月xx日格式，或者确认汇总文件中存在对应" + sheetName + "的sheet页名称");
-                            return;
+//                            updateTextArea(ta, "未查询到与文件名对应的" + sheetName + "名称的sheet页！请确认文件名中日期为 xx年xx月xx日格式，或者确认汇总文件中存在对应" + sheetName + "的sheet页名称");
+//                            return;
+                            updateTextArea(ta, "未查询到sheet页：" + sheetName + "，开始创建新sheet页");
+                            summaryWb.createSheet(sheetName);
                         }
                         Sheet summarySheet = summaryWb.getSheet(sheetName);
                         // 设置公式自动计算

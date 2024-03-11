@@ -211,6 +211,8 @@ public class GetCommentsNew implements Function {
 		for (Node n : template) {
 			line1.getChildren().add(n);
 		}
+		// 模板文件检查按钮
+
 
 		HBox line1Next = new HBox();
 		line1Next.setAlignment(Pos.CENTER_LEFT);
