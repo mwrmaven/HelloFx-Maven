@@ -229,11 +229,16 @@ public class Unit {
             ta.setText("测试浏览器已启动，请在任务栏中点击浏览器图标创建新窗口！");
             return;
         }
-        String[] cmd = new String[4];
+        String[] cmd = new String[5];
         cmd[0] = chromePath;
+        // 指定连接的端口号
         cmd[1] = "--remote-debugging-port=9527";
+        // 指定用户数据的存储路径
         cmd[2] = "--user-data-dir=" + chromeTestPath;
-        cmd[3] = "-window-position=0,0";
+        // 指定浏览器左上角的的坐标
+        cmd[3] = "-window-position=10,10";
+        // 无痕模式
+        cmd[4] = "--incognito";
         try {
             Runtime.getRuntime().exec(cmd);
             ta.appendText("\nchrome浏览器远程调试模式启动成功！");
