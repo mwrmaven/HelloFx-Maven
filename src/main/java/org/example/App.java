@@ -92,6 +92,8 @@ public class App extends Application {
         primaryStage.setMinHeight(h);
         primaryStage.setMaxWidth(w);
         primaryStage.setMaxHeight(h);
+        primaryStage.setX(100);
+        primaryStage.setY(100);
         primaryStage.show();
 
         ServiceLoader<Function> allTabs = ServiceLoader.load(Function.class);
