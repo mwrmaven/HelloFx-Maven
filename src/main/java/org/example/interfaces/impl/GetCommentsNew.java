@@ -211,6 +211,9 @@ public class GetCommentsNew implements Function {
 		for (Node n : template) {
 			line1.getChildren().add(n);
 		}
+		// 模板文件检查按钮
+		BatchButton templateBatchButton = new BatchButton();
+		Button templateButton = templateBatchButton.createInstance("检查模板文件", 15, 150, 10);
 
 		HBox line1Next = new HBox();
 		line1Next.setAlignment(Pos.CENTER_LEFT);
@@ -400,10 +403,16 @@ public class GetCommentsNew implements Function {
 					if (vBox.getChildren().contains(hiddenVbox)) {
 						vBox.getChildren().remove(hiddenVbox);
 					}
+					if (line1.getChildren().contains(templateButton)) {
+						line1.getChildren().remove(templateButton);
+					}
 				} else if (text.equals(timeComments.getText())) {
 					// 定时获取微信文章评论数，添加 hiddenVbox
 					if (!vBox.getChildren().contains(hiddenVbox)) {
 						vBox.getChildren().add(vBox.getChildren().indexOf(line3), hiddenVbox);
+					}
+					if (!line1.getChildren().contains(templateButton)) {
+						line1.getChildren().add(templateButton);
 					}
 				}
 
@@ -642,9 +651,6 @@ public class GetCommentsNew implements Function {
 							}
 						}
 					}).start();
-
-
-
 				} else {
 					Alert alertError = new Alert(Alert.AlertType.ERROR,
 							"当前暂无：" + functionName + " 功能",
@@ -652,6 +658,82 @@ public class GetCommentsNew implements Function {
 				}
 
 
+			}
+		});
+
+		// 检查模板文件的格式
+		templateButton.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				// 获取模板文件路径
+				String templatePath = ((TextField) template.get(1)).getText();
+				if (StringUtils.isBlank(templatePath)) {
+					updateTextArea(ta, "请选择模板文件！");
+					return;
+				}
+				File file = new File(templatePath);
+				FileInputStream fis = null;
+				Workbook wb = null;
+				try {
+					fis = new FileInputStream(file);
+					wb = new XSSFWorkbook(fis);
+					Sheet sheet = wb.getSheetAt(0);
+					// 获取第二行
+					Row row = sheet.getRow(1);
+					// 获取单元格
+					String titles = "文章标题、标题类型、位置、组别、推送日期、推送时间、新系统分组人数、序号、文章链接";
+					if (row.getLastCellNum() < 8) {
+						updateTextArea(ta, "请确认标题行为：" + titles);
+						return;
+					}
+					String[] ts = titles.split("、");
+					for (int i = 0; i < 9; i++) {
+						Cell cell = row.getCell(i);
+						if (cell != null && !CellType.BLANK.equals(cell.getCellType())
+								&& ts[i].equals(cell.getStringCellValue())) {
+
+						} else {
+							updateTextArea(ta, "请确认标题行为：" + titles);
+							return;
+						}
+					}
+					updateTextArea(ta, "模板文件标题校验通过！");
+					// 判断文章名
+					for (int i = 2; i <= sheet.getLastRowNum(); i++) {
+						Row row1 = sheet.getRow(i);
+						if (row1 == null) {
+							continue;
+						}
+						Cell cell = row1.getCell(0);
+						if (cell == null || CellType.BLANK.equals(cell.getCellType())) {
+							continue;
+						}
+						String articleName = cell.getStringCellValue();
+						// 获取第一个文字
+						String firstWord = articleName.substring(0, 1);
+						if (firstWord.matches("\\d")) {
+							updateTextArea(ta, "请确认文章标题中有没有包含组别！确认是否影响生成数据");
+							return;
+						}
+					}
+
+				} catch (Exception e) {
+					updateTextArea(ta, "模板文件校验异常！");
+					throw new RuntimeException(e);
+				} finally {
+					try {
+						if (wb != null) {
+							wb.close();
+						}
+						if (fis != null) {
+							fis.close();
+						}
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+
+
+				}
 			}
 		});
 
