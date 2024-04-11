@@ -4,11 +4,11 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.mavenr.email.MavenrQQEmail;
 import com.mavenr.image.DownloadImageToFileByUrl;
+import com.mavenr.utils.PoiUtil;
 import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
@@ -660,7 +660,7 @@ public class GetCommentNumService implements Job {
                     if (StringUtils.isNotBlank(summaryFilePath)) {
                         updateTextArea(ta, "开始读取汇总文件！");
                         if (summaryFilePath.endsWith(".xlsx")) {
-                            summaryWb = new XSSFWorkbook(summaryFilePath);
+                            summaryWb = new XSSFWorkbook(new FileInputStream(summaryFilePath));
                         } else {
                             summaryWb = new HSSFWorkbook(new FileInputStream(summaryFilePath));
                         }
@@ -680,14 +680,18 @@ public class GetCommentNumService implements Job {
                             }
                         }
 
-                        // 标记是否没有标签页
-                        boolean noSheetFlag = false;
+                        // 判断是否有标签页
                         if (summaryWb.getSheetIndex(sheetName) == -1) {
 //                            updateTextArea(ta, "未查询到与文件名对应的" + sheetName + "名称的sheet页！请确认文件名中日期为 xx年xx月xx日格式，或者确认汇总文件中存在对应" + sheetName + "的sheet页名称");
 //                            return;
                             updateTextArea(ta, "未查询到sheet页：" + sheetName + "，开始创建新sheet页");
-                            summaryWb.createSheet(sheetName);
-                            noSheetFlag = true;
+                            Sheet newSheet = summaryWb.createSheet(sheetName);
+                            // 获取模板文件
+                            Workbook summaryFileTemplate = new XSSFWorkbook(ClassLoader.getSystemResourceAsStream("template/summaryFile.xlsx"));
+                            Sheet summaryTemplateSheet = summaryFileTemplate.getSheetAt(0);
+                            // 新sheet页复制汇总模板sheet页
+                            PoiUtil.copySheetAll(summaryTemplateSheet, summaryWb, newSheet);
+
                         }
                         Sheet summarySheet = summaryWb.getSheet(sheetName);
                         // 设置公式自动计算
@@ -763,38 +767,6 @@ public class GetCommentNumService implements Job {
                         updateTextArea(ta, "开始处理汇总文件下面的汇总区域！");
                         int start = startLine + resultSheet.getLastRowNum() + 1;
                         boolean countFlag = false;
-
-                        // 判断是否是新建sheet页面
-                        if (noSheetFlag) {
-                            // 新建推送时间行
-                            int summaryTitleNum = start + 1;
-                            for (int i = summaryTitleNum; i < summaryTitleNum + 6; i++) {
-                                Row row = summarySheet.createRow(summaryTitleNum);
-                                Cell cell3 = row.createCell(3);
-                                cell3.setCellStyle(defaultCellStyle);
-                                Cell cell4 = row.createCell(4);
-                                cell4.setCellStyle(defaultCellStyle);
-                                Cell cell5 = row.createCell(5);
-                                cell5.setCellStyle(defaultCellStyle);
-                                Cell cell6 = row.createCell(6);
-                                cell6.setCellStyle(defaultCellStyle);
-                                Cell cell7 = row.createCell(7);
-                                cell7.setCellStyle(defaultCellStyle);
-                                Cell cell8 = row.createCell(8);
-                                cell8.setCellStyle(defaultCellStyle);
-                                Cell cell9 = row.createCell(9);
-                                cell9.setCellStyle(defaultCellStyle);
-                                if (i == summaryTitleNum) {
-                                    cell3.setCellValue("推送时间");
-                                    cell4.setCellValue("头图平均阅读率");
-                                    cell5.setCellValue("头图平均分享率");
-                                    cell6.setCellValue("头图平均完读率");
-                                    cell7.setCellValue("次图平均阅读率");
-                                    cell8.setCellValue("次图平均分享率");
-                                    cell9.setCellValue("次图平均完读率");
-                                }
-                            }
-                        }
 
                         for (int i = start; i < summarySheet.getLastRowNum(); i++) {
                             Row row = summarySheet.getRow(i);
