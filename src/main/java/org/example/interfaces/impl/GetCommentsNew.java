@@ -554,12 +554,19 @@ public class GetCommentsNew implements Function {
 							String dataFilePath = ((TextField) dataFile.get(1)).getText();
 							String start = null;
 							String end = null;
+							// 获取开始时间和结束时间
+							LocalDate startDate = startDatePicker.getValue();
+							LocalDate endDate = endDatePicker.getValue();
+							if (startDate != null) {
+								start = startDate.format(dtf);
+							}
+							if (endDate != null) {
+								end = endDate.format(dtf);
+							}
+
 							if (StringUtils.isNotBlank(dataFilePath)) {
 								updateTextArea(ta, "数据文件路径：" + dataFilePath);
 							} else {
-								// 获取开始时间和结束时间
-								LocalDate startDate = startDatePicker.getValue();
-								LocalDate endDate = endDatePicker.getValue();
 								if (startDate == null || endDate == null) {
 									updateTextArea(ta, "请选择下载数据文件的开始时间和结束时间");
 									return;
@@ -568,8 +575,6 @@ public class GetCommentsNew implements Function {
 									updateTextArea(ta, "结束时间需大于等于开始时间");
 									return;
 								}
-								start = startDate.format(dtf);
-								end = endDate.format(dtf);
 								System.out.println("开始时间：" + start + "; 结束时间：" + end);
 								updateTextArea(ta, "开始时间：" + start + "; 结束时间：" + end);
 							}

@@ -852,7 +852,12 @@ public class GetCommentNumService implements Job {
                             MavenrQQEmail email = new MavenrQQEmail(username, realPassword);
                             List<File> files = new ArrayList<>();
                             files.add(summaryFile);
-                            email.sendAttachMail(username, Arrays.asList(tos), "汇总数据-" + startTime + "-" + endTime, ta.getText(), files);
+
+                            String subject = "汇总数据";
+                            if (startTime != null && endTime != null) {
+                                subject = subject + "-" + startTime + "-" + endTime;
+                            }
+                            email.sendAttachMail(username, Arrays.asList(tos), subject, ta.getText(), files);
 
                         }
                     }
