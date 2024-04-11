@@ -12,8 +12,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
 import org.example.entity.ProcessInfo;
 import org.example.init.Config;
 
@@ -231,14 +231,16 @@ public class Unit {
         }
         String[] cmd = new String[5];
         cmd[0] = chromePath;
+        // 指定打开的网址
+        cmd[1] = "https://mp.weixin.qq.com/";
         // 指定连接的端口号
-        cmd[1] = "--remote-debugging-port=9527";
+        cmd[2] = "--remote-debugging-port=9527";
         // 指定用户数据的存储路径
-        cmd[2] = "--user-data-dir=" + chromeTestPath;
+        cmd[3] = "--user-data-dir=" + chromeTestPath;
         // 指定浏览器左上角的的坐标
-        cmd[3] = "-window-position=10,10";
+        cmd[4] = "-window-position=10,10";
         // 无痕模式
-        cmd[4] = "--incognito";
+//        cmd[5] = "--incognito";
         try {
             Runtime.getRuntime().exec(cmd);
             ta.appendText("\nchrome浏览器远程调试模式启动成功！");
@@ -246,6 +248,8 @@ public class Unit {
             System.out.println(e.getMessage());
             ta.appendText("\nchrome浏览器远程调试模式启动失败，请联系技术人员！");
         }
+
+
     }
 
     /**
@@ -371,6 +375,30 @@ public class Unit {
             sb.append( seg );
         }
         return sb.toString() ;
+    }
+
+    /**
+     * 单元格的默认样式
+     * @param dataWb
+     * @return
+     */
+    public CellStyle defaultCellStyle(Workbook dataWb) {
+        CellStyle defaultCellStyle = dataWb.createCellStyle();
+        // 字体
+        Font defaultFont = dataWb.createFont();
+        defaultFont.setFontName("冬青黑体简体中文 W3");
+        defaultFont.setFontHeightInPoints((short) 11);
+        defaultCellStyle.setFont(defaultFont);
+        // 内容水平、垂直居中
+        defaultCellStyle.setAlignment(HorizontalAlignment.CENTER);
+        defaultCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        // 设置边框实线
+        defaultCellStyle.setBorderLeft(BorderStyle.THIN);
+        defaultCellStyle.setBorderBottom(BorderStyle.THIN);
+        defaultCellStyle.setBorderRight(BorderStyle.THIN);
+        defaultCellStyle.setBorderTop(BorderStyle.THIN);
+
+        return defaultCellStyle;
     }
 
 }
