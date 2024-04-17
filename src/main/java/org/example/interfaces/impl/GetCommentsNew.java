@@ -876,25 +876,27 @@ public class GetCommentsNew implements Function {
 //		System.out.println(driver.getPageSource());
 		if (StringUtils.isBlank(draftsUrl)) {
 			List<WebElement> aList = driver.findElements(By.tagName("a"));
+			List<WebElement> spanList = driver.findElements(By.tagName("span"));
 			// 获取草稿箱的父目录名称
-			String draftsParentMenu = "展开";
-//			String configParentMenu = Config.get("DRAFTSPARENTMENU");
-//			if (StringUtils.isNotBlank(configParentMenu)) {
-//				draftsParentMenu = configParentMenu;
-//				updateTextArea(ta, "查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
-//				System.out.println("查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
-//			} else {
-//				updateTextArea(ta, "配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
-//				System.out.println("配置文件中草稿箱的父目录名称为空，使用默认的“展开”");
-//			}
+			String draftsParentMenu = "内容与互动";
+			String configParentMenu = Config.get("DRAFTSPARENTMENU");
+			if (StringUtils.isNotBlank(configParentMenu)) {
+				draftsParentMenu = configParentMenu;
+				updateTextArea(ta, "查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+				System.out.println("查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+			} else {
+				updateTextArea(ta, "配置文件中草稿箱的父目录名称为空，使用默认的目录：" + draftsParentMenu);
+				System.out.println("配置文件中草稿箱的父目录名称为空，使用默认的目录：" + draftsParentMenu);
+			}
 
 			try {
-				for (WebElement w : aList) {
-					if (draftsParentMenu.equals(w.getText())) {
+				for (WebElement w : spanList) {
+					String menu = w.getAttribute("title");
+					if (draftsParentMenu.equals(menu)) {
 						updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
 						System.out.println("点击“" + draftsParentMenu + "”目录");
 						w.click();
-						Thread.sleep(500);
+						Thread.sleep(2000);
 						break;
 					}
 				}
@@ -904,12 +906,12 @@ public class GetCommentsNew implements Function {
 				draftsParentMenu = "内容与互动";
 				updateTextArea(ta, "寻找“" + draftsParentMenu + "”目录");
 				System.out.println("寻找“" + draftsParentMenu + "”目录");
-				for (WebElement w : aList) {
+				for (WebElement w : spanList) {
 					if (draftsParentMenu.equals(w.getText())) {
 						updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
 						System.out.println("点击“" + draftsParentMenu + "”目录");
 						w.click();
-						Thread.sleep(500);
+						Thread.sleep(2000);
 						break;
 					}
 				}
