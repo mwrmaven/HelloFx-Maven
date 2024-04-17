@@ -877,43 +877,36 @@ public class GetCommentsNew implements Function {
 		if (StringUtils.isBlank(draftsUrl)) {
 			List<WebElement> aList = driver.findElements(By.tagName("a"));
 			List<WebElement> spanList = driver.findElements(By.tagName("span"));
-			// 获取草稿箱的父目录名称
-			String draftsParentMenu = "内容与互动";
-			String configParentMenu = Config.get("DRAFTSPARENTMENU");
-			if (StringUtils.isNotBlank(configParentMenu)) {
-				draftsParentMenu = configParentMenu;
-				updateTextArea(ta, "查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
-				System.out.println("查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
-			} else {
-				updateTextArea(ta, "配置文件中草稿箱的父目录名称为空，使用默认的目录：" + draftsParentMenu);
-				System.out.println("配置文件中草稿箱的父目录名称为空，使用默认的目录：" + draftsParentMenu);
-			}
-
-			try {
-				for (WebElement w : spanList) {
-					String menu = w.getAttribute("title");
-					if (draftsParentMenu.equals(menu)) {
-						updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
-						System.out.println("点击“" + draftsParentMenu + "”目录");
-						w.click();
-						Thread.sleep(2000);
-						break;
-					}
+			WebElement jsLevel = driver.findElement(By.id("js_level2_title"));
+			String style = jsLevel.getAttribute("style");
+			if (StringUtils.isNotBlank(style) && style.contains("none")) {
+				// 说明草稿箱目录没打开，开启
+				// 获取草稿箱的父目录名称
+				String draftsParentMenu = "内容与互动";
+				String configParentMenu = Config.get("DRAFTSPARENTMENU");
+				if (StringUtils.isNotBlank(configParentMenu)) {
+					draftsParentMenu = configParentMenu;
+					updateTextArea(ta, "查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+					System.out.println("查询到配置文件中草稿箱的父目录名称为：" + draftsParentMenu);
+				} else {
+					updateTextArea(ta, "配置文件中草稿箱的父目录名称为空，使用默认的目录：" + draftsParentMenu);
+					System.out.println("配置文件中草稿箱的父目录名称为空，使用默认的目录：" + draftsParentMenu);
 				}
-			} catch (Exception e) {
-				updateTextArea(ta, "未找到“" + draftsParentMenu + "”目录");
-				System.out.println("未找到“" + draftsParentMenu + "”目录");
-				draftsParentMenu = "内容与互动";
-				updateTextArea(ta, "寻找“" + draftsParentMenu + "”目录");
-				System.out.println("寻找“" + draftsParentMenu + "”目录");
-				for (WebElement w : spanList) {
-					if (draftsParentMenu.equals(w.getText())) {
-						updateTextArea(ta, "点击“" + draftsParentMenu + "”目录");
-						System.out.println("点击“" + draftsParentMenu + "”目录");
-						w.click();
-						Thread.sleep(2000);
-						break;
+
+				try {
+					for (WebElement w : spanList) {
+						String menu = w.getAttribute("title");
+						if (draftsParentMenu.equals(menu)) {
+							updateTextArea(ta, "点击“" + draftsParentMenu + "”目录，等待2秒");
+							System.out.println("点击“" + draftsParentMenu + "”目录");
+							w.click();
+							Thread.sleep(2000);
+							break;
+						}
 					}
+				} catch (Exception e) {
+					updateTextArea(ta, "获取草稿箱信息出错！");
+					e.printStackTrace();
 				}
 			}
 
