@@ -582,11 +582,22 @@ public class GetCommentNumService implements Job {
                         if (commentInfo == null) {
                             updateTextArea(ta, "未匹配到送达人数：" + key + "，文章标题：" + tTitle + " 的评论信息！");
                         } else {
+                            Integer allReadPeople = commentInfo.getAllReadPeople();
+                            Integer allSharePeople = commentInfo.getAllSharePeople();
                             Cell cell5 = resultRow.createCell(5);
-                            cell5.setCellValue(commentInfo.getAllReadPeople());
-                            cell5.setCellStyle(cloneCellStyle);
+                            if (allReadPeople < 1) {
+                                cell5.setCellValue(1);
+                                CellStyle updateCellStyle = dataWb.createCellStyle();
+                                updateCellStyle.cloneStyleFrom(defaultCellStyle);
+                                updateCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                                updateCellStyle.setFillForegroundColor(IndexedColors.GREEN.getIndex());
+                                cell5.setCellStyle(updateCellStyle);
+                            } else {
+                                cell5.setCellValue(allReadPeople);
+                                cell5.setCellStyle(cloneCellStyle);
+                            }
                             Cell cell6 = resultRow.createCell(6);
-                            cell6.setCellValue(commentInfo.getAllSharePeople());
+                            cell6.setCellValue(allSharePeople);
                             cell6.setCellStyle(cloneCellStyle);
                             // 设置百分比格式
                             CellStyle rateCellStyle = dataWb.createCellStyle();
@@ -610,14 +621,21 @@ public class GetCommentNumService implements Job {
                             cell10.setCellStyle(cloneCellStyle);
 
                             String groupValue = templateInfo.getGroup();
-                            String cell12Value = "";
+                            String cell12Value = commentInfo.getUrl();
                             if (!groupStandard.equals(groupValue)) {
                                 beginAndEnd.add(rowNum);
                                 groupStandard = groupValue;
-                                cell12Value = commentInfo.getUrl();
+//                                cell12Value = commentInfo.getUrl();
                             }
                             Cell cell12 = resultRow.createCell(12);
                             cell12.setCellValue(cell12Value);
+                            // 需要刷的量
+                            int standard = (int) Math.ceil(key * 0.001);
+                            int need = standard - allReadPeople;
+                            Cell cell13 = resultRow.createCell(13);
+                            if (need > 0) {
+                                cell13.setCellValue(need);
+                            }
                         }
 
                     }
@@ -716,7 +734,7 @@ public class GetCommentNumService implements Job {
                             Row newRow = summarySheet.createRow(startLine + i);
                             Row dataRow = resultSheet.getRow(i);
                             newRow.setHeightInPoints(dataRow.getHeightInPoints());
-                            for (int j = 0; j <= 12; j++) {
+                            for (int j = 0; j <= 13; j++) {
                                 Cell newCell = newRow.createCell(j);
                                 Cell dataCell = dataRow.getCell(j);
                                 if (dataCell == null) {
